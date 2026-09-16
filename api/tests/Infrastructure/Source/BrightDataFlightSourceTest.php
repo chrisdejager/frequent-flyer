@@ -398,8 +398,11 @@ final class BrightDataFlightSourceTest extends TestCase
 
         self::assertCount(1, $warnings, 'Er moet precies één logmelding zijn voor de overgeslagen aanbiedingen');
         self::assertSame('warning', $warnings[0]['level']);
-        self::assertStringContainsString('1', $warnings[0]['message'],
-            'Het aantal overgeslagen aanbiedingen staat in de logmelding');
+        // Scherpe assertion: telt aantal én route samen, zodat een losse "1" uit datum of
+        // vluchtcode niet per ongeluk kan matchen. Een verkeerde teller (bijv. 2 i.p.v. 1)
+        // of een verkeerde route laat de test zakken.
+        self::assertStringContainsString('1 aanbod(en) overgeslagen voor route AMS→HEL', $warnings[0]['message'],
+            'De logmelding bevat het exacte aantal overgeslagen aanbiedingen én de route');
     }
 
     private static function sourceReturning(string $body, ?\Psr\Log\LoggerInterface $logger = null): BrightDataFlightSource

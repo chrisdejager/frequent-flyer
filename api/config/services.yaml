@@ -26,6 +26,9 @@ services:
         arguments:
             $apiToken: '%env(BRIGHTDATA_TOKEN)%'
             $zone: '%env(BRIGHTDATA_ZONE)%'
+            # Expliciet, ook al autowiret Symfony dit: zonder deze regel verdwijnt
+            # de logger stil zodra iemand dit blok met een positional argument uitbreidt.
+            $logger: '@logger'
 
     App\Domain\Port\FlightPriceSource: '@App\Infrastructure\Source\BrightDataFlightSource'
     App\Domain\Port\PriceHistory: '@App\Infrastructure\Persistence\NullPriceHistory'
