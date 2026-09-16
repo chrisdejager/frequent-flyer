@@ -85,16 +85,16 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
 
             $rows = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
         } catch (ExceptionInterface $e) {
-            $this->logger?->warning('Apify HTTP-fout bij ophalen treinprijs ({date}): {message}', [
-                'date'    => $date->format('Y-m-d'),
-                'message' => $e->getMessage(),
+            $this->logger?->warning('Apify HTTP-fout bij ophalen treinprijs ({date}): {reason}', [
+                'date'   => $date->format('Y-m-d'),
+                'reason' => $e->getMessage(),
             ]);
 
             return null;
         } catch (\JsonException $e) {
-            $this->logger?->warning('Apify gaf onleesbare JSON voor treinprijs ({date}): {message}', [
-                'date'    => $date->format('Y-m-d'),
-                'message' => $e->getMessage(),
+            $this->logger?->warning('Apify gaf onleesbare JSON voor treinprijs ({date}): {reason}', [
+                'date'   => $date->format('Y-m-d'),
+                'reason' => $e->getMessage(),
             ]);
 
             return null;

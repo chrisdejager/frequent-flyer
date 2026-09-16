@@ -9,6 +9,15 @@
 parameters:
 
 services:
+    # Vervangt de standaard logger van FrameworkBundle zodat waarschuwingen
+    # (warning+) naar stderr schrijven. Zonder dit override staat de drempelwaarde
+    # op ERROR, waardoor $logger->warning(...) stilletjes niets doet.
+    logger:
+        class: Symfony\Component\HttpKernel\Log\Logger
+        arguments:
+            $minLevel: 'warning'
+            $output: 'php://stderr'
+
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
@@ -37,6 +46,8 @@ services:
         arguments:
             $cache: '@cache.app'
             $apiToken: '%env(APIFY_TOKEN)%'
+            # Expliciet, ook al autowiret Symfony dit: zonder deze regel verdwijnt
+            # de logger stil zodra iemand dit blok met een positional argument uitbreidt.
             $logger: '@logger'
 
     App\Domain\Port\TrainPriceSource: '@App\Infrastructure\Source\ApifyTrainPriceSource'

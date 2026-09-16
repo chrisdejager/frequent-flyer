@@ -11,13 +11,12 @@ interface TrainPriceSource
     /**
      * Goedkoopste VR-prijs Helsinki ⇄ Turku op deze datum.
      *
-     * Geeft null als er geen bruikbare prijs in het antwoord zit — bijvoorbeeld
-     * een lege lijst van treinen, of een prijsveld met een naam die de scraper
-     * niet herkent.
-     *
-     * Let op: een transportfout of een non-2xx-antwoord levert geen null op,
-     * maar geeft een exception. Alleen het ontbreken van bruikbare prijsdata
-     * in een verder geldig antwoord resulteert in null.
+     * Geeft null als de prijs onbekend is. Dat omvat alle gevallen waarbij de
+     * implementatie geen bruikbare prijs kan vaststellen: een lege scrapopbrengst,
+     * onleesbare of ontbrekende prijsvelden, een non-2xx-antwoord (inclusief
+     * quota-uitputting), een transportfout (time-out, verbindingsweigering) en
+     * onleesbare JSON. De aanroeper hoeft dus geen exception op te vangen;
+     * null is de volledige signalering van "prijs onbekend".
      */
     public function priceFor(\DateTimeImmutable $date): ?Money;
 }
