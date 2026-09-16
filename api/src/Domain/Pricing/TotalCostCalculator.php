@@ -38,6 +38,12 @@ final readonly class TotalCostCalculator
         $indicative = (!$baggageCost->isZero() && $this->rates->isEstimate($itinerary->carrier))
             || ($isHelRoute && !$trainCostKnown);
 
-        return new TotalCost($itinerary->basePrice, $baggageCost, $train, $indicative, $trainCostKnown);
+        return new TotalCost(
+            basePrice:      $itinerary->basePrice,
+            baggageCost:    $baggageCost,
+            trainCost:      $train,
+            indicative:     $indicative,
+            trainCostKnown: $trainCostKnown,
+        );
     }
 }
