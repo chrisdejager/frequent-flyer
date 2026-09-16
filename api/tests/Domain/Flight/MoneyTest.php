@@ -51,4 +51,28 @@ final class MoneyTest extends TestCase
 
         Money::fromCents(-1);
     }
+
+    public function test_inf_is_rejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('niet-eindige waarde');
+
+        Money::fromEuros(INF);
+    }
+
+    public function test_negative_inf_is_rejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('niet-eindige waarde');
+
+        Money::fromEuros(-INF);
+    }
+
+    public function test_nan_is_rejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('niet-eindige waarde');
+
+        Money::fromEuros(NAN);
+    }
 }

@@ -20,6 +20,12 @@ final readonly class Money
 
     public static function fromEuros(float $euros): self
     {
+        if (!is_finite($euros)) {
+            throw new \InvalidArgumentException(
+                sprintf('Money::fromEuros() ontving een niet-eindige waarde (%s).', $euros),
+            );
+        }
+
         return new self((int) round($euros * 100));
     }
 
