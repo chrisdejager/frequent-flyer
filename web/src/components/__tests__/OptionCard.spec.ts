@@ -20,6 +20,7 @@ const viaHelsinki: Option = {
     total: 15650,
     totalFormatted: '€ 156,50',
     indicative: false,
+    trainCostKnown: true,  // nieuw veld
   },
 }
 
@@ -111,5 +112,25 @@ describe('OptionCard', () => {
 
     expect(card.text()).toContain('13:00')
     expect(card.text()).toContain('16:45')
+  })
+
+  it('toont "onbekend" in de treinregel als trainCostKnown false is', () => {
+    const unknownTrain: Option = {
+      ...viaHelsinki,
+      cost: {
+        ...viaHelsinki.cost,
+        trainCostKnown: false,
+        indicative: true,
+      },
+    }
+
+    const card = mount(OptionCard, { props: { option: unknownTrain } })
+    const rows = card.findAll('[data-testid="cost-row"]')
+    const trainRow = rows.find(r => r.text().includes('Trein'))
+
+    expect(trainRow).toBeDefined()
+    expect(trainRow!.text()).toContain('onbekend')
+    expect(trainRow!.text()).not.toContain('€ 0,00')
+    expect(card.find('[data-testid="indicative"]').exists()).toBe(true)
   })
 })

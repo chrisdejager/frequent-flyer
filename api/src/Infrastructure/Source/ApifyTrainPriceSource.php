@@ -13,6 +13,7 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
 {
     private const ACTOR = 'studio-amba~vr-scraper';
     private const TTL_SECONDS = 86400;
+    private const TTL_NULL_SECONDS = 900; // 15 minuten: mislukken cachen om Apify-tegoed te sparen
 
     /**
      * Bovengrens voor een treinkaartje HEL–TKU in euro.
@@ -22,6 +23,12 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
      */
     private const MAX_TRAIN_PRICE_EUROS = 10_000.0;
 
+    /**
+     * Schildwacht-waarde die in de cache staat als de scraper niets bruikbaars leverde.
+     * Onderscheidt "null gecacht" van "prijs is 0 cent" en van "cache miss".
+     */
+    private const CACHE_NULL_SENTINEL = 'null';
+
     public function __construct(
         private HttpClientInterface $http,
         private CacheItemPoolInterface $cache,
@@ -29,26 +36,36 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
     ) {
     }
 
-    public function priceFor(\DateTimeImmutable $date): Money
+    public function priceFor(\DateTimeImmutable $date): ?Money
     {
         $item = $this->cache->getItem('vr.hel-tku.'.$date->format('Y-m-d'));
 
         if ($item->isHit()) {
-            return Money::fromCents((int) $item->get());
+            $cached = $item->get();
+
+            if (self::CACHE_NULL_SENTINEL === $cached) {
+                return null;
+            }
+
+            return Money::fromCents((int) $cached);
         }
 
         $price = $this->fetch($date);
 
-        if (!$price->isZero()) {
+        if (null === $price) {
+            $item->set(self::CACHE_NULL_SENTINEL);
+            $item->expiresAfter(self::TTL_NULL_SECONDS);
+        } else {
             $item->set($price->cents);
             $item->expiresAfter(self::TTL_SECONDS);
-            $this->cache->save($item);
         }
+
+        $this->cache->save($item);
 
         return $price;
     }
 
-    private function fetch(\DateTimeImmutable $date): Money
+    private function fetch(\DateTimeImmutable $date): ?Money
     {
         $response = $this->http->request('POST', sprintf(
             'https://api.apify.com/v2/acts/%s/run-sync-get-dataset-items?token=%s',
@@ -91,7 +108,7 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
         ), static fn (?float $p): bool => null !== $p);
 
         if ([] === $prices) {
-            return Money::zero();
+            return null;
         }
 
         return Money::fromEuros(min($prices));

@@ -105,6 +105,48 @@ final class SearchControllerTest extends WebTestCase
             'Een \InvalidArgumentException uit de databron hoort een 500 te zijn, niet een 400.');
     }
 
+    public function test_trainCostKnown_is_present_in_json_response(): void
+    {
+        $client = static::createClient();
+
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [self::aFinnairFlight()]);
+        static::getContainer()->set(FlightPriceSource::class, $flights);
+
+        static::getContainer()->set(
+            TrainPriceSource::class,
+            FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
+        );
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertArrayHasKey('trainCostKnown', $body['options'][0]['cost']);
+        self::assertTrue($body['options'][0]['cost']['trainCostKnown']);
+    }
+
+    public function test_unknown_train_price_sets_trainCostKnown_false_and_indicative_true(): void
+    {
+        $client = static::createClient();
+
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [self::aFinnairFlight()]);
+        static::getContainer()->set(FlightPriceSource::class, $flights);
+
+        static::getContainer()->set(
+            TrainPriceSource::class,
+            FixedTrainPriceSource::withUnknownPrice(),
+        );
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertFalse($body['options'][0]['cost']['trainCostKnown']);
+        self::assertTrue($body['options'][0]['cost']['indicative']);
+    }
+
     private static function aFinnairFlight(): Itinerary
     {
         return new Itinerary(

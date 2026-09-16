@@ -59,7 +59,7 @@ final class ApifyTrainPriceSourceTest extends TestCase
         self::assertSame(2, $calls);
     }
 
-    public function test_an_empty_result_yields_zero_rather_than_crashing(): void
+    public function test_an_empty_result_yields_null(): void
     {
         $source = new ApifyTrainPriceSource(
             new MockHttpClient(new MockResponse('[]')),
@@ -67,7 +67,7 @@ final class ApifyTrainPriceSourceTest extends TestCase
             'test-token',
         );
 
-        self::assertTrue($source->priceFor(new \DateTimeImmutable('2026-10-29'))->isZero());
+        self::assertNull($source->priceFor(new \DateTimeImmutable('2026-10-29')));
     }
 
     public function test_a_zero_euro_price_is_not_filtered_out(): void
@@ -88,7 +88,7 @@ final class ApifyTrainPriceSourceTest extends TestCase
         self::assertSame(0, $price->cents, 'een prijs van €0 is een geldige (gratis) rit en mag niet worden weggefilterd');
     }
 
-    public function test_an_empty_result_is_not_cached(): void
+    public function test_a_null_result_is_cached_for_15_minutes(): void
     {
         $calls = 0;
         $client = new MockHttpClient(function () use (&$calls) {
@@ -99,10 +99,12 @@ final class ApifyTrainPriceSourceTest extends TestCase
 
         $source = new ApifyTrainPriceSource($client, new ArrayAdapter(), 'test-token');
 
-        $source->priceFor(new \DateTimeImmutable('2026-10-29'));
-        $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+        $first  = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+        $second = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
 
-        self::assertSame(2, $calls, 'een leeg antwoord mag niet worden gecacht, zodat de volgende aanroep het opnieuw probeert');
+        self::assertNull($first);
+        self::assertNull($second);
+        self::assertSame(1, $calls, 'null-uitkomst moet worden gecacht (15 min) zodat niet elke klik een Apify-run kost');
     }
 
     public function test_a_malformed_response_is_not_cached(): void
@@ -190,7 +192,7 @@ final class ApifyTrainPriceSourceTest extends TestCase
 
         $price = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
 
-        self::assertTrue($price->isZero(), 'Een absurd hoge prijs wordt weggefilterd; er blijft geen bruikbare prijs over');
+        self::assertNull($price, 'Een absurd hoge prijs wordt weggefilterd; er blijft geen bruikbare prijs over');
     }
 
     public function test_an_absurdly_high_price_does_not_replace_a_valid_one(): void

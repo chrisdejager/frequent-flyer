@@ -13,14 +13,24 @@ const time = (iso: string) =>
     timeZone: 'UTC',
   })
 
+interface CostRow {
+  label: string
+  cents: number
+  unknown?: boolean
+}
+
 const rows = computed(() => {
-  const r = [
+  const r: CostRow[] = [
     { label: 'Vlucht', cents: props.option.cost.basePrice },
     { label: 'Bagage', cents: props.option.cost.baggageCost },
   ]
 
   if (props.option.pattern === 'via_hel_train') {
-    r.push({ label: 'Trein HEL–TKU', cents: props.option.cost.trainCost })
+    r.push({
+      label: 'Trein HEL–TKU',
+      cents: props.option.cost.trainCost,
+      unknown: !props.option.cost.trainCostKnown,
+    })
   }
 
   return r
@@ -46,7 +56,8 @@ const rows = computed(() => {
     <dl>
       <div v-for="row in rows" :key="row.label" data-testid="cost-row">
         <dt>{{ row.label }}</dt>
-        <dd>{{ euro(row.cents) }}</dd>
+        <dd v-if="row.unknown">onbekend</dd>
+        <dd v-else>{{ euro(row.cents) }}</dd>
       </div>
     </dl>
 

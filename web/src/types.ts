@@ -9,6 +9,7 @@ export interface Cost {
   total: number
   totalFormatted: string
   indicative: boolean
+  trainCostKnown: boolean
 }
 
 export interface Option {
