@@ -12,7 +12,8 @@
 
 ## Global Constraints
 
-- PHP **8.4**, Symfony **7.2**. Alle PHP-bestanden beginnen met `declare(strict_types=1);`.
+- PHP **8.4**, Symfony **7.4 LTS** (`^7.2` loste bij installatie op naar 7.4.19; LTS is beter en API-compatibel). Alle PHP-bestanden beginnen met `declare(strict_types=1);`.
+- De PHPUnit-configuratie heet `api/phpunit.dist.xml` (zo legt de Symfony-recipe hem neer), niet `phpunit.xml.dist`.
 - `src/Domain/**` mag **geen** `use Symfony\`, `use Doctrine\` of andere framework-imports bevatten. Dit wordt in Taak 15 automatisch afgedwongen.
 - Alle geldbedragen zijn `Money` in hele centen (`int`). Nooit `float` voor geld.
 - Maatschappijen: alleen `AY` (Finnair), `SK` (SAS), `KL` (KLM).
