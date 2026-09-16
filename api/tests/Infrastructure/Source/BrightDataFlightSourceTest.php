@@ -39,6 +39,30 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame(RoutePattern::ViaHelsinkiWithTrain, $found[0]->pattern);
     }
 
+    public function test_a_journey_starting_in_helsinki_also_gets_the_train_pattern(): void
+    {
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [[
+                'flights' => [[
+                    'departure_airport' => ['id' => 'HEL', 'time' => '2026-10-25 14:00'],
+                    'arrival_airport'   => ['id' => 'AMS', 'time' => '2026-10-25 16:45'],
+                    'airline'           => 'Finnair',
+                    'flight_number'     => 'AY 841',
+                ]],
+                'price' => 80,
+            ]],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Hel, Airport::Ams, new \DateTimeImmutable('2026-10-25'));
+
+        self::assertCount(1, $found);
+        self::assertSame(
+            RoutePattern::ViaHelsinkiWithTrain,
+            $found[0]->pattern,
+            'Een vlucht vanuit Helsinki hoort patroon ViaHelsinkiWithTrain te krijgen.',
+        );
+    }
+
     public function test_unknown_airlines_are_skipped_rather_than_crashing(): void
     {
         $source = self::sourceReturning(json_encode([

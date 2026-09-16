@@ -139,6 +139,47 @@ final class SearchFlightsHandlerTest extends TestCase
         );
     }
 
+    public function test_return_flight_via_helsinki_includes_train_cost(): void
+    {
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Hel, Airport::Ams, [
+            self::helToAms(Carrier::Finnair, 80, '14:00'),
+        ]);
+        $flights->give(Airport::Tku, Airport::Ams, []);
+
+        $train = new FixedTrainPriceSource(Money::fromEuros(22.50));
+
+        $result = $this->handler($flights, $train)(
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'chris'),
+        );
+
+        self::assertCount(1, $result->options);
+        self::assertSame(1, $train->callCount, 'treinprijs moet worden opgehaald voor HEL→AMS');
+        // basis € 80,00 + bagage € 0 (chris/Finnair silver = gratis) + trein € 22,50 = € 102,50
+        // Baggagebeleid: Finnair Silver geeft gratis bagage, dus bagage = €0
+        // Trein €22,50 = 2250 cent
+        // Basis €80 = 8000 cent
+        // Totaal = 8000 + 2250 = 10250
+        self::assertSame(10250, $result->options[0]->cost->total()->cents,
+            'basis €80 + trein €22,50 = €102,50 (Finnair Silver: gratis bagage)');
+    }
+
+    public function test_return_flight_departing_before_noon_is_rejected(): void
+    {
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Hel, Airport::Ams, [
+            self::helToAms(Carrier::Finnair, 80, '08:00'), // te vroeg
+        ]);
+        $flights->give(Airport::Tku, Airport::Ams, []);
+
+        $result = $this->handler($flights, new FixedTrainPriceSource(Money::fromEuros(22.50)))(
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'chris'),
+        );
+
+        self::assertCount(0, $result->options,
+            'Een HEL→AMS-vlucht met vertrek 08:00 moet worden afgewezen (vóór 12:00).');
+    }
+
     private function handler(InMemoryFlightPriceSource $flights, FixedTrainPriceSource $train): SearchFlightsHandler
     {
         $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
@@ -148,6 +189,22 @@ final class SearchFlightsHandlerTest extends TestCase
             $train,
             new TotalCostCalculator(new BaggagePolicy($rates), $rates),
             new NullPriceHistory(),
+        );
+    }
+
+    private static function helToAms(Carrier $carrier, float $euros, string $dep): Itinerary
+    {
+        return new Itinerary(
+            $carrier,
+            [new Segment(
+                Airport::Hel,
+                Airport::Ams,
+                new \DateTimeImmutable('2026-10-25 '.$dep),
+                new \DateTimeImmutable('2026-10-25 16:45'),
+                'AY841',
+            )],
+            Money::fromEuros($euros),
+            RoutePattern::ViaHelsinkiWithTrain,
         );
     }
 

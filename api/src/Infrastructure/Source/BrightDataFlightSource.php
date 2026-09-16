@@ -132,13 +132,17 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
             return null;
         }
 
+        $origin      = $segments[0]->from;
         $destination = $segments[count($segments) - 1]->to;
+
+        // Helsinki als eindpunt (heen of terug) betekent dat de VR-trein HEL–TKU erbij hoort.
+        $viaHelsinki = Airport::Hel === $destination || Airport::Hel === $origin;
 
         return new Itinerary(
             $carrier,
             $segments,
             Money::fromEuros((float) $offer['price']),
-            Airport::Hel === $destination ? RoutePattern::ViaHelsinkiWithTrain : RoutePattern::ThroughTicket,
+            $viaHelsinki ? RoutePattern::ViaHelsinkiWithTrain : RoutePattern::ThroughTicket,
         );
     }
 
