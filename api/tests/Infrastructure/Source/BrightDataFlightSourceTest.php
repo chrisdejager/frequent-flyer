@@ -188,6 +188,95 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame([], $found, 'Aanbieding met aankomst vóór vertrek wordt overgeslagen');
     }
 
+    public function test_an_offer_with_a_non_numeric_price_is_skipped(): void
+    {
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 134,
+                ],
+                // Rot aanbod: niet-numerieke prijs
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 843',
+                    ]],
+                    'price' => 'N/A',
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Aanbod met "N/A" als prijs wordt overgeslagen');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
+    public function test_an_offer_with_a_locale_formatted_price_is_skipped(): void
+    {
+        // '1.234,00' (Nederlandse notatie) wordt door (float) '1.234,00' → 1.234 → €1,23.
+        // Dat is een vlucht van €1234 die als €1,23 bovenaan komt. Overslaan.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => '1.234,00',
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $found, 'Aanbod met locale-prijs "1.234,00" wordt overgeslagen');
+    }
+
+    public function test_an_offer_with_a_negative_price_is_skipped_without_crashing_the_search(): void
+    {
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 134,
+                ],
+                // Rot aanbod: negatieve prijs
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 843',
+                    ]],
+                    'price' => -5,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Negatieve prijs wordt overgeslagen zonder de hele zoekopdracht te laten crashen');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
     private static function sourceReturning(string $body): BrightDataFlightSource
     {
         return new BrightDataFlightSource(

@@ -138,10 +138,25 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
         // Helsinki als eindpunt (heen of terug) betekent dat de VR-trein HEL–TKU erbij hoort.
         $viaHelsinki = Airport::Hel === $destination || Airport::Hel === $origin;
 
+        // Een onleesbare prijs (leeg, "N/A", locale-notatie "1.234,00") of een negatieve
+        // waarde mag de hele zoekopdracht niet slopen; sla dit aanbod stil over.
+        // is_numeric() keurt strings met komma als decimaalscheider af, wat precies
+        // de Nederlandse locale-notatie uitsluit.
+        $rawPrice = $offer['price'];
+        if (!is_numeric($rawPrice) || (float) $rawPrice < 0) {
+            return null;
+        }
+
+        try {
+            $price = Money::fromEuros((float) $rawPrice);
+        } catch (\InvalidArgumentException) {
+            return null;
+        }
+
         return new Itinerary(
             $carrier,
             $segments,
-            Money::fromEuros((float) $offer['price']),
+            $price,
             $viaHelsinki ? RoutePattern::ViaHelsinkiWithTrain : RoutePattern::ThroughTicket,
         );
     }
