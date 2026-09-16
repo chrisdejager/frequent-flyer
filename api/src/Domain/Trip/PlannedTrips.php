@@ -12,9 +12,14 @@ use App\Domain\Flight\Direction;
  */
 final readonly class PlannedTrips
 {
+    /**
+     * Bewust niet op datum gezet: zo moet `all()` echt sorteren en heeft de
+     * sorteertest iets om te bewaken. Uit de agenda komt de volgorde straks
+     * ook niet gegarandeerd goed.
+     */
     private const TRIPS = [
-        ['2026-10-25', 'fi-nl', 'partner'],
         ['2026-10-29', 'nl-fi', 'partner'],
+        ['2026-10-25', 'fi-nl', 'partner'],
     ];
 
     /**
