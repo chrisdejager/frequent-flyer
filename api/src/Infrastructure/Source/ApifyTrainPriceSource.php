@@ -14,6 +14,14 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
     private const ACTOR = 'studio-amba~vr-scraper';
     private const TTL_SECONDS = 86400;
 
+    /**
+     * Bovengrens voor een treinkaartje HEL–TKU in euro.
+     * Een VR-kaartje kost enkele tientjes; alles daarboven is een scraperartefact.
+     * Zonder deze grens loopt (int) round($euros * 100) over naar een negatief
+     * getal, waarop Money een InvalidArgumentException gooit — HTTP 500.
+     */
+    private const MAX_TRAIN_PRICE_EUROS = 10_000.0;
+
     public function __construct(
         private HttpClientInterface $http,
         private CacheItemPoolInterface $cache,
@@ -62,8 +70,8 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
 
                 // Filter onbruikbare prijzen vóór de float-cast:
                 // - niet-numeriek (N/A, lege string, gewone strings) → null
-                // - niet-eindig (INF, -INF uit 1e999) → null
-                // - negatief → null (een negatieve treinprijs is geen bruikbare prijs)
+                // - absurd hoog (incl. INF, want INF > MAX_TRAIN_PRICE_EUROS is waar) → null
+                // - negatief → null (een negatieve treinprijs is geen bruikbare prijs; -INF valt hier ook onder)
                 // Prijs 0.0 is geldig: een gratis rit is mogelijk.
                 if (!is_numeric($raw)) {
                     return null;
@@ -71,7 +79,9 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
 
                 $price = (float) $raw;
 
-                if (!is_finite($price) || $price < 0.0) {
+                // De bovengrens vangt tevens INF af (INF > MAX_TRAIN_PRICE_EUROS is waar),
+                // waardoor een aparte is_finite()-toets overbodig is. -INF valt onder < 0.0.
+                if ($price < 0.0 || $price > self::MAX_TRAIN_PRICE_EUROS) {
                     return null;
                 }
 

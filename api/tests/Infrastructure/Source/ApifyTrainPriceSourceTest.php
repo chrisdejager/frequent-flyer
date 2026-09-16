@@ -172,6 +172,43 @@ final class ApifyTrainPriceSourceTest extends TestCase
         self::assertSame(2250, $price->cents, 'Negatieve prijs (-5.0) wordt overgeslagen; de geldige prijs van €22,50 blijft over');
     }
 
+    public function test_an_absurdly_high_price_does_not_crash_the_search(): void
+    {
+        // 1e17 euro is eindig en niet-negatief, dus het passeerde alle oude filters.
+        // (int) round(1e17 * 100) loopt over naar -8446744073709551616, waarop
+        // Money::fromCents() een InvalidArgumentException gooit: HTTP 500 op de
+        // hele zoekopdracht. De bovengrens sluit dit uit.
+        $json = json_encode([
+            ['priceEur' => 1e17, 'departureTime' => '2026-10-29T08:00:00', 'trainType' => 'IC'],
+        ]);
+
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse($json)),
+            new ArrayAdapter(),
+            'test-token',
+        );
+
+        $price = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        self::assertTrue($price->isZero(), 'Een absurd hoge prijs wordt weggefilterd; er blijft geen bruikbare prijs over');
+    }
+
+    public function test_an_absurdly_high_price_does_not_replace_a_valid_one(): void
+    {
+        $json = json_encode([
+            ['priceEur' => 1e17, 'departureTime' => '2026-10-29T08:00:00', 'trainType' => 'IC'],
+            ['priceEur' => 22.5, 'departureTime' => '2026-10-29T17:00:00', 'trainType' => 'S'],
+        ]);
+
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse($json)),
+            new ArrayAdapter(),
+            'test-token',
+        );
+
+        self::assertSame(2250, $source->priceFor(new \DateTimeImmutable('2026-10-29'))->cents);
+    }
+
     private static function fixture(): string
     {
         return file_get_contents(__DIR__.'/../../Fixtures/apify-vr-hel-tku.json');
