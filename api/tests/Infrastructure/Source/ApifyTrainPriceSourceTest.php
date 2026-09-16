@@ -70,6 +70,68 @@ final class ApifyTrainPriceSourceTest extends TestCase
         self::assertTrue($source->priceFor(new \DateTimeImmutable('2026-10-29'))->isZero());
     }
 
+    public function test_a_zero_euro_price_is_not_filtered_out(): void
+    {
+        $json = json_encode([
+            ['priceEur' => 0.0, 'departureTime' => '2026-10-29T08:00:00', 'trainType' => 'IC'],
+            ['priceEur' => 22.5, 'departureTime' => '2026-10-29T17:00:00', 'trainType' => 'S'],
+        ]);
+
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse($json)),
+            new ArrayAdapter(),
+            'test-token',
+        );
+
+        $price = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame(0, $price->cents, 'een prijs van €0 is een geldige (gratis) rit en mag niet worden weggefilterd');
+    }
+
+    public function test_an_empty_result_is_not_cached(): void
+    {
+        $calls = 0;
+        $client = new MockHttpClient(function () use (&$calls) {
+            ++$calls;
+
+            return new MockResponse('[]');
+        });
+
+        $source = new ApifyTrainPriceSource($client, new ArrayAdapter(), 'test-token');
+
+        $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+        $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame(2, $calls, 'een leeg antwoord mag niet worden gecacht, zodat de volgende aanroep het opnieuw probeert');
+    }
+
+    public function test_a_malformed_response_is_not_cached(): void
+    {
+        $calls = 0;
+        $client = new MockHttpClient(function () use (&$calls) {
+            ++$calls;
+
+            if (1 === $calls) {
+                return new MockResponse('dit is geen json!');
+            }
+
+            return new MockResponse(self::fixture());
+        });
+
+        $source = new ApifyTrainPriceSource($client, new ArrayAdapter(), 'test-token');
+
+        try {
+            $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+            self::fail('verwachtte een JsonException bij ongeldig JSON');
+        } catch (\JsonException) {
+            // verwacht
+        }
+
+        $price = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+        self::assertSame(2250, $price->cents, 'na een mislukte aanroep moet een volgende aanroep de juiste prijs geven');
+        self::assertSame(2, $calls, 'mislukte aanroep mag niet in de cache blijven hangen');
+    }
+
     private static function fixture(): string
     {
         return file_get_contents(__DIR__.'/../../Fixtures/apify-vr-hel-tku.json');

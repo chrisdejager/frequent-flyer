@@ -31,9 +31,11 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
 
         $price = $this->fetch($date);
 
-        $item->set($price->cents);
-        $item->expiresAfter(self::TTL_SECONDS);
-        $this->cache->save($item);
+        if (!$price->isZero()) {
+            $item->set($price->cents);
+            $item->expiresAfter(self::TTL_SECONDS);
+            $this->cache->save($item);
+        }
 
         return $price;
     }
@@ -57,7 +59,7 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
         $prices = array_filter(array_map(
             static fn (array $row): ?float => isset($row['priceEur']) ? (float) $row['priceEur'] : null,
             is_array($rows) ? $rows : [],
-        ));
+        ), static fn (?float $p): bool => null !== $p);
 
         if ([] === $prices) {
             return Money::zero();
