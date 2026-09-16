@@ -437,7 +437,7 @@ final class BrightDataFlightSourceTest extends TestCase
                         ]],
                         'price' => 134,
                     ],
-                    // Rot aanbod: niet-numerieke prijs
+                    // Rot aanbod 1: niet-numerieke prijs
                     [
                         'flights' => [[
                             'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
@@ -446,6 +446,16 @@ final class BrightDataFlightSourceTest extends TestCase
                             'flight_number'     => 'AY 843',
                         ]],
                         'price' => 'N/A',
+                    ],
+                    // Rot aanbod 2: negatieve prijs — cents <= 0-guard slaat dit over
+                    [
+                        'flights' => [[
+                            'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                            'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                            'airline'           => 'Finnair',
+                            'flight_number'     => 'AY 844',
+                        ]],
+                        'price' => -5,
                     ],
                 ],
             ], JSON_THROW_ON_ERROR))),
@@ -460,11 +470,11 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame('warning', $warnings[0]['level']);
         // PSR-3: de boodschap bevat placeholders; de waarden zitten in de context-array.
         // Scherpe asserties op zowel het template als de context, zodat een verkeerde
-        // teller (bijv. 2 i.p.v. 1) of een verkeerde route de test laat zakken.
+        // teller (bijv. 1 i.p.v. 2) of een verkeerde route de test laat zakken.
         self::assertStringContainsString('{count} aanbod(en) overgeslagen', $warnings[0]['message'],
             'De logmelding gebruikt PSR-3 placeholder {count}');
-        self::assertSame(1, $warnings[0]['context']['count'],
-            'Context-array bevat het exacte aantal overgeslagen aanbiedingen');
+        self::assertSame(2, $warnings[0]['context']['count'],
+            'Context-array bevat het exacte aantal overgeslagen aanbiedingen (2 rotte in deze payload)');
         self::assertSame('AMS', $warnings[0]['context']['from'],
             'Context-array bevat de vertrekhaven');
         self::assertSame('HEL', $warnings[0]['context']['to'],
