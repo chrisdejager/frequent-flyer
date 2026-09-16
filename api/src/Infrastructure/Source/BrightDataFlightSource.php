@@ -11,6 +11,7 @@ use App\Domain\Flight\Money;
 use App\Domain\Flight\RoutePattern;
 use App\Domain\Flight\Segment;
 use App\Domain\Port\FlightPriceSource;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class BrightDataFlightSource implements FlightPriceSource
@@ -29,6 +30,7 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
         private HttpClientInterface $http,
         private string $apiToken,
         private string $zone,
+        private ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -54,13 +56,26 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
         ];
 
         $itineraries = [];
+        $skipped = 0;
 
         foreach ($raw as $offer) {
             $itinerary = $this->toItinerary($offer);
 
             if (null !== $itinerary) {
                 $itineraries[] = $itinerary;
+            } else {
+                ++$skipped;
             }
+        }
+
+        if ($skipped > 0) {
+            $this->logger?->warning(sprintf(
+                '%d aanbod(en) overgeslagen voor route %s→%s (%s).',
+                $skipped,
+                $from->value,
+                $to->value,
+                $date->format('Y-m-d'),
+            ));
         }
 
         return $itineraries;

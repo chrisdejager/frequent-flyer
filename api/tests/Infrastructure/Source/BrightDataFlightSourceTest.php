@@ -9,6 +9,7 @@ use App\Domain\Flight\Carrier;
 use App\Domain\Flight\RoutePattern;
 use App\Infrastructure\Source\BrightDataFlightSource;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -350,12 +351,64 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
-    private static function sourceReturning(string $body): BrightDataFlightSource
+    public function test_skipped_offers_are_logged_as_a_warning(): void
+    {
+        $warnings = [];
+
+        $logger = new class($warnings) extends AbstractLogger {
+            public function __construct(private array &$log) {}
+
+            public function log($level, string|\Stringable $message, array $context = []): void
+            {
+                $this->log[] = ['level' => $level, 'message' => $message];
+            }
+        };
+
+        $source = new BrightDataFlightSource(
+            new MockHttpClient(new MockResponse(json_encode([
+                'best_flights' => [
+                    // Geldig aanbod
+                    [
+                        'flights' => [[
+                            'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                            'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                            'airline'           => 'Finnair',
+                            'flight_number'     => 'AY 842',
+                        ]],
+                        'price' => 134,
+                    ],
+                    // Rot aanbod: niet-numerieke prijs
+                    [
+                        'flights' => [[
+                            'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                            'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                            'airline'           => 'Finnair',
+                            'flight_number'     => 'AY 843',
+                        ]],
+                        'price' => 'N/A',
+                    ],
+                ],
+            ], JSON_THROW_ON_ERROR))),
+            'test-token',
+            'serp_zone',
+            $logger,
+        );
+
+        $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $warnings, 'Er moet precies één logmelding zijn voor de overgeslagen aanbiedingen');
+        self::assertSame('warning', $warnings[0]['level']);
+        self::assertStringContainsString('1', $warnings[0]['message'],
+            'Het aantal overgeslagen aanbiedingen staat in de logmelding');
+    }
+
+    private static function sourceReturning(string $body, ?\Psr\Log\LoggerInterface $logger = null): BrightDataFlightSource
     {
         return new BrightDataFlightSource(
             new MockHttpClient(new MockResponse($body)),
             'test-token',
             'serp_zone',
+            $logger,
         );
     }
 
