@@ -36,7 +36,7 @@ final class InMemoryFlightPriceSourceTest extends TestCase
 
     public function test_the_train_double_counts_its_calls(): void
     {
-        $train = new FixedTrainPriceSource(Money::fromEuros(22.50));
+        $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
 
         $train->priceFor(new \DateTimeImmutable('2026-10-29'));
 

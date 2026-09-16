@@ -28,7 +28,7 @@ final class SearchControllerTest extends WebTestCase
 
         static::getContainer()->set(
             TrainPriceSource::class,
-            new FixedTrainPriceSource(Money::fromEuros(22.50)),
+            FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
         );
 
         $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');

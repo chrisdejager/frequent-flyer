@@ -36,7 +36,7 @@ final class SearchFlightsHandlerTest extends TestCase
             self::throughTicket(Carrier::Sas, 150),
         ]);
 
-        $result = $this->handler($flights, new FixedTrainPriceSource(Money::fromEuros(22.50)))(
+        $result = $this->handler($flights, FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)))(
             new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
         );
 
@@ -53,7 +53,7 @@ final class SearchFlightsHandlerTest extends TestCase
             self::viaHel(Carrier::Finnair, 118, '18:30', '22:15'),
         ]);
 
-        $result = $this->handler($flights, new FixedTrainPriceSource(Money::fromEuros(22.50)))(
+        $result = $this->handler($flights, FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)))(
             new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
         );
 
@@ -66,7 +66,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $flights = new InMemoryFlightPriceSource();
         $flights->give(Airport::Ams, Airport::Hel, [self::viaHel(Carrier::Finnair, 134, '13:00', '16:45')]);
 
-        $handler = $this->handler($flights, new FixedTrainPriceSource(Money::fromEuros(22.50)));
+        $handler = $this->handler($flights, FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)));
 
         $chris = $handler(new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'));
         $partner = $handler(new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'partner'));
@@ -80,7 +80,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $flights = new InMemoryFlightPriceSource();
         $flights->give(Airport::Ams, Airport::Tku, [self::throughTicket(Carrier::Sas, 150)]);
 
-        $train = new FixedTrainPriceSource(Money::fromEuros(22.50));
+        $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
 
         $this->handler($flights, $train)(
             new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
@@ -99,7 +99,7 @@ final class SearchFlightsHandlerTest extends TestCase
             self::throughTicket(Carrier::Sas, 150),
         ]);
 
-        $train = new FixedTrainPriceSource(Money::fromEuros(22.50));
+        $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
 
         $result = $this->handler($flights, $train)(
             new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
@@ -117,7 +117,7 @@ final class SearchFlightsHandlerTest extends TestCase
             self::viaHel(Carrier::Finnair, 145, '14:00', '17:45'),
         ]);
 
-        $train = new FixedTrainPriceSource(Money::fromEuros(22.50));
+        $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
 
         $this->handler($flights, $train)(
             new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
@@ -132,7 +132,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $flights->give(Airport::Hel, Airport::Ams, []);
         $flights->give(Airport::Tku, Airport::Ams, []);
 
-        $this->handler($flights, new FixedTrainPriceSource(Money::zero()))(
+        $this->handler($flights, FixedTrainPriceSource::withPrice(Money::zero()))(
             new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'partner'),
         );
 
@@ -150,7 +150,7 @@ final class SearchFlightsHandlerTest extends TestCase
         ]);
         $flights->give(Airport::Tku, Airport::Ams, []);
 
-        $train = new FixedTrainPriceSource(Money::fromEuros(22.50));
+        $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
 
         $result = $this->handler($flights, $train)(
             new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'chris'),
@@ -175,7 +175,7 @@ final class SearchFlightsHandlerTest extends TestCase
         ]);
         $flights->give(Airport::Tku, Airport::Ams, []);
 
-        $result = $this->handler($flights, new FixedTrainPriceSource(Money::fromEuros(22.50)))(
+        $result = $this->handler($flights, FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)))(
             new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'chris'),
         );
 
@@ -221,7 +221,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
         $handler = new SearchFlightsHandler(
             $source,
-            new FixedTrainPriceSource(Money::fromEuros(22.50)),
+            FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
             new TotalCostCalculator(new BaggagePolicy($rates), $rates),
             new NullPriceHistory(),
         );

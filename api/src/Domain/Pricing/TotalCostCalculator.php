@@ -24,14 +24,20 @@ final readonly class TotalCostCalculator
             $traveller->statusFor($itinerary->carrier),
         );
 
-        $train = RoutePattern::ViaHelsinkiWithTrain === $itinerary->pattern
-            ? ($trainCost ?? Money::zero())
-            : Money::zero();
+        $isHelRoute = RoutePattern::ViaHelsinkiWithTrain === $itinerary->pattern;
+        $trainCostKnown = true;
 
-        // De uitkomst is alleen onzeker als er daadwerkelijk een geschat
-        // tarief in meegerekend is.
-        $indicative = !$baggageCost->isZero() && $this->rates->isEstimate($itinerary->carrier);
+        if ($isHelRoute) {
+            $train = $trainCost ?? Money::zero();
+            $trainCostKnown = null !== $trainCost;
+        } else {
+            $train = Money::zero();
+        }
 
-        return new TotalCost($itinerary->basePrice, $baggageCost, $train, $indicative);
+        // Indicatief als: de bagagekosten geschat zijn, OF de treinprijs onbekend is.
+        $indicative = (!$baggageCost->isZero() && $this->rates->isEstimate($itinerary->carrier))
+            || ($isHelRoute && !$trainCostKnown);
+
+        return new TotalCost($itinerary->basePrice, $baggageCost, $train, $indicative, $trainCostKnown);
     }
 }

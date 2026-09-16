@@ -13,6 +13,7 @@ final readonly class TotalCost
         public Money $baggageCost,
         public Money $trainCost,
         public bool $indicative,
+        public bool $trainCostKnown = true,
     ) {
     }
 

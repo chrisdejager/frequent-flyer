@@ -114,6 +114,41 @@ final class TotalCostCalculatorTest extends TestCase
         self::assertFalse($cost->indicative, 'geen schatting dus niet indicatief');
     }
 
+    public function test_null_train_price_for_helsinki_pattern_marks_cost_unknown_and_indicative(): void
+    {
+        $cost = $this->calculator->calculate(
+            self::viaHel(Carrier::Finnair, 134),
+            Traveller::chris(),
+            null,
+        );
+
+        self::assertFalse($cost->trainCostKnown, 'treinprijs null → trainCostKnown moet false zijn');
+        self::assertTrue($cost->indicative, 'onbekende treinprijs → optie is indicatief');
+        self::assertTrue($cost->trainCost->isZero(), 'rekent intern met nul zodat totaal klopt');
+    }
+
+    public function test_null_train_price_for_through_ticket_leaves_trainCostKnown_true(): void
+    {
+        $cost = $this->calculator->calculate(
+            self::throughTicket(Carrier::Sas, 150),
+            Traveller::chris(),
+            null,
+        );
+
+        self::assertTrue($cost->trainCostKnown, 'doorgaand ticket heeft geen trein, dus niets onbekends');
+    }
+
+    public function test_known_train_price_sets_trainCostKnown_true(): void
+    {
+        $cost = $this->calculator->calculate(
+            self::viaHel(Carrier::Finnair, 134),
+            Traveller::chris(),
+            Money::fromEuros(22.50),
+        );
+
+        self::assertTrue($cost->trainCostKnown);
+    }
+
     private static function viaHel(Carrier $carrier, float $euros): Itinerary
     {
         return new Itinerary(
