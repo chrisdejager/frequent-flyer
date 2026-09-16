@@ -98,6 +98,22 @@ final class TotalCostCalculatorTest extends TestCase
         self::assertTrue($cost->baggageCost->isZero());
     }
 
+    public function test_klm_is_not_indicative_when_the_upgrade_rate_is_zero(): void
+    {
+        // Een KLM-reisoptie, maar met nultarief voor bagagekosten
+        $rates = FareUpgradeRates::fromConfig(['AY' => 16, 'KL' => 0]);
+        $calculator = new TotalCostCalculator(new BaggagePolicy($rates), $rates);
+
+        $cost = $calculator->calculate(
+            self::throughTicket(Carrier::Klm, 120),
+            Traveller::chris(),
+            null,
+        );
+
+        self::assertTrue($cost->baggageCost->isZero(), 'bagagekosten moeten nul zijn');
+        self::assertFalse($cost->indicative, 'geen schatting dus niet indicatief');
+    }
+
     private static function viaHel(Carrier $carrier, float $euros): Itinerary
     {
         return new Itinerary(
