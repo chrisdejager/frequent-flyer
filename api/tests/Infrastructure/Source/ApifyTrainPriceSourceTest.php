@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\Source;
 
 use App\Infrastructure\Source\ApifyTrainPriceSource;
+use App\Tests\Double\SpyCacheItemPool;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -209,6 +210,48 @@ final class ApifyTrainPriceSourceTest extends TestCase
         );
 
         self::assertSame(2250, $source->priceFor(new \DateTimeImmutable('2026-10-29'))->cents);
+    }
+
+    public function test_a_null_result_is_cached_with_ttl_of_900_seconds(): void
+    {
+        $spy = new SpyCacheItemPool();
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse('[]')),
+            $spy,
+            'test-token',
+        );
+
+        $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        $key = 'vr.hel-tku.2026-10-29';
+        self::assertArrayHasKey($key, $spy->recordedTtls, 'geen cache-item opgeslagen na een null-resultaat');
+        self::assertSame(
+            900,
+            $spy->recordedTtls[$key],
+            'null-resultaat moet 15 minuten (900 s) gecacht worden, niet 24 uur — '
+            .'anders zit een kapotte scraper een hele dag vast',
+        );
+    }
+
+    public function test_a_valid_price_is_cached_with_ttl_of_86400_seconds(): void
+    {
+        $spy = new SpyCacheItemPool();
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse(self::fixture())),
+            $spy,
+            'test-token',
+        );
+
+        $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        $key = 'vr.hel-tku.2026-10-29';
+        self::assertArrayHasKey($key, $spy->recordedTtls, 'geen cache-item opgeslagen na een geldige prijs');
+        self::assertSame(
+            86400,
+            $spy->recordedTtls[$key],
+            'geldige prijs moet 24 uur (86400 s) gecacht worden, niet 15 minuten — '
+            .'anders vreet elke klik Apify-tegoed op',
+        );
     }
 
     private static function fixture(): string
