@@ -53,7 +53,10 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
         // Als noch best_flights noch other_flights aanwezig is, heeft de bron zijn
         // antwoordvorm gewijzigd (hernoemd veld, foutobject {"error":"…"}, lege payload).
         // Dat is precies het scenario dat eerder stil 0 resultaten gaf zonder enige aanwijzing.
-        if (!isset($payload['best_flights']) && !isset($payload['other_flights'])) {
+        $bestFlights  = is_array($payload['best_flights'] ?? null)  ? $payload['best_flights']  : [];
+        $otherFlights = is_array($payload['other_flights'] ?? null) ? $payload['other_flights'] : [];
+
+        if ([] === $bestFlights && [] === $otherFlights) {
             $this->logger?->warning('Geen vluchtcollectie in payload voor route {from}→{to} ({date}).', [
                 'from' => $from->value,
                 'to'   => $to->value,
@@ -63,15 +66,17 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
             return [];
         }
 
-        $raw = [
-            ...($payload['best_flights'] ?? []),
-            ...($payload['other_flights'] ?? []),
-        ];
+        $raw = [...$bestFlights, ...$otherFlights];
 
         $itineraries = [];
         $skipped = 0;
 
         foreach ($raw as $offer) {
+            if (!is_array($offer)) {
+                ++$skipped;
+                continue;
+            }
+
             $itinerary = $this->toItinerary($offer);
 
             if (null !== $itinerary) {

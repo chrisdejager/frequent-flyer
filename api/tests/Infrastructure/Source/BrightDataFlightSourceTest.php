@@ -609,6 +609,64 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
+    public function test_a_scalar_best_flights_value_yields_a_warning_and_empty_result(): void
+    {
+        // best_flights: "oops" gaf eerder HTTP 500 ("Only arrays and Traversables can be unpacked").
+        // Na de fix: een waarschuwing + leeg resultaat.
+        $warnings = [];
+
+        $logger = new class($warnings) extends AbstractLogger {
+            public function __construct(private array &$log) {}
+
+            public function log($level, string|\Stringable $message, array $context = []): void
+            {
+                $this->log[] = ['level' => $level, 'message' => $message, 'context' => $context];
+            }
+        };
+
+        $source = new BrightDataFlightSource(
+            new MockHttpClient(new MockResponse(json_encode([
+                'best_flights' => 'oops',
+            ], JSON_THROW_ON_ERROR))),
+            'test-token',
+            'serp_zone',
+            $logger,
+        );
+
+        $result = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $result, 'Scalaire best_flights geeft leeg resultaat, geen 500');
+        self::assertCount(1, $warnings, 'Er moet één waarschuwing zijn');
+        self::assertSame('warning', $warnings[0]['level']);
+        self::assertStringContainsString('Geen vluchtcollectie', $warnings[0]['message']);
+    }
+
+    public function test_non_array_elements_in_best_flights_are_skipped(): void
+    {
+        // best_flights: [1, 2] gaf eerder TypeError in toItinerary().
+        // Na de fix: de losse ints worden overgeslagen, geen crash.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                1,  // geen array → overslaan
+                2,  // geen array → overslaan
+                [   // geldig aanbod
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 134,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Scalaire elementen worden overgeslagen; het geldige aanbod blijft');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
     private static function sourceReturning(string $body, ?\Psr\Log\LoggerInterface $logger = null): BrightDataFlightSource
     {
         return new BrightDataFlightSource(
