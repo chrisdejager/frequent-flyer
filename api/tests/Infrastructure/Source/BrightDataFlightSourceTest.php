@@ -259,7 +259,9 @@ final class BrightDataFlightSourceTest extends TestCase
                     ]],
                     'price' => 134,
                 ],
-                // Rot aanbod: negatieve prijs
+                // Rot aanbod: negatieve prijs van -0.004
+                // Dit geval dekt de guard zelf: zonder de < 0-check wordt
+                // (int) round(-0.4) = 0 cent — een gratis spookvlucht.
                 [
                     'flights' => [[
                         'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
@@ -267,14 +269,14 @@ final class BrightDataFlightSourceTest extends TestCase
                         'airline'           => 'Finnair',
                         'flight_number'     => 'AY 843',
                     ]],
-                    'price' => -5,
+                    'price' => -0.004,
                 ],
             ],
         ], JSON_THROW_ON_ERROR));
 
         $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
 
-        self::assertCount(1, $found, 'Negatieve prijs wordt overgeslagen zonder de hele zoekopdracht te laten crashen');
+        self::assertCount(1, $found, 'Negatieve prijs (-0.004) wordt overgeslagen; zonder de < 0-guard zou het 0 cent worden');
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
@@ -316,9 +318,8 @@ final class BrightDataFlightSourceTest extends TestCase
 
     public function test_an_offer_with_an_overflow_price_is_skipped_without_crashing_the_search(): void
     {
-        // Een extreem grote float (bijv. 9e18) passeert is_numeric() en is niet negatief,
-        // maar (int) round(9e18 * 100) overflowt naar een negatief getal in PHP op 64-bit.
-        // Money::fromEuros() gooit dan een InvalidArgumentException; de try/catch is bereikbaar.
+        // Een extreem grote float (9e18) valt boven de bovengrens van 1_000_000.0 en wordt
+        // overgeslagen door de is_finite + bovengrens-check, vóór Money::fromEuros() bereikt wordt.
         $source = self::sourceReturning(json_encode([
             'best_flights' => [
                 // Geldig aanbod
@@ -331,8 +332,7 @@ final class BrightDataFlightSourceTest extends TestCase
                     ]],
                     'price' => 134,
                 ],
-                // Rot aanbod: overflow-prijs — passeert de is_numeric- en < 0-guard,
-                // maar brengt Money::fromEuros() tot een negatieve int na de cast
+                // Rot aanbod: overflow-prijs boven de bovengrens
                 [
                     'flights' => [[
                         'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
@@ -348,6 +348,66 @@ final class BrightDataFlightSourceTest extends TestCase
         $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
 
         self::assertCount(1, $found, 'Overflow-prijs (9e18) wordt overgeslagen zonder de hele zoekopdracht te laten crashen');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
+    public function test_an_offer_with_an_inf_price_is_skipped_without_becoming_a_free_flight(): void
+    {
+        // json_decode maakt van "price": 1e999 gewoon INF (een geldige PHP float).
+        // is_numeric(INF) = true en INF < 0 = false, waardoor de oude guard werd gepasseerd.
+        // (int) round(INF * 100) = 0 cent — een spookvlucht van €0,00 die bovenaan de lijst komt.
+        // De is_finite()-check sluit dit uit.
+        // Opmerking: json_encode gooit een JsonException op INF, dus het JSON-antwoord wordt
+        // hier als raw string aangeboden — exact zoals json_decode het uit 1e999 zou produceren.
+        $json = '{"best_flights":[' .
+            '{"flights":[{"departure_airport":{"id":"AMS","time":"2026-10-29 13:00"},' .
+            '"arrival_airport":{"id":"HEL","time":"2026-10-29 16:45"},' .
+            '"airline":"Finnair","flight_number":"AY 842"}],"price":134},' .
+            '{"flights":[{"departure_airport":{"id":"AMS","time":"2026-10-29 13:00"},' .
+            '"arrival_airport":{"id":"HEL","time":"2026-10-29 16:45"},' .
+            '"airline":"Finnair","flight_number":"AY 843"}],"price":1e999}]}';
+
+        $found = self::sourceReturning($json)->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'INF-prijs (1e999) wordt overgeslagen; zonder is_finite()-check zou het een gratis spookvlucht worden');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
+    public function test_an_offer_with_a_price_above_one_million_is_skipped_without_crashing_the_search(): void
+    {
+        // 92233720368547744 passeert is_numeric() en is niet negatief, maar
+        // (int) round(92233720368547744 * 100) overflowt stil naar een positieve int.
+        // Daarna loopt Money::add() over van int naar float, waarna Money::__construct(int)
+        // een TypeError gooit — geen InvalidArgumentException, dus de catch pakt hem niet.
+        // Resultaat: een 500 op de hele zoekopdracht. De bovengrens van 1_000_000.0 sluit dit uit.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 134,
+                ],
+                // Rot aanbod: prijs die int-bereik sloopt via Money::add()
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 843',
+                    ]],
+                    'price' => 92233720368547744,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Prijs boven 1_000_000 wordt overgeslagen; zonder bovengrens zou Money::add() de hele zoekopdracht laten crashen');
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 

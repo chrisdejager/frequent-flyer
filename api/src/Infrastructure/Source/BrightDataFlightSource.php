@@ -158,12 +158,25 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
         // is_numeric() keurt strings met komma als decimaalscheider af, wat precies
         // de Nederlandse locale-notatie uitsluit.
         $rawPrice = $offer['price'];
-        if (!is_numeric($rawPrice) || (float) $rawPrice < 0) {
+
+        if (!is_numeric($rawPrice)) {
+            return null;
+        }
+
+        $euros = (float) $rawPrice;
+
+        // is_finite() sluit INF/NAN uit: json_decode maakt van 1e999 gewoon INF, en
+        // (int) INF is 0 — een spookvlucht die gratis bovenaan de lijst komt.
+        // De bovengrens houdt de centen ruim binnen int-bereik, zodat ook een latere
+        // Money::add() niet naar float kan overlopen en een TypeError gooit.
+        // De ondergrens < 0 dekt het geval -0.004: zonder deze guard wordt dat
+        // (int) round(-0.4) = 0 cent — ook een gratis spookvlucht.
+        if (!is_finite($euros) || $euros < 0.0 || $euros > 1_000_000.0) {
             return null;
         }
 
         try {
-            $price = Money::fromEuros((float) $rawPrice);
+            $price = Money::fromEuros($euros);
         } catch (\InvalidArgumentException) {
             return null;
         }
