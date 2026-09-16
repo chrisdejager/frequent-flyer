@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Traveller;
 
-final class UnknownTraveller extends \InvalidArgumentException
+final class UnknownTraveller extends \DomainException
 {
     public static function withId(string $id): self
     {
