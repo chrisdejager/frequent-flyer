@@ -7,6 +7,7 @@ namespace App\Infrastructure\Http;
 use App\Application\SearchFlights\SearchFlightsHandler;
 use App\Application\SearchFlights\SearchFlightsQuery;
 use App\Domain\Flight\Direction;
+use App\Domain\Traveller\UnknownTraveller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -43,7 +44,7 @@ final readonly class SearchController
                 $direction,
                 (string) $request->query->get('traveller', ''),
             ));
-        } catch (\InvalidArgumentException $e) {
+        } catch (UnknownTraveller $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }
 

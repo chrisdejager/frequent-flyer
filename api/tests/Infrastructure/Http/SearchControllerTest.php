@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\Http;
 
 use App\Domain\Flight\Airport;
 use App\Domain\Flight\Carrier;
+use App\Domain\Flight\Direction;
 use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\Money;
 use App\Domain\Flight\RoutePattern;
@@ -82,6 +83,27 @@ final class SearchControllerTest extends WebTestCase
         $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=buurman');
 
         self::assertResponseStatusCodeSame(400);
+    }
+
+    public function test_a_data_source_error_is_a_server_error(): void
+    {
+        $client = static::createClient();
+
+        // Een FlightPriceSource die een InvalidArgumentException gooit,
+        // alsof Money of Itinerary kapotte brondata heeft gekregen.
+        $broken = new class implements FlightPriceSource {
+            public function search(Airport $from, Airport $to, \DateTimeImmutable $date): array
+            {
+                throw new \InvalidArgumentException('Bedrag mag niet negatief zijn.');
+            }
+        };
+
+        static::getContainer()->set(FlightPriceSource::class, $broken);
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        self::assertResponseStatusCodeSame(500,
+            'Een \InvalidArgumentException uit de databron hoort een 500 te zijn, niet een 400.');
     }
 
     private static function aFinnairFlight(): Itinerary

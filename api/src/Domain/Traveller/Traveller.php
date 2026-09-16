@@ -38,7 +38,7 @@ final readonly class Traveller
         return match ($id) {
             'chris' => self::chris(),
             'partner' => self::partner(),
-            default => throw new \InvalidArgumentException(sprintf('Onbekende reiziger "%s".', $id)),
+            default => throw UnknownTraveller::withId($id),
         };
     }
 
