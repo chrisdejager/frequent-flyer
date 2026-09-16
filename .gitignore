@@ -4,3 +4,4 @@ api/var/
 api/.env.local
 web/node_modules/
 web/dist/
+web/*.tsbuildinfo
