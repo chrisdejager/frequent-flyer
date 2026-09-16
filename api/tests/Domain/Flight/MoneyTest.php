@@ -83,4 +83,22 @@ final class MoneyTest extends TestCase
 
         Money::fromEuros(1e17);
     }
+
+    public function test_max_euros_boundary_succeeds(): void
+    {
+        // 9×10^15 is de grenswaarde zelf — dit moet slagen.
+        $money = Money::fromEuros(9e15);
+
+        self::assertSame((int) round(9e15 * 100), $money->cents);
+    }
+
+    public function test_just_above_max_euros_throws(): void
+    {
+        // Eén stap boven de grens (9×10^15 + 1) moet een overflow-exception geven,
+        // zodat een slordig aanpassen van MAX_EUROS niet onopgemerkt blijft.
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/te groot is om in centen/');
+
+        Money::fromEuros(9e15 + 1);
+    }
 }
