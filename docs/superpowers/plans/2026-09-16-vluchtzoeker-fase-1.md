@@ -79,8 +79,13 @@ api/var/
 api/.env.local
 web/node_modules/
 web/dist/
-.env
 ```
+
+**Let op:** hier staat bewust géén regel `.env`. Een gitignore-patroon zonder
+slash matcht op elk niveau, dus `.env` zou ook `api/.env` uitsluiten — en dat is
+precies het bestand dat wél in git hoort. Symfony's conventie is dat `.env` het
+gecommitte sjabloon met lege waarden is (het documenteert wélke variabelen
+bestaan) en dat `.env.local` met de echte waarden genegeerd wordt.
 
 - [ ] **Step 2: Maak `docker/php/Dockerfile`**
 
