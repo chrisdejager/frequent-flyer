@@ -1,0 +1,42 @@
+{
+  "best_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {"id": "AMS", "time": "2026-10-29 13:00"},
+          "arrival_airport": {"id": "HEL", "time": "2026-10-29 16:45"},
+          "airline": "Finnair",
+          "flight_number": "AY 842"
+        }
+      ],
+      "price": 134,
+      "total_duration": 165
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {"id": "AMS", "time": "2026-10-29 18:30"},
+          "arrival_airport": {"id": "HEL", "time": "2026-10-29 22:15"},
+          "airline": "Finnair",
+          "flight_number": "AY 844"
+        }
+      ],
+      "price": 118,
+      "total_duration": 165
+    }
+  ],
+  "other_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {"id": "AMS", "time": "2026-10-29 07:10"},
+          "arrival_airport": {"id": "HEL", "time": "2026-10-29 10:55"},
+          "airline": "KLM",
+          "flight_number": "KL 1163"
+        }
+      ],
+      "price": 156,
+      "total_duration": 165
+    }
+  ]
+}
