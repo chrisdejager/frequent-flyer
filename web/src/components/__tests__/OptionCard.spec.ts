@@ -39,6 +39,21 @@ describe('OptionCard', () => {
     expect(rows[0].text()).toContain('Vlucht')
     expect(rows[1].text()).toContain('Bagage')
     expect(rows[2].text()).toContain('Trein')
+
+    // Ook de bedragen toetsen: met alleen de labels zou een kapotte
+    // centen-omrekening onopgemerkt blijven, terwijl juist deze opbouw
+    // moet laten zien waarom een optie wint.
+    expect(rows[0].text()).toContain('€ 134,00')
+    expect(rows[1].text()).toContain('€ 0,00')
+    expect(rows[2].text()).toContain('€ 22,50')
+  })
+
+  it('telt de uitgesplitste bedragen op tot het getoonde totaal', () => {
+    const card = mount(OptionCard, { props: { option: viaHelsinki } })
+    const { basePrice, baggageCost, trainCost, total } = viaHelsinki.cost
+
+    expect(basePrice + baggageCost + trainCost).toBe(total)
+    expect(card.text()).toContain('€ 156,50')
   })
 
   it('laat de treinregel weg bij een doorgaand ticket', () => {
