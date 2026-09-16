@@ -78,6 +78,58 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertContains('Authorization: Bearer test-token', $seen['headers']);
     }
 
+    public function test_an_offer_with_an_unparseable_time_is_skipped(): void
+    {
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod: Finnair AMS→HEL
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 134,
+                ],
+                // Rot aanbod: onleesbaar tijdstip — mag de geldige aanbieding niet meesleuren
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => 'N/A'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 843',
+                    ]],
+                    'price' => 99,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Het rotte aanbod wordt overgeslagen; het geldige blijft staan');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
+    public function test_an_offer_whose_arrival_precedes_departure_is_skipped(): void
+    {
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [[
+                'flights' => [[
+                    'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 16:00'],
+                    'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 13:00'],
+                    'airline'           => 'Finnair',
+                    'flight_number'     => 'AY 999',
+                ]],
+                'price' => 134,
+            ]],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $found, 'Aanbieding met aankomst vóór vertrek wordt overgeslagen');
+    }
+
     private static function sourceReturning(string $body): BrightDataFlightSource
     {
         return new BrightDataFlightSource(

@@ -95,13 +95,31 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
                 return null;
             }
 
-            $segments[] = new Segment(
-                $from,
-                $to,
-                new \DateTimeImmutable($leg['departure_airport']['time']),
-                new \DateTimeImmutable($leg['arrival_airport']['time']),
-                str_replace(' ', '', (string) ($leg['flight_number'] ?? '')),
-            );
+            // Een onleesbaar tijdstip (leeg, "N/A", ontbrekende sleutel) mag de hele
+            // zoekopdracht niet slopen; sla dit aanbod stil over.
+            $departureTime = $leg['departure_airport']['time'] ?? '';
+            $arrivalTime = $leg['arrival_airport']['time'] ?? '';
+
+            try {
+                $departAt = new \DateTimeImmutable($departureTime);
+                $arriveAt = new \DateTimeImmutable($arrivalTime);
+            } catch (\Exception) {
+                return null;
+            }
+
+            // Segment gooit een InvalidArgumentException als aankomst niet ná vertrek ligt;
+            // ook dat hoort één aanbieding te laten vervallen, niet de hele zoekopdracht.
+            try {
+                $segments[] = new Segment(
+                    $from,
+                    $to,
+                    $departAt,
+                    $arriveAt,
+                    str_replace(' ', '', (string) ($leg['flight_number'] ?? '')),
+                );
+            } catch (\InvalidArgumentException) {
+                return null;
+            }
         }
 
         if (count($segments) > 2) {
