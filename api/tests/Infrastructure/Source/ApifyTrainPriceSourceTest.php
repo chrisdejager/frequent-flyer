@@ -132,6 +132,46 @@ final class ApifyTrainPriceSourceTest extends TestCase
         self::assertSame(2, $calls, 'mislukte aanroep mag niet in de cache blijven hangen');
     }
 
+    public function test_a_non_numeric_price_in_the_list_is_filtered_out(): void
+    {
+        // "N/A" wordt via (float) stilzwijgend 0.0 — een gratis treinrit die er niet is.
+        // De guard filtert niet-numerieke waarden vóór de cast weg.
+        $json = json_encode([
+            ['priceEur' => 'N/A', 'departureTime' => '2026-10-29T08:00:00', 'trainType' => 'IC'],
+            ['priceEur' => 22.5, 'departureTime' => '2026-10-29T17:00:00', 'trainType' => 'S'],
+        ]);
+
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse($json)),
+            new ArrayAdapter(),
+            'test-token',
+        );
+
+        $price = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame(2250, $price->cents, '"N/A" wordt overgeslagen; de geldige prijs van €22,50 blijft over');
+    }
+
+    public function test_a_negative_price_in_the_list_is_filtered_out(): void
+    {
+        // Een negatieve treinprijs geeft zonder guard HTTP 500 (Money::__construct gooit).
+        // De guard filtert negatieve waarden weg.
+        $json = json_encode([
+            ['priceEur' => -5.0, 'departureTime' => '2026-10-29T08:00:00', 'trainType' => 'IC'],
+            ['priceEur' => 22.5, 'departureTime' => '2026-10-29T17:00:00', 'trainType' => 'S'],
+        ]);
+
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse($json)),
+            new ArrayAdapter(),
+            'test-token',
+        );
+
+        $price = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame(2250, $price->cents, 'Negatieve prijs (-5.0) wordt overgeslagen; de geldige prijs van €22,50 blijft over');
+    }
+
     private static function fixture(): string
     {
         return file_get_contents(__DIR__.'/../../Fixtures/apify-vr-hel-tku.json');

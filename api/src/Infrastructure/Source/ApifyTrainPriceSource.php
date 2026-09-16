@@ -57,7 +57,26 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
         $rows = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
         $prices = array_filter(array_map(
-            static fn (array $row): ?float => isset($row['priceEur']) ? (float) $row['priceEur'] : null,
+            static function (array $row): ?float {
+                $raw = $row['priceEur'] ?? null;
+
+                // Filter onbruikbare prijzen vóór de float-cast:
+                // - niet-numeriek (N/A, lege string, gewone strings) → null
+                // - niet-eindig (INF, -INF uit 1e999) → null
+                // - negatief → null (een negatieve treinprijs is geen bruikbare prijs)
+                // Prijs 0.0 is geldig: een gratis rit is mogelijk.
+                if (!is_numeric($raw)) {
+                    return null;
+                }
+
+                $price = (float) $raw;
+
+                if (!is_finite($price) || $price < 0.0) {
+                    return null;
+                }
+
+                return $price;
+            },
             is_array($rows) ? $rows : [],
         ), static fn (?float $p): bool => null !== $p);
 
