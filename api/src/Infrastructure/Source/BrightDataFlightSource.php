@@ -159,11 +159,13 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
             return null;
         }
 
-        $origin      = $segments[0]->from;
+        $origin = $segments[0]->from;
         $destination = $segments[count($segments) - 1]->to;
 
-        // Helsinki als eindpunt (heen of terug) betekent dat de VR-trein HEL–TKU erbij hoort.
-        $viaHelsinki = Airport::Hel === $destination || Airport::Hel === $origin;
+        // Helsinki is een eindpunt van de vlucht (vertrek of aankomst): de VR-trein HEL–TKU hoort erbij.
+        // Let op: dit gaat over het eindpunt van dit ticket, niet over een tussenlandige overstap —
+        // een ticket dat via Helsinki overstapt maar ergens anders eindigt krijgt terecht ThroughTicket.
+        $trainNeeded = Airport::Hel === $destination || Airport::Hel === $origin;
 
         // Een onleesbare prijs (leeg, "N/A", locale-notatie "1.234,00") of een negatieve
         // waarde mag de hele zoekopdracht niet slopen; sla dit aanbod stil over.
@@ -197,7 +199,7 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
             $carrier,
             $segments,
             $price,
-            $viaHelsinki ? RoutePattern::ViaHelsinkiWithTrain : RoutePattern::ThroughTicket,
+            $trainNeeded ? RoutePattern::ViaHelsinkiWithTrain : RoutePattern::ThroughTicket,
         );
     }
 
