@@ -17,9 +17,12 @@ use App\Domain\Pricing\BaggagePolicy;
 use App\Domain\Pricing\FareUpgradeRates;
 use App\Domain\Pricing\TotalCostCalculator;
 use App\Infrastructure\Persistence\NullPriceHistory;
+use App\Infrastructure\Source\BrightDataFlightSource;
 use App\Tests\Double\FixedTrainPriceSource;
 use App\Tests\Double\InMemoryFlightPriceSource;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class SearchFlightsHandlerTest extends TestCase
 {
@@ -178,6 +181,58 @@ final class SearchFlightsHandlerTest extends TestCase
 
         self::assertCount(0, $result->options,
             'Een HEL→AMS-vlucht met vertrek 08:00 moet worden afgewezen (vóór 12:00).');
+    }
+
+    public function test_real_adapter_hel_to_ams_finnair_gets_train_pattern_and_correct_total(): void
+    {
+        // Integratietest: de échte BrightDataFlightSource (met MockHttpClient) draait door
+        // de échte SearchFlightsHandler voor Direction::FiToNl.
+        // Doel: dekt de patroonbepaling via $trainNeeded in de adapter — de twee bestaande
+        // handlertests (test_return_flight_via_helsinki_includes_train_cost en
+        // test_return_flight_departing_before_noon_is_rejected) gebruiken de helToAms()-helper
+        // die RoutePattern::ViaHelsinkiWithTrain hardcodeert en de adapter nooit raken.
+        // Mutatietest: als $trainNeeded = Airport::Hel === $destination || Airport::Hel === $origin
+        // wordt teruggedraaid naar alleen-bestemming, valt alleen deze test; de twee bestaande
+        // handlertests blijven groen.
+        $helToAmsJson = json_encode([
+            'best_flights' => [[
+                'flights' => [[
+                    'departure_airport' => ['id' => 'HEL', 'time' => '2026-10-25 14:00'],
+                    'arrival_airport'   => ['id' => 'AMS', 'time' => '2026-10-25 16:45'],
+                    'airline'           => 'Finnair',
+                    'flight_number'     => 'AY 841',
+                ]],
+                'price' => 80,
+            ]],
+        ], JSON_THROW_ON_ERROR);
+
+        // De handler zoekt voor FiToNl zowel HEL→AMS als TKU→AMS op.
+        // We laten de MockHttpClient voor beide calls hetzelfde antwoord geven,
+        // maar TKU→AMS bevat geen geldige vluchten (HEL/AMS/Finnair is de enige sleutel).
+        // Omdat de JSON dezelfde vlucht bevat (HEL→AMS) voor beide calls, maar Tku-routes
+        // Airport::tryFrom('HEL') and Airport::tryFrom('AMS') opleveren (dus geldig),
+        // zouden we de vlucht dubbel krijgen. Geef voor TKU→AMS een leeg antwoord.
+        $callIndex = 0;
+        $client = new MockHttpClient(function () use ($helToAmsJson, &$callIndex): MockResponse {
+            return new MockResponse(0 === $callIndex++ ? $helToAmsJson : '{"best_flights":[]}');
+        });
+
+        $source = new BrightDataFlightSource($client, 'test-token', 'serp_zone');
+        $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
+        $handler = new SearchFlightsHandler(
+            $source,
+            new FixedTrainPriceSource(Money::fromEuros(22.50)),
+            new TotalCostCalculator(new BaggagePolicy($rates), $rates),
+            new NullPriceHistory(),
+        );
+
+        $result = $handler(new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'chris'));
+
+        self::assertCount(1, $result->options, 'Één geldige HEL→AMS Finnair-vlucht verwacht');
+
+        // basis €80 + bagage €0 (chris/Finnair Silver = gratis handbagage) + trein €22,50 = €102,50
+        self::assertSame(10250, $result->options[0]->cost->total()->cents,
+            'basis €80 + trein €22,50 = €102,50 (Finnair Silver: gratis bagage); adapter moet HEL als oorsprong herkennen als ViaHelsinkiWithTrain');
     }
 
     private function handler(InMemoryFlightPriceSource $flights, FixedTrainPriceSource $train): SearchFlightsHandler
