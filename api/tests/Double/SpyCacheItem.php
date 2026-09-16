@@ -34,6 +34,18 @@ final class SpyCacheItem implements CacheItemInterface
         return $this->isHit ? $this->value : null;
     }
 
+    /**
+     * Returns the value unconditionally, regardless of isHit.
+     * Used internally by SpyCacheItemPool::save() so that a miss-item whose
+     * value was set via set() can be stored correctly.
+     *
+     * PSR-6 does not expose this method; it is a test-double helper only.
+     */
+    public function getRawValue(): mixed
+    {
+        return $this->value;
+    }
+
     public function isHit(): bool
     {
         return $this->isHit;

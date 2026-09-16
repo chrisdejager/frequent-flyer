@@ -33,7 +33,7 @@ final class SpyCacheItemPool implements CacheItemPoolInterface
 
         // Return a fresh hit-item with the stored value so the pool stays
         // consistent across calls, while each getItem() call gets a new object.
-        return new SpyCacheItem($key, $stored->get(), true);
+        return new SpyCacheItem($key, $stored->getRawValue(), true);
     }
 
     public function getItems(array $keys = []): iterable
@@ -80,7 +80,12 @@ final class SpyCacheItemPool implements CacheItemPoolInterface
             $this->recordedTtls[$key] = $item->getRecordedTtl();
         }
 
-        $this->items[$key] = new SpyCacheItem($key, $item->get(), true);
+        // Use getRawValue() rather than get() so that a miss-item whose value
+        // was populated via set() is stored correctly.  get() returns null on a
+        // miss (correct PSR-6 behaviour), but that would silently discard the
+        // value that was just set() on the item before save() was called.
+        $rawValue = $item instanceof SpyCacheItem ? $item->getRawValue() : $item->get();
+        $this->items[$key] = new SpyCacheItem($key, $rawValue, true);
 
         return true;
     }
