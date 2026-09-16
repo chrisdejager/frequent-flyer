@@ -36,3 +36,19 @@ services:
             $apiToken: '%env(APIFY_TOKEN)%'
 
     App\Domain\Port\TrainPriceSource: '@App\Infrastructure\Source\ApifyTrainPriceSource'
+
+    App\Domain\Pricing\FareUpgradeRates:
+        factory: ['App\Domain\Pricing\FareUpgradeRates', 'fromConfig']
+        arguments:
+            $raw:
+                AY: '%env(float:FARE_UPGRADE_AY)%'
+                KL: '%env(float:FARE_UPGRADE_KL)%'
+
+when@test:
+    services:
+        App\Domain\Port\FlightPriceSource:
+            alias: App\Infrastructure\Source\BrightDataFlightSource
+            public: true
+        App\Domain\Port\TrainPriceSource:
+            alias: App\Infrastructure\Source\ApifyTrainPriceSource
+            public: true
