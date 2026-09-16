@@ -79,7 +79,7 @@ final class MoneyTest extends TestCase
     public function test_overflow_gives_honest_error_message(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/te groot om in centen/');
+        $this->expectExceptionMessageMatches('/te groot is om in centen/');
 
         Money::fromEuros(1e17);
     }

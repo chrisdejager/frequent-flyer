@@ -31,7 +31,7 @@ final readonly class Money
         if (abs($euros) > self::MAX_EUROS) {
             throw new \InvalidArgumentException(
                 sprintf(
-                    'Money::fromEuros() ontving een bedrag dat te groot om in centen uit te drukken (%.2e euro).',
+                    'Money::fromEuros() ontving een bedrag dat te groot is om in centen uit te drukken (%.2e euro).',
                     $euros,
                 ),
             );
