@@ -86,6 +86,26 @@ final class SearchFlightsHandlerTest extends TestCase
         self::assertSame(0, $train->callCount, 'geen HEL-optie, dus geen apify-tegoed verbruiken');
     }
 
+    public function test_the_train_price_is_not_fetched_when_the_only_helsinki_option_is_filtered_out(): void
+    {
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [
+            self::viaHel(Carrier::Finnair, 118, '18:30', '22:15'), // aankomst 22:15 valt af op tijdvenster
+        ]);
+        $flights->give(Airport::Ams, Airport::Tku, [
+            self::throughTicket(Carrier::Sas, 150),
+        ]);
+
+        $train = new FixedTrainPriceSource(Money::fromEuros(22.50));
+
+        $result = $this->handler($flights, $train)(
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
+        );
+
+        self::assertSame(0, $train->callCount, 'de HEL-vlucht viel af op de reisregels, dus geen treinprijs nodig');
+        self::assertCount(1, $result->options, 'alleen het doorgaande ticket blijft over — de nul-call komt niet door een lege uitkomst');
+    }
+
     public function test_the_train_price_is_fetched_only_once(): void
     {
         $flights = new InMemoryFlightPriceSource();
