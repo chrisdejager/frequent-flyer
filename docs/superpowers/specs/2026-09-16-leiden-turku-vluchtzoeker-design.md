@@ -127,12 +127,34 @@ gecached** en alleen opgehaald voor daadwerkelijke reisdatums.
 - **SerpApi** — 250 calls/mnd gratis is te krap.
 - **Digitraffic** — gratis en officieel, maar bevat alleen dienstregeling, geen prijzen.
 
-### Bekende beperking
+### Bekende beperking: Plus-tarieven
 
 Google Flights levert fare-informatie als losse tekst (`"Checked baggage for a
-fee"`), niet als gestructureerde Light/Plus-vergelijking. De Plus-prijzen worden
-daarom in fase 1 **niet** live opgehaald maar uit een onderhouden tarieventabel
-gelezen. Live ophalen per maatschappij is een latere verbetering.
+fee"`), niet als gestructureerde Light/Plus-vergelijking. De meerprijs van Light
+naar Plus komt daarom niet uit een bron, maar uit **configuratie**:
+
+```yaml
+fare_upgrade:
+  AY: ~        # Finnair — vast tarief, door Chris in te vullen
+  KL: ~        # KLM — dynamisch; schatting, door Chris in te vullen
+```
+
+De bedragen zijn nog niet bekend en worden bij implementatie door Chris
+ingevuld. Het systeem moet weigeren te starten bij een ontbrekende waarde in
+plaats van stilletjes €0 te rekenen — een onzichtbare nul zou Light-tarieven
+structureel te gunstig laten lijken.
+
+Het verschil in zekerheid is wezenlijk en moet zichtbaar blijven:
+
+- **Finnair** hanteert een vast tarief voor de stap naar Plus. De waarde is
+  statisch bekend en de vergelijking dus hard.
+- **KLM** prijst dynamisch. De geconfigureerde waarde is een schatting. Elke
+  KLM-optie waarvan de uitkomst afhangt van deze meerprijs wordt in de
+  interface gemarkeerd als **indicatief**, zodat je hem niet als vaststaand leest.
+
+Dat KLM sowieso alleen verschijnt als het duidelijk goedkoper is, dempt het
+risico: bij een marginaal verschil is KLM al weggefilterd voordat de onzekere
+meerprijs ertoe doet.
 
 ---
 
@@ -295,8 +317,9 @@ geen status) is dus meteen het relevante geval.
 
 ## 13. Open punten
 
-1. **Plus-tarieven.** Fase 1 leest ze uit een onderhouden tabel, niet live.
-   Als die tabel te snel veroudert, is per-maatschappij ophalen nodig.
+1. ~~**Plus-tarieven.**~~ *Opgelost 2026-09-16:* statisch configureerbaar.
+   Finnair is een vast, bekend tarief; KLM is dynamisch en daarom een schatting
+   die als indicatief wordt gemarkeerd. Zie §5.
 2. **"Tot hoe lang van tevoren is los handbagage bijkopen het goedkoopst?"**
    Uit de intake, maar geen enkele bron levert dit gestructureerd. Uitgesteld
    naar fase 3; mogelijk alleen als statische vuistregel op te nemen.
