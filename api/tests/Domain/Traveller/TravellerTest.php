@@ -41,7 +41,7 @@ final class TravellerTest extends TestCase
 
     public function test_unknown_id_is_rejected(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\DomainException::class);
 
         Traveller::byId('iemand-anders');
     }
