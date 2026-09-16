@@ -135,14 +135,13 @@ naar Plus komt daarom niet uit een bron, maar uit **configuratie**:
 
 ```yaml
 fare_upgrade:
-  AY: ~        # Finnair — vast tarief, door Chris in te vullen
-  KL: ~        # KLM — dynamisch; schatting, door Chris in te vullen
+  AY: 16.00    # Finnair — vast tarief, betrouwbaar
+  KL: 25.00    # KLM — dynamisch geprijsd, dit is een schatting
 ```
 
-De bedragen zijn nog niet bekend en worden bij implementatie door Chris
-ingevuld. Het systeem moet weigeren te starten bij een ontbrekende waarde in
-plaats van stilletjes €0 te rekenen — een onzichtbare nul zou Light-tarieven
-structureel te gunstig laten lijken.
+Het systeem moet weigeren te starten bij een ontbrekende waarde in plaats van
+stilletjes €0 te rekenen — een onzichtbare nul zou Light-tarieven structureel
+te gunstig laten lijken.
 
 Het verschil in zekerheid is wezenlijk en moet zichtbaar blijven:
 

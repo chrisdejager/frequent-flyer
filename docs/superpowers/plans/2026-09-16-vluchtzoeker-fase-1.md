@@ -3466,12 +3466,19 @@ Voeg toe aan `api/config/services.yaml` onder `services:`:
                 KL: '%env(float:FARE_UPGRADE_KL)%'
 ```
 
-Voeg toe aan `api/.env` — **vul de echte bedragen in voordat je dit draait**:
+Voeg toe aan `api/.env`:
 
 ```
-FARE_UPGRADE_AY=
-FARE_UPGRADE_KL=
+FARE_UPGRADE_AY=16
+FARE_UPGRADE_KL=25
 ```
+
+Finnair €16 is een vast, bekend tarief. KLM €25 is een schatting omdat KLM
+dynamisch prijst — vandaar de `indicative`-markering op KLM-uitkomsten.
+
+De tests in Taak 5, 6 en 8 gebruiken bewust **andere** bedragen (€35 en €40).
+Dat is geen slordigheid: zo bewijzen ze dat de tarieven echt uit configuratie
+komen en nergens hardgecodeerd zijn.
 
 - [ ] **Step 7: Draai de test**
 
@@ -4322,8 +4329,8 @@ Kopieer `api/.env` naar `api/.env.local` en vul in:
 | `BRIGHTDATA_TOKEN` | brightdata.com — 5.000 gratis credits per maand |
 | `BRIGHTDATA_ZONE` | naam van je SERP-zone |
 | `APIFY_TOKEN` | apify.com — $5 gratis tegoed per maand |
-| `FARE_UPGRADE_AY` | Finnair Light→Plus in euro's (vast tarief) |
-| `FARE_UPGRADE_KL` | KLM Light→Plus in euro's (schatting; dynamisch geprijsd) |
+| `FARE_UPGRADE_AY` | Finnair Light→Plus in euro's — **16** (vast tarief) |
+| `FARE_UPGRADE_KL` | KLM Light→Plus in euro's — **25** (schatting; dynamisch geprijsd) |
 
 De app **start niet** zonder `FARE_UPGRADE_AY` en `FARE_UPGRADE_KL`. Dat is
 opzet: doorrekenen met €0 zou Light-tarieven structureel te goedkoop laten lijken.
