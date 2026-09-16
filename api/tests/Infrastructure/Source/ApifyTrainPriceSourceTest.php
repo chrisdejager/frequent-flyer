@@ -6,8 +6,10 @@ namespace App\Tests\Infrastructure\Source;
 
 use App\Infrastructure\Source\ApifyTrainPriceSource;
 use App\Tests\Double\SpyCacheItemPool;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -164,10 +166,27 @@ final class ApifyTrainPriceSourceTest extends TestCase
         self::assertSame(900, $spy->recordedTtls['vr.hel-tku.2026-10-29'], 'quota-uitputting moet kort gecacht worden');
     }
 
-    public function test_non_array_row_is_skipped(): void
+    /**
+     * @return array<string, array{mixed}>
+     */
+    public static function nonArrayRowProvider(): array
     {
-        // Eerste rij is een scalar (22.5), tweede is een geldige array
-        $json = json_encode([22.5, ['priceEur' => 22.5, 'departureTime' => '2026-10-29T17:00:00', 'trainType' => 'S']]);
+        return [
+            'float (22.5)'  => [22.5],
+            'string kapot'  => ['kapot'],
+            'null'          => [null],
+            'bool true'     => [true],
+        ];
+    }
+
+    /**
+     * Elke niet-array rij in de Apify-respons wordt overgeslagen; de geldige rij
+     * geeft €22,50. Dekt de productiecrashes met 'kapot' (string) en null.
+     */
+    #[DataProvider('nonArrayRowProvider')]
+    public function test_non_array_row_is_skipped(mixed $badRow): void
+    {
+        $json = json_encode([$badRow, ['priceEur' => 22.5, 'departureTime' => '2026-10-29T17:00:00', 'trainType' => 'S']]);
 
         $source = new ApifyTrainPriceSource(
             new MockHttpClient(new MockResponse($json)),
@@ -177,7 +196,25 @@ final class ApifyTrainPriceSourceTest extends TestCase
 
         $price = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
 
-        self::assertSame(2250, $price->cents, 'scalar rij overgeslagen, geldige rij geeft €22,50');
+        self::assertSame(2250, $price->cents, 'ongeldige rij overgeslagen, geldige rij geeft €22,50');
+    }
+
+    public function test_transport_error_returns_null_and_is_cached_for_short_ttl(): void
+    {
+        $spy = new SpyCacheItemPool();
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(static function (): never {
+                throw new TransportException('Connection timed out');
+            }),
+            $spy,
+            'test-token',
+        );
+
+        $result = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        self::assertNull($result, 'transportfout (time-out) moet null teruggeven');
+        self::assertArrayHasKey('vr.hel-tku.2026-10-29', $spy->recordedTtls, 'transportfout moet gecacht worden');
+        self::assertSame(900, $spy->recordedTtls['vr.hel-tku.2026-10-29'], 'transportfout moet kort (900 s) gecacht worden');
     }
 
     public function test_a_non_numeric_price_in_the_list_is_filtered_out(): void
