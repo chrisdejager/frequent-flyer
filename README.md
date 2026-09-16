@@ -18,8 +18,14 @@ Kopieer `api/.env` naar `api/.env.local` en vul in:
 | `FARE_UPGRADE_AY` | Finnair Light→Plus in euro's — **16** (vast tarief) |
 | `FARE_UPGRADE_KL` | KLM Light→Plus in euro's — **25** (schatting; dynamisch geprijsd) |
 
-De app **start niet** zonder `FARE_UPGRADE_AY` en `FARE_UPGRADE_KL`. Dat is
-opzet: doorrekenen met €0 zou Light-tarieven structureel te goedkoop laten lijken.
+Zonder `FARE_UPGRADE_AY` en `FARE_UPGRADE_KL` **weigert de eerste zoekopdracht**
+met een 500 — ontbrekend levert `Environment variable not found`, leeglaten
+levert `Non-numeric env var ... cannot be cast to float`. Dat is opzet:
+doorrekenen met €0 zou Light-tarieven structureel te goedkoop laten lijken.
+
+Let op dat de container zelf wél opstart; je merkt een ontbrekende waarde dus
+pas bij de eerste zoekopdracht, niet bij het deployen. Doe na een deploy één
+zoekopdracht om te controleren dat de configuratie compleet is.
 
 ## Lokaal draaien
 
