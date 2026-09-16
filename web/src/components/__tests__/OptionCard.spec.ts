@@ -119,6 +119,7 @@ describe('OptionCard', () => {
       ...viaHelsinki,
       cost: {
         ...viaHelsinki.cost,
+        trainCost: 0,      // TotalCostCalculator zet trainCost op 0 als de prijs onbekend is
         trainCostKnown: false,
         indicative: true,
       },
