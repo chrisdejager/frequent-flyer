@@ -18,6 +18,15 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
 {
     private const ENDPOINT = 'https://api.brightdata.com/request';
 
+    /**
+     * Bovengrens voor een vliegticketprijs in euro.
+     * Geen ticket op onze routes (AMS–HEL/TKU) komt in de buurt van dit bedrag;
+     * een hogere waarde duidt op een scraperartefact, niet op een dure vlucht.
+     * Let op: dit is een plausibiliteitsgrens, geen int-veiligheidsgrens —
+     * voor int-veiligheid zou pas rond 9,2e16 een grens nodig zijn.
+     */
+    private const MAX_TICKET_PRICE_EUROS = 1_000_000.0;
+
     /** Google Flights noemt maatschappijen bij naam, wij werken met codes. */
     private const AIRLINES = [
         'Finnair' => Carrier::Finnair,
@@ -184,9 +193,10 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
 
         $euros = (float) $rawPrice;
 
-        // De bovengrens sluit absurde bedragen uit en vangt tevens INF af:
-        // json_decode maakt van 1e999 een INF-float, en INF > 1_000_000.0 is waar.
-        if ($euros > 1_000_000.0) {
+        // MAX_TICKET_PRICE_EUROS is een plausibiliteitsgrens: geen ticket op AMS–HEL/TKU
+        // kost een miljoen euro. De grens vangt tevens INF af: json_decode maakt van
+        // 1e999 een INF-float, en INF > MAX_TICKET_PRICE_EUROS is waar.
+        if ($euros > self::MAX_TICKET_PRICE_EUROS) {
             return null;
         }
 

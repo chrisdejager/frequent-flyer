@@ -318,8 +318,8 @@ final class BrightDataFlightSourceTest extends TestCase
 
     public function test_an_offer_with_an_overflow_price_is_skipped_without_crashing_the_search(): void
     {
-        // Een extreem grote float (9e18) valt boven de bovengrens van 1_000_000.0 en wordt
-        // overgeslagen door de is_finite + bovengrens-check, vóór Money::fromEuros() bereikt wordt.
+        // Een extreem grote float (9e18) valt boven de bovengrens (MAX_TICKET_PRICE_EUROS) en wordt
+        // overgeslagen, vóór Money::fromEuros() bereikt wordt.
         $source = self::sourceReturning(json_encode([
             'best_flights' => [
                 // Geldig aanbod
@@ -379,7 +379,7 @@ final class BrightDataFlightSourceTest extends TestCase
         // (int) round(92233720368547744 * 100) overflowt stil naar een positieve int.
         // Daarna loopt Money::add() over van int naar float, waarna Money::__construct(int)
         // een TypeError gooit — geen InvalidArgumentException, dus de catch pakt hem niet.
-        // Resultaat: een 500 op de hele zoekopdracht. De bovengrens van 1_000_000.0 sluit dit uit.
+        // Resultaat: een 500 op de hele zoekopdracht. De bovengrens (MAX_TICKET_PRICE_EUROS) sluit dit uit.
         $source = self::sourceReturning(json_encode([
             'best_flights' => [
                 // Geldig aanbod
@@ -407,7 +407,7 @@ final class BrightDataFlightSourceTest extends TestCase
 
         $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
 
-        self::assertCount(1, $found, 'Prijs boven 1_000_000 wordt overgeslagen; zonder bovengrens zou Money::add() de hele zoekopdracht laten crashen');
+        self::assertCount(1, $found, 'Prijs boven MAX_TICKET_PRICE_EUROS wordt overgeslagen; zonder bovengrens zou Money::add() de hele zoekopdracht laten crashen');
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
