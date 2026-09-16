@@ -179,24 +179,25 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
 
         $euros = (float) $rawPrice;
 
-        // is_finite() sluit INF/NAN uit: json_decode maakt van 1e999 gewoon INF, en
-        // (int) INF is 0 — een spookvlucht die gratis bovenaan de lijst komt.
-        // De bovengrens houdt de centen ruim binnen int-bereik, zodat ook een latere
-        // Money::add() niet naar float kan overlopen en een TypeError gooit.
-        // Een prijs van nul of minder is geen bruikbare prijs — de ondergrens <= 0 dekt
-        // zowel -0.004 als 0 zelf: zonder deze guard worden ze (int) round(…*100) = 0 cent,
-        // een gratis spookvlucht die stil bovenaan de goedkoopste-lijst verschijnt.
-        if (!is_finite($euros) || $euros <= 0.0 || $euros > 1_000_000.0) {
+        // De bovengrens sluit absurde bedragen uit en vangt tevens INF af
+        // (json_decode maakt van 1e999 een INF-float; INF > 1_000_000.0 is waar).
+        if (!is_finite($euros) || $euros > 1_000_000.0) {
+            return null;
+        }
+
+        $cents = (int) round($euros * 100);
+
+        // Een prijs van nul cent of minder is geen bruikbare prijs. De toets staat
+        // op centniveau omdat de spookvlucht daar ontstaat: zowel 0, 0.004 als
+        // -0.004 worden (int) round(...*100) = 0 cent. Een scraper die een prijs
+        // niet kan parsen levert vaker 0 dan een negatieve waarde.
+        if ($cents <= 0) {
             return null;
         }
 
         try {
-            $price = Money::fromEuros($euros);
+            $price = Money::fromCents($cents);
         } catch (\InvalidArgumentException) {
-            return null;
-        }
-
-        if ($price->isZero()) {
             return null;
         }
 
