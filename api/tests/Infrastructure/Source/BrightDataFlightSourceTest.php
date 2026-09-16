@@ -351,12 +351,12 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
-    public function test_an_offer_with_an_inf_price_is_skipped_without_becoming_a_free_flight(): void
+    public function test_an_offer_with_an_inf_price_does_not_become_a_free_flight(): void
     {
         // json_decode maakt van "price": 1e999 gewoon INF (een geldige PHP float).
-        // is_numeric(INF) = true en INF < 0 = false, waardoor de oude guard werd gepasseerd.
-        // (int) round(INF * 100) = 0 cent — een spookvlucht van €0,00 die bovenaan de lijst komt.
-        // De is_finite()-check sluit dit uit.
+        // is_numeric(INF) = true en INF < 0 = false, waardoor de prijs de eerste guards passeert.
+        // INF wordt gevangen door de bovengrens (INF > 1_000_000.0 is waar); daarnaast zou
+        // (int) round(INF * 100) = 0 zijn, zodat ook de centen-guard het zou tegenhouden.
         // Opmerking: json_encode gooit een JsonException op INF, dus het JSON-antwoord wordt
         // hier als raw string aangeboden — exact zoals json_decode het uit 1e999 zou produceren.
         $json = '{"best_flights":[' .
@@ -369,7 +369,7 @@ final class BrightDataFlightSourceTest extends TestCase
 
         $found = self::sourceReturning($json)->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
 
-        self::assertCount(1, $found, 'INF-prijs (1e999) wordt overgeslagen; zonder is_finite()-check zou het een gratis spookvlucht worden');
+        self::assertCount(1, $found, 'INF-prijs (1e999) wordt gevangen door de bovengrens (INF > 1_000_000.0 is waar)');
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 

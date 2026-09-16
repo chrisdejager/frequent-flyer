@@ -184,9 +184,9 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
 
         $euros = (float) $rawPrice;
 
-        // De bovengrens sluit absurde bedragen uit en vangt tevens INF af
-        // (json_decode maakt van 1e999 een INF-float; INF > 1_000_000.0 is waar).
-        if (!is_finite($euros) || $euros > 1_000_000.0) {
+        // De bovengrens sluit absurde bedragen uit en vangt tevens INF af:
+        // json_decode maakt van 1e999 een INF-float, en INF > 1_000_000.0 is waar.
+        if ($euros > 1_000_000.0) {
             return null;
         }
 
