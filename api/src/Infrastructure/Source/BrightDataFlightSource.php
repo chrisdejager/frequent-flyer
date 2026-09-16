@@ -183,15 +183,20 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
         // (int) INF is 0 — een spookvlucht die gratis bovenaan de lijst komt.
         // De bovengrens houdt de centen ruim binnen int-bereik, zodat ook een latere
         // Money::add() niet naar float kan overlopen en een TypeError gooit.
-        // De ondergrens < 0 dekt het geval -0.004: zonder deze guard wordt dat
-        // (int) round(-0.4) = 0 cent — ook een gratis spookvlucht.
-        if (!is_finite($euros) || $euros < 0.0 || $euros > 1_000_000.0) {
+        // Een prijs van nul of minder is geen bruikbare prijs — de ondergrens <= 0 dekt
+        // zowel -0.004 als 0 zelf: zonder deze guard worden ze (int) round(…*100) = 0 cent,
+        // een gratis spookvlucht die stil bovenaan de goedkoopste-lijst verschijnt.
+        if (!is_finite($euros) || $euros <= 0.0 || $euros > 1_000_000.0) {
             return null;
         }
 
         try {
             $price = Money::fromEuros($euros);
         } catch (\InvalidArgumentException) {
+            return null;
+        }
+
+        if ($price->isZero()) {
             return null;
         }
 

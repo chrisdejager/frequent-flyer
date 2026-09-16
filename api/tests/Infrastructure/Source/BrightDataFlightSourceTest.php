@@ -539,6 +539,76 @@ final class BrightDataFlightSourceTest extends TestCase
             'De logmelding signaleert het ontbreken van vluchtcollecties ook bij een foutobject');
     }
 
+    public function test_an_offer_with_price_zero_is_skipped_without_becoming_a_free_flight(): void
+    {
+        // Prijs 0 passeert de oude guard (< 0.0) en wordt 0 cent — een gratis spookvlucht.
+        // De nieuwe guard (<= 0.0) moet dit aanbod overslaan.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 80,
+                ],
+                // Rot aanbod: prijs 0
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 999',
+                    ]],
+                    'price' => 0,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Prijs 0 wordt overgeslagen; zonder <= 0-guard wordt het een gratis spookvlucht van 0 cent');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
+    public function test_an_offer_with_price_that_rounds_to_zero_cents_is_skipped(): void
+    {
+        // 0.004 euro rond af naar 0 cent. De oude guard (< 0.0) liet dit door.
+        // De nieuwe guard (<= 0.0) slaat dit aanbod ook over.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 80,
+                ],
+                // Rot aanbod: prijs 0.004 (rondt af naar 0 cent)
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 999',
+                    ]],
+                    'price' => 0.004,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Prijs 0.004 rondt af naar 0 cent en wordt overgeslagen; het geldige aanbod blijft');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
     private static function sourceReturning(string $body, ?\Psr\Log\LoggerInterface $logger = null): BrightDataFlightSource
     {
         return new BrightDataFlightSource(
