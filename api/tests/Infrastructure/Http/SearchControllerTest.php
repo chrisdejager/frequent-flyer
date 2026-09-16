@@ -6,7 +6,6 @@ namespace App\Tests\Infrastructure\Http;
 
 use App\Domain\Flight\Airport;
 use App\Domain\Flight\Carrier;
-use App\Domain\Flight\Direction;
 use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\Money;
 use App\Domain\Flight\RoutePattern;
