@@ -111,6 +111,40 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
+    public function test_an_offer_with_a_missing_time_key_is_skipped(): void
+    {
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod: Finnair AMS→HEL
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 134,
+                ],
+                // Rot aanbod: ontbrekende 'time'-sleutel — mag de geldige aanbieding niet meesleuren
+                // en mag ook niet stilzwijgend het huidige tijdstip invullen
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 843',
+                    ]],
+                    'price' => 99,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Het aanbod zonder tijdsleutel wordt overgeslagen; het geldige blijft staan');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
     public function test_an_offer_whose_arrival_precedes_departure_is_skipped(): void
     {
         $source = self::sourceReturning(json_encode([

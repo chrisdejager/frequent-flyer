@@ -97,8 +97,14 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
 
             // Een onleesbaar tijdstip (leeg, "N/A", ontbrekende sleutel) mag de hele
             // zoekopdracht niet slopen; sla dit aanbod stil over.
+            // Let op: new \DateTimeImmutable('') gooit géén exception maar levert "nu" terug —
+            // een lege string moet daarom expliciet worden afgevangen vóór de constructor.
             $departureTime = $leg['departure_airport']['time'] ?? '';
             $arrivalTime = $leg['arrival_airport']['time'] ?? '';
+
+            if ('' === $departureTime || '' === $arrivalTime) {
+                return null;
+            }
 
             try {
                 $departAt = new \DateTimeImmutable($departureTime);
