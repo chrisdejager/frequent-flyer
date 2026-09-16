@@ -29,3 +29,10 @@ services:
 
     App\Domain\Port\FlightPriceSource: '@App\Infrastructure\Source\BrightDataFlightSource'
     App\Domain\Port\PriceHistory: '@App\Infrastructure\Persistence\NullPriceHistory'
+
+    App\Infrastructure\Source\ApifyTrainPriceSource:
+        arguments:
+            $cache: '@cache.app'
+            $apiToken: '%env(APIFY_TOKEN)%'
+
+    App\Domain\Port\TrainPriceSource: '@App\Infrastructure\Source\ApifyTrainPriceSource'

@@ -1,0 +1,5 @@
+[
+  {"departureTime": "2026-10-29T08:04:00", "arrivalTime": "2026-10-29T10:02:00", "trainType": "IC", "priceEur": 34.9},
+  {"departureTime": "2026-10-29T17:04:00", "arrivalTime": "2026-10-29T19:02:00", "trainType": "S", "priceEur": 22.5},
+  {"departureTime": "2026-10-29T21:04:00", "arrivalTime": "2026-10-29T23:02:00", "trainType": "IC", "priceEur": 29.0}
+]
