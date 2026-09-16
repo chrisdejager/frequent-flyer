@@ -87,6 +87,14 @@ final class ApifyTrainPriceSourceTest extends TestCase
         $price = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
 
         self::assertSame(0, $price->cents, 'een prijs van €0 is een geldige (gratis) rit en mag niet worden weggefilterd');
+
+        // Tweede aanroep: cache-terugweg mag een echte €0-prijs niet omzetten naar null.
+        // Levende mutant: CACHE_NULL_SENTINEL = 0 (int) zou de sentinel-check laten slagen
+        // voor een gecachte 0-cent prijs, waardoor de tweede aanroep null teruggeeft.
+        $second = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        self::assertNotNull($second, 'cache-hit voor €0: mag niet als null-sentinel worden geïnterpreteerd');
+        self::assertSame(0, $second->cents, 'cache-hit voor €0: moet dezelfde prijs van 0 cent geven');
     }
 
     public function test_a_null_result_is_cached_for_15_minutes(): void

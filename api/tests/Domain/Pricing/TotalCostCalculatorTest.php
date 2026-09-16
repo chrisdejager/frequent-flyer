@@ -149,6 +149,22 @@ final class TotalCostCalculatorTest extends TestCase
         self::assertTrue($cost->trainCostKnown);
     }
 
+    public function test_null_train_price_with_non_zero_baggage_is_still_indicative(): void
+    {
+        // Dekt het kruispunt: isHelRoute=true + trainCostKnown=false + baggageCost≠0.
+        // Levende mutant: || ($isHelRoute && !$trainCostKnown && $baggageCost->isZero())
+        // zou de indicatief-markering weggooien op het standaardpad (partner + Finnair).
+        $cost = $this->calculator->calculate(
+            self::viaHel(Carrier::Finnair, 134),
+            Traveller::partner(),
+            null,
+        );
+
+        self::assertFalse($cost->baggageCost->isZero(), 'partner betaalt €35 bagage — anders bewijst de test het kruispunt niet');
+        self::assertFalse($cost->trainCostKnown, 'treinprijs null → trainCostKnown moet false zijn');
+        self::assertTrue($cost->indicative, 'onbekende treinprijs moet indicatief zijn, ook als baggageCost niet nul is');
+    }
+
     private static function viaHel(Carrier $carrier, float $euros): Itinerary
     {
         return new Itinerary(
