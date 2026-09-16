@@ -37,6 +37,7 @@ services:
         arguments:
             $cache: '@cache.app'
             $apiToken: '%env(APIFY_TOKEN)%'
+            $logger: '@logger'
 
     App\Domain\Port\TrainPriceSource: '@App\Infrastructure\Source\ApifyTrainPriceSource'
 

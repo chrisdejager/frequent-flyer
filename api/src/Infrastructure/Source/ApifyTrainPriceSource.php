@@ -7,6 +7,8 @@ namespace App\Infrastructure\Source;
 use App\Domain\Flight\Money;
 use App\Domain\Port\TrainPriceSource;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class ApifyTrainPriceSource implements TrainPriceSource
@@ -33,6 +35,7 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
         private HttpClientInterface $http,
         private CacheItemPoolInterface $cache,
         private string $apiToken,
+        private ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -67,22 +70,42 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
 
     private function fetch(\DateTimeImmutable $date): ?Money
     {
-        $response = $this->http->request('POST', sprintf(
-            'https://api.apify.com/v2/acts/%s/run-sync-get-dataset-items?token=%s',
-            self::ACTOR,
-            urlencode($this->apiToken),
-        ), [
-            'json' => [
-                'from' => 'Helsinki',
-                'to' => 'Turku',
-                'date' => $date->format('Y-m-d'),
-            ],
-        ]);
+        try {
+            $response = $this->http->request('POST', sprintf(
+                'https://api.apify.com/v2/acts/%s/run-sync-get-dataset-items?token=%s',
+                self::ACTOR,
+                urlencode($this->apiToken),
+            ), [
+                'json' => [
+                    'from' => 'Helsinki',
+                    'to' => 'Turku',
+                    'date' => $date->format('Y-m-d'),
+                ],
+            ]);
 
-        $rows = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+            $rows = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (ExceptionInterface $e) {
+            $this->logger?->warning('Apify HTTP-fout bij ophalen treinprijs ({date}): {message}', [
+                'date'    => $date->format('Y-m-d'),
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        } catch (\JsonException $e) {
+            $this->logger?->warning('Apify gaf onleesbare JSON voor treinprijs ({date}): {message}', [
+                'date'    => $date->format('Y-m-d'),
+                'message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
 
         $prices = array_filter(array_map(
-            static function (array $row): ?float {
+            static function (mixed $row): ?float {
+                if (!is_array($row)) {
+                    return null;
+                }
+
                 $raw = $row['priceEur'] ?? null;
 
                 // Filter onbruikbare prijzen vóór de float-cast:

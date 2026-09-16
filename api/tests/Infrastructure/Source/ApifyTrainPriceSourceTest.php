@@ -116,31 +116,68 @@ final class ApifyTrainPriceSourceTest extends TestCase
         self::assertSame(1, $calls, 'null-uitkomst moet worden gecacht (15 min) zodat niet elke klik een Apify-run kost');
     }
 
-    public function test_a_malformed_response_is_not_cached(): void
+    public function test_a_malformed_response_is_cached_for_short_ttl(): void
     {
-        $calls = 0;
-        $client = new MockHttpClient(function () use (&$calls) {
-            ++$calls;
+        $spy = new SpyCacheItemPool();
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse('dit is geen json!')),
+            $spy,
+            'test-token',
+        );
 
-            if (1 === $calls) {
-                return new MockResponse('dit is geen json!');
-            }
+        $result = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
 
-            return new MockResponse(self::fixture());
-        });
+        self::assertNull($result, 'onleesbare JSON moet null teruggeven');
+        self::assertArrayHasKey('vr.hel-tku.2026-10-29', $spy->recordedTtls, 'ook onleesbare JSON moet gecacht worden');
+        self::assertSame(900, $spy->recordedTtls['vr.hel-tku.2026-10-29'], 'korte TTL van 900 s verwacht');
+    }
 
-        $source = new ApifyTrainPriceSource($client, new ArrayAdapter(), 'test-token');
+    public function test_http_error_returns_null_and_is_cached_for_short_ttl(): void
+    {
+        $spy = new SpyCacheItemPool();
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse('Server Error', ['http_code' => 500])),
+            $spy,
+            'test-token',
+        );
 
-        try {
-            $source->priceFor(new \DateTimeImmutable('2026-10-29'));
-            self::fail('verwachtte een JsonException bij ongeldig JSON');
-        } catch (\JsonException) {
-            // verwacht
-        }
+        $result = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        self::assertNull($result, 'HTTP 500 moet null teruggeven');
+        self::assertArrayHasKey('vr.hel-tku.2026-10-29', $spy->recordedTtls);
+        self::assertSame(900, $spy->recordedTtls['vr.hel-tku.2026-10-29'], 'fout moet kort gecacht worden');
+    }
+
+    public function test_quota_exceeded_returns_null_and_is_cached_for_short_ttl(): void
+    {
+        $spy = new SpyCacheItemPool();
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse('Too Many Requests', ['http_code' => 429])),
+            $spy,
+            'test-token',
+        );
+
+        $result = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
+
+        self::assertNull($result, 'HTTP 429 (quota op) moet null teruggeven');
+        self::assertArrayHasKey('vr.hel-tku.2026-10-29', $spy->recordedTtls);
+        self::assertSame(900, $spy->recordedTtls['vr.hel-tku.2026-10-29'], 'quota-uitputting moet kort gecacht worden');
+    }
+
+    public function test_non_array_row_is_skipped(): void
+    {
+        // Eerste rij is een scalar (22.5), tweede is een geldige array
+        $json = json_encode([22.5, ['priceEur' => 22.5, 'departureTime' => '2026-10-29T17:00:00', 'trainType' => 'S']]);
+
+        $source = new ApifyTrainPriceSource(
+            new MockHttpClient(new MockResponse($json)),
+            new ArrayAdapter(),
+            'test-token',
+        );
 
         $price = $source->priceFor(new \DateTimeImmutable('2026-10-29'));
-        self::assertSame(2250, $price->cents, 'na een mislukte aanroep moet een volgende aanroep de juiste prijs geven');
-        self::assertSame(2, $calls, 'mislukte aanroep mag niet in de cache blijven hangen');
+
+        self::assertSame(2250, $price->cents, 'scalar rij overgeslagen, geldige rij geeft €22,50');
     }
 
     public function test_a_non_numeric_price_in_the_list_is_filtered_out(): void
