@@ -75,4 +75,12 @@ final class MoneyTest extends TestCase
 
         Money::fromEuros(NAN);
     }
+
+    public function test_overflow_gives_honest_error_message(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/te groot om in centen/');
+
+        Money::fromEuros(1e17);
+    }
 }
