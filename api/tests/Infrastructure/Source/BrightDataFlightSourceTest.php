@@ -420,7 +420,7 @@ final class BrightDataFlightSourceTest extends TestCase
 
             public function log($level, string|\Stringable $message, array $context = []): void
             {
-                $this->log[] = ['level' => $level, 'message' => $message];
+                $this->log[] = ['level' => $level, 'message' => $message, 'context' => $context];
             }
         };
 
@@ -458,11 +458,85 @@ final class BrightDataFlightSourceTest extends TestCase
 
         self::assertCount(1, $warnings, 'Er moet precies één logmelding zijn voor de overgeslagen aanbiedingen');
         self::assertSame('warning', $warnings[0]['level']);
-        // Scherpe assertion: telt aantal én route samen, zodat een losse "1" uit datum of
-        // vluchtcode niet per ongeluk kan matchen. Een verkeerde teller (bijv. 2 i.p.v. 1)
-        // of een verkeerde route laat de test zakken.
-        self::assertStringContainsString('1 aanbod(en) overgeslagen voor route AMS→HEL', $warnings[0]['message'],
-            'De logmelding bevat het exacte aantal overgeslagen aanbiedingen én de route');
+        // PSR-3: de boodschap bevat placeholders; de waarden zitten in de context-array.
+        // Scherpe asserties op zowel het template als de context, zodat een verkeerde
+        // teller (bijv. 2 i.p.v. 1) of een verkeerde route de test laat zakken.
+        self::assertStringContainsString('{count} aanbod(en) overgeslagen', $warnings[0]['message'],
+            'De logmelding gebruikt PSR-3 placeholder {count}');
+        self::assertSame(1, $warnings[0]['context']['count'],
+            'Context-array bevat het exacte aantal overgeslagen aanbiedingen');
+        self::assertSame('AMS', $warnings[0]['context']['from'],
+            'Context-array bevat de vertrekhaven');
+        self::assertSame('HEL', $warnings[0]['context']['to'],
+            'Context-array bevat de bestemmingshaven');
+    }
+
+    public function test_a_payload_without_flight_collections_is_logged_as_a_warning(): void
+    {
+        // Als best_flights én other_flights beide ontbreken (hernoemde sleutel, foutobject,
+        // lege payload), was het gedrag stilletjes 0 resultaten — exact het scenario uit de bevinding.
+        $warnings = [];
+
+        $logger = new class($warnings) extends AbstractLogger {
+            public function __construct(private array &$log) {}
+
+            public function log($level, string|\Stringable $message, array $context = []): void
+            {
+                $this->log[] = ['level' => $level, 'message' => $message, 'context' => $context];
+            }
+        };
+
+        $source = new BrightDataFlightSource(
+            new MockHttpClient(new MockResponse(json_encode([
+                'top_flights' => [], // hernoemde collectie — geen van beide bekende sleutels aanwezig
+            ], JSON_THROW_ON_ERROR))),
+            'test-token',
+            'serp_zone',
+            $logger,
+        );
+
+        $result = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $result, 'Geen resultaten verwacht');
+        self::assertCount(1, $warnings, 'Ontbrekende collectie moet één waarschuwing geven');
+        self::assertSame('warning', $warnings[0]['level']);
+        self::assertStringContainsString('Geen vluchtcollectie', $warnings[0]['message'],
+            'De logmelding signaleert het ontbreken van vluchtcollecties');
+        self::assertSame('AMS', $warnings[0]['context']['from']);
+        self::assertSame('HEL', $warnings[0]['context']['to']);
+    }
+
+    public function test_an_error_object_payload_is_logged_as_a_warning(): void
+    {
+        // {"error":"quota exceeded"} bevat ook geen best_flights of other_flights.
+        // Vroeger: 0 resultaten, 0 logregels — volledig stil.
+        $warnings = [];
+
+        $logger = new class($warnings) extends AbstractLogger {
+            public function __construct(private array &$log) {}
+
+            public function log($level, string|\Stringable $message, array $context = []): void
+            {
+                $this->log[] = ['level' => $level, 'message' => $message, 'context' => $context];
+            }
+        };
+
+        $source = new BrightDataFlightSource(
+            new MockHttpClient(new MockResponse(json_encode([
+                'error' => 'quota exceeded',
+            ], JSON_THROW_ON_ERROR))),
+            'test-token',
+            'serp_zone',
+            $logger,
+        );
+
+        $result = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $result, 'Geen resultaten verwacht bij foutobject');
+        self::assertCount(1, $warnings, 'Foutobject-payload moet één waarschuwing geven');
+        self::assertSame('warning', $warnings[0]['level']);
+        self::assertStringContainsString('Geen vluchtcollectie', $warnings[0]['message'],
+            'De logmelding signaleert het ontbreken van vluchtcollecties ook bij een foutobject');
     }
 
     private static function sourceReturning(string $body, ?\Psr\Log\LoggerInterface $logger = null): BrightDataFlightSource

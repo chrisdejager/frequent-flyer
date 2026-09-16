@@ -50,6 +50,19 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
 
         $payload = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
+        // Als noch best_flights noch other_flights aanwezig is, heeft de bron zijn
+        // antwoordvorm gewijzigd (hernoemd veld, foutobject {"error":"…"}, lege payload).
+        // Dat is precies het scenario dat eerder stil 0 resultaten gaf zonder enige aanwijzing.
+        if (!isset($payload['best_flights']) && !isset($payload['other_flights'])) {
+            $this->logger?->warning('Geen vluchtcollectie in payload voor route {from}→{to} ({date}).', [
+                'from' => $from->value,
+                'to'   => $to->value,
+                'date' => $date->format('Y-m-d'),
+            ]);
+
+            return [];
+        }
+
         $raw = [
             ...($payload['best_flights'] ?? []),
             ...($payload['other_flights'] ?? []),
@@ -69,13 +82,12 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
         }
 
         if ($skipped > 0) {
-            $this->logger?->warning(sprintf(
-                '%d aanbod(en) overgeslagen voor route %s→%s (%s).',
-                $skipped,
-                $from->value,
-                $to->value,
-                $date->format('Y-m-d'),
-            ));
+            $this->logger?->warning('{count} aanbod(en) overgeslagen voor route {from}→{to} ({date}).', [
+                'count' => $skipped,
+                'from'  => $from->value,
+                'to'    => $to->value,
+                'date'  => $date->format('Y-m-d'),
+            ]);
         }
 
         return $itineraries;
