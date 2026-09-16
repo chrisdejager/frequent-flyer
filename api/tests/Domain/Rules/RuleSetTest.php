@@ -33,6 +33,13 @@ final class RuleSetTest extends TestCase
         );
     }
 
+    public function test_arriving_in_helsinki_at_exactly_21_00_is_accepted(): void
+    {
+        $it = self::viaHel('2026-10-29 18:30', '2026-10-29 21:00', Carrier::Finnair);
+
+        self::assertNull(RuleSet::standard(Direction::NlToFi)->rejectionReason($it));
+    }
+
     public function test_departing_helsinki_before_noon_is_rejected(): void
     {
         $it = new Itinerary(
@@ -46,6 +53,18 @@ final class RuleSetTest extends TestCase
             'Vertrek uit Helsinki vóór 12:00.',
             RuleSet::standard(Direction::FiToNl)->rejectionReason($it),
         );
+    }
+
+    public function test_departing_helsinki_at_exactly_12_00_is_accepted(): void
+    {
+        $it = new Itinerary(
+            Carrier::Finnair,
+            [self::segment(Airport::Hel, Airport::Ams, '2026-10-25 12:00', '2026-10-25 13:50', 'AY841')],
+            Money::fromEuros(80),
+            RoutePattern::ViaHelsinkiWithTrain,
+        );
+
+        self::assertNull(RuleSet::standard(Direction::FiToNl)->rejectionReason($it));
     }
 
     public function test_a_through_ticket_is_not_judged_on_helsinki_times(): void
