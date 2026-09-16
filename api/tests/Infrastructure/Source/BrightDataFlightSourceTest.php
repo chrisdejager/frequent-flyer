@@ -277,6 +277,79 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
+    public function test_an_offer_with_a_comma_decimal_price_is_skipped(): void
+    {
+        // '134,50' (komma als decimaalscheider) → is_numeric() geeft false terug.
+        // Vóór de guard werd dit door (float) '134,50' → 134.0 → €134,00 verwerkt,
+        // waardoor de centen onzichtbaar werden afgekapt.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 134,
+                ],
+                // Rot aanbod: komma als decimaalscheider
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 843',
+                    ]],
+                    'price' => '134,50',
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Aanbod met "134,50" als prijs wordt overgeslagen (centen mogen niet verdwijnen)');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
+    public function test_an_offer_with_an_overflow_price_is_skipped_without_crashing_the_search(): void
+    {
+        // Een extreem grote float (bijv. 9e18) passeert is_numeric() en is niet negatief,
+        // maar (int) round(9e18 * 100) overflowt naar een negatief getal in PHP op 64-bit.
+        // Money::fromEuros() gooit dan een InvalidArgumentException; de try/catch is bereikbaar.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 134,
+                ],
+                // Rot aanbod: overflow-prijs — passeert de is_numeric- en < 0-guard,
+                // maar brengt Money::fromEuros() tot een negatieve int na de cast
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 843',
+                    ]],
+                    'price' => 9e18,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Overflow-prijs (9e18) wordt overgeslagen zonder de hele zoekopdracht te laten crashen');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
+    }
+
     private static function sourceReturning(string $body): BrightDataFlightSource
     {
         return new BrightDataFlightSource(
