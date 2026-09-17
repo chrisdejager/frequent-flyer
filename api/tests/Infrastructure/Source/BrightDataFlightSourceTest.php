@@ -677,6 +677,142 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
+    public function test_two_leg_offer_with_both_allowed_carriers_is_accepted(): void
+    {
+        // Patroon B: SAS AMS→ARN + KLM ARN→TKU (beide toegestaan)
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [[
+                'flights' => [
+                    [
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 09:00'],
+                        'arrival_airport'   => ['id' => 'ARN', 'time' => '2026-10-29 11:00'],
+                        'airline'           => 'SAS',
+                        'flight_number'     => 'SK552',
+                    ],
+                    [
+                        'departure_airport' => ['id' => 'ARN', 'time' => '2026-10-29 12:30'],
+                        'arrival_airport'   => ['id' => 'TKU', 'time' => '2026-10-29 14:10'],
+                        'airline'           => 'KLM',
+                        'flight_number'     => 'KL789',
+                    ],
+                ],
+                'price' => 150,
+            ]],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Tku, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Aanbod met twee toegestane maatschappijen (SAS+KLM) moet worden geaccepteerd');
+        // KLM heeft hogere prioriteit dan SAS → carrier moet KLM zijn
+        self::assertSame(Carrier::Klm, $found[0]->carrier,
+            'Bij gemengde SAS+KLM legs moet KLM worden gekozen (conservatieve keuze: hoogste bagagetoeslag)');
+    }
+
+    public function test_two_leg_offer_carrier_priority_klm_over_finnair(): void
+    {
+        // Patroon B: Finnair AMS→HEL + KLM HEL→TKU — KLM heeft prioriteit
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [[
+                'flights' => [
+                    [
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 09:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 12:00'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY123',
+                    ],
+                    [
+                        'departure_airport' => ['id' => 'HEL', 'time' => '2026-10-29 13:30'],
+                        'arrival_airport'   => ['id' => 'TKU', 'time' => '2026-10-29 14:10'],
+                        'airline'           => 'KLM',
+                        'flight_number'     => 'KL456',
+                    ],
+                ],
+                'price' => 160,
+            ]],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Tku, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found);
+        self::assertSame(Carrier::Klm, $found[0]->carrier,
+            'Bij gemengde Finnair+KLM legs moet KLM worden gekozen (KLM heeft hogere prioriteit dan Finnair)');
+    }
+
+    public function test_two_leg_offer_with_unknown_airline_on_second_leg_is_skipped(): void
+    {
+        // Bevinding 2a: Ryanair op leg 1 moet het aanbod overslaan, ook als leg 0 geldig is.
+        // Eerder: carrier=SK (van leg 0), Ryanair op leg 1 werd nooit gecheckt → doorgeglipt.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Goed aanbod: SAS AMS→TKU (1 leg, door filter)
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 09:00'],
+                        'arrival_airport'   => ['id' => 'TKU', 'time' => '2026-10-29 14:10'],
+                        'airline'           => 'SAS',
+                        'flight_number'     => 'SK552',
+                    ]],
+                    'price' => 150,
+                ],
+                // Slecht aanbod: SAS leg 0 + Ryanair leg 1 — moet worden overgeslagen
+                [
+                    'flights' => [
+                        [
+                            'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 09:00'],
+                            'arrival_airport'   => ['id' => 'ARN', 'time' => '2026-10-29 11:00'],
+                            'airline'           => 'SAS',
+                            'flight_number'     => 'SK552',
+                        ],
+                        [
+                            'departure_airport' => ['id' => 'ARN', 'time' => '2026-10-29 12:30'],
+                            'arrival_airport'   => ['id' => 'TKU', 'time' => '2026-10-29 14:10'],
+                            'airline'           => 'Ryanair',
+                            'flight_number'     => 'FR999',
+                        ],
+                    ],
+                    'price' => 89,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Tku, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found,
+            'Aanbod met Ryanair op leg 1 moet worden overgeslagen; eerder glipte het door via carrier=SK van leg 0');
+        self::assertSame(Carrier::Sas, $found[0]->carrier);
+        self::assertSame('SK552', $found[0]->segments[0]->flightNumber,
+            'Alleen het zuivere SAS-aanbod (1 leg) moet overblijven');
+    }
+
+    public function test_two_leg_offer_with_unknown_airline_on_first_leg_is_skipped(): void
+    {
+        // Ryanair op leg 0: eerder werkte de $legs[0]-check dit al af,
+        // maar de test ontbrak. Nu gedekt voor volledigheid en als mutatiedekking.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [[
+                'flights' => [
+                    [
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 09:00'],
+                        'arrival_airport'   => ['id' => 'ARN', 'time' => '2026-10-29 11:00'],
+                        'airline'           => 'Ryanair',
+                        'flight_number'     => 'FR001',
+                    ],
+                    [
+                        'departure_airport' => ['id' => 'ARN', 'time' => '2026-10-29 12:30'],
+                        'arrival_airport'   => ['id' => 'TKU', 'time' => '2026-10-29 14:10'],
+                        'airline'           => 'SAS',
+                        'flight_number'     => 'SK721',
+                    ],
+                ],
+                'price' => 89,
+            ]],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Tku, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $found, 'Aanbod met Ryanair op leg 0 moet worden overgeslagen');
+    }
+
     private static function sourceReturning(string $body, ?\Psr\Log\LoggerInterface $logger = null): BrightDataFlightSource
     {
         return new BrightDataFlightSource(

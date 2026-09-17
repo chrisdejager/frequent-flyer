@@ -35,6 +35,18 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
         'KLM' => Carrier::Klm,
     ];
 
+    /**
+     * Volgorde van maatschappijen van duurste naar goedkoopste bagagetoeslag.
+     * Bij gemengde legs kiezen we de maatschappij die de hoogste kosten impliceert (conservatief).
+     * KLM wordt preferentieel gekozen omdat zijn tarief een schatting is (indicatief);
+     * Finnair heeft een vast tarief; SAS heeft geen bagagetoeslag.
+     */
+    private const CARRIER_PRIORITY = [
+        Carrier::Klm,
+        Carrier::Finnair,
+        Carrier::Sas,
+    ];
+
     public function __construct(
         private HttpClientInterface $http,
         private string $apiToken,
@@ -118,11 +130,30 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
             return null;
         }
 
-        $carrier = self::AIRLINES[$legs[0]['airline'] ?? ''] ?? null;
+        // Verzamel de maatschappijen van álle legs.
+        $carriers = [];
+        foreach ($legs as $leg) {
+            $legCarrier = self::AIRLINES[$leg['airline'] ?? ''] ?? null;
+            if (null === $legCarrier) {
+                // Een maatschappij buiten Finnair/SAS/KLM op een van de legs.
+                // Overslaan: één onbekende aanbieder mag de hele zoekopdracht niet slopen.
+                return null;
+            }
+            $carriers[] = $legCarrier;
+        }
 
+        // Bij gemengde legs kiezen we de maatschappij met de hoogste bagagetoeslag (conservatief).
+        $carrier = null;
+        foreach (self::CARRIER_PRIORITY as $priority) {
+            if (in_array($priority, $carriers, true)) {
+                $carrier = $priority;
+                break;
+            }
+        }
+
+        // $carrier kan hier niet null zijn: alle carriers zijn toegestaan en CARRIER_PRIORITY
+        // bevat alle toegestane carriers. Maar voor type-safety:
         if (null === $carrier) {
-            // Een maatschappij buiten Finnair/SAS/KLM. Overslaan in plaats van
-            // afbreken: één onbekende aanbieder mag de hele zoekopdracht niet slopen.
             return null;
         }
 
