@@ -29,15 +29,14 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
-    App\Infrastructure\Source\BrightDataFlightSource:
+    App\Infrastructure\Source\IgnavFlightSource:
         arguments:
-            $apiToken: '%env(BRIGHTDATA_TOKEN)%'
-            $zone: '%env(BRIGHTDATA_ZONE)%'
+            $apiKey: '%env(IGNAV_API_KEY)%'
             # Expliciet, ook al autowiret Symfony dit: zonder deze regel verdwijnt
             # de logger stil zodra iemand dit blok met een positional argument uitbreidt.
             $logger: '@logger'
 
-    App\Domain\Port\FlightPriceSource: '@App\Infrastructure\Source\BrightDataFlightSource'
+    App\Domain\Port\FlightPriceSource: '@App\Infrastructure\Source\IgnavFlightSource'
     App\Domain\Port\PriceHistory: '@App\Infrastructure\Persistence\NullPriceHistory'
 
     App\Infrastructure\Source\ApifyTrainPriceSource:
@@ -60,7 +59,7 @@ services:
 when@test:
     services:
         App\Domain\Port\FlightPriceSource:
-            alias: App\Infrastructure\Source\BrightDataFlightSource
+            alias: App\Infrastructure\Source\IgnavFlightSource
             public: true
         App\Domain\Port\TrainPriceSource:
             alias: App\Infrastructure\Source\ApifyTrainPriceSource

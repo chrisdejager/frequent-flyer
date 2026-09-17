@@ -17,7 +17,7 @@ use App\Domain\Pricing\BaggagePolicy;
 use App\Domain\Pricing\FareUpgradeRates;
 use App\Domain\Pricing\TotalCostCalculator;
 use App\Infrastructure\Persistence\NullPriceHistory;
-use App\Infrastructure\Source\BrightDataFlightSource;
+use App\Infrastructure\Source\IgnavFlightSource;
 use App\Tests\Double\FixedTrainPriceSource;
 use App\Tests\Double\InMemoryFlightPriceSource;
 use PHPUnit\Framework\TestCase;
@@ -185,7 +185,7 @@ final class SearchFlightsHandlerTest extends TestCase
 
     public function test_real_adapter_hel_to_ams_finnair_gets_train_pattern_and_correct_total(): void
     {
-        // Integratietest: de échte BrightDataFlightSource (met MockHttpClient) draait door
+        // Integratietest: de échte IgnavFlightSource (met MockHttpClient) draait door
         // de échte SearchFlightsHandler voor Direction::FiToNl.
         // Doel: dekt de patroonbepaling via $trainNeeded in de adapter — de twee bestaande
         // handlertests (test_return_flight_via_helsinki_includes_train_cost en
@@ -195,14 +195,19 @@ final class SearchFlightsHandlerTest extends TestCase
         // wordt teruggedraaid naar alleen-bestemming, valt alleen deze test; de twee bestaande
         // handlertests blijven groen.
         $helToAmsJson = json_encode([
-            'best_flights' => [[
-                'flights' => [[
-                    'departure_airport' => ['id' => 'HEL', 'time' => '2026-10-25 14:00'],
-                    'arrival_airport'   => ['id' => 'AMS', 'time' => '2026-10-25 16:45'],
-                    'airline'           => 'Finnair',
-                    'flight_number'     => 'AY 841',
-                ]],
-                'price' => 80,
+            'itineraries' => [[
+                'price' => ['amount' => 80, 'currency' => 'EUR', 'status' => 'verified'],
+                'requires_self_transfer' => false,
+                'outbound' => [
+                    'segments' => [[
+                        'marketing_carrier_code' => 'AY',
+                        'flight_number'          => '841',
+                        'departure_airport'      => 'HEL',
+                        'departure_time_utc'     => '2026-10-25T14:00:00Z',
+                        'arrival_airport'        => 'AMS',
+                        'arrival_time_utc'       => '2026-10-25T16:45:00Z',
+                    ]],
+                ],
             ]],
         ], JSON_THROW_ON_ERROR);
 
@@ -212,7 +217,7 @@ final class SearchFlightsHandlerTest extends TestCase
         // zodat we exact één resultaat krijgen.
         $client = new MockHttpClient(new MockResponse($helToAmsJson));
 
-        $source = new BrightDataFlightSource($client, 'test-token', 'serp_zone');
+        $source = new IgnavFlightSource($client, 'test-key');
         $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
         $handler = new SearchFlightsHandler(
             $source,
