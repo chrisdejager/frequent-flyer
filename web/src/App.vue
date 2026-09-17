@@ -89,10 +89,6 @@ const unrankedOptions = computed<Option[]>(() =>
         Geen opties die aan de regels voldoen op deze datum.
       </p>
 
-      <p v-if="unrankedOptions.length > 0" class="unranked-notice" data-testid="unranked-notice">
-        Niet gerangschikt — treinprijs onbekend
-      </p>
-
       <OptionCard
         v-for="(option, i) in rankedOptions"
         :key="'ranked-' + i"
@@ -100,6 +96,10 @@ const unrankedOptions = computed<Option[]>(() =>
       />
 
       <template v-if="unrankedOptions.length > 0">
+        <p class="unranked-notice" data-testid="unranked-notice">
+          Niet gerangschikt — treinprijs onbekend
+        </p>
+
         <OptionCard
           v-for="(option, i) in unrankedOptions"
           :key="'unranked-' + i"
