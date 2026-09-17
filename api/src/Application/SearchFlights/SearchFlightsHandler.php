@@ -37,8 +37,10 @@ final readonly class SearchFlightsHandler
 
         $valid = $rules->filter($candidates);
 
-        // Alleen betalen voor een treinprijs als er een HEL-optie overblijft.
-        $trainCost = $this->needsTrainPrice($valid)
+        // Alleen betalen voor een treinprijs als de calculator hem gebruikt én er
+        // een HEL-optie overblijft. Het ophalen kost een Apify-run; met de transfer
+        // uit zou dat een run zijn voor een bedrag dat direct wordt weggegooid.
+        $trainCost = $this->calculator->usesTrainCost() && $this->needsTrainPrice($valid)
             ? $this->trains->priceFor($query->date)
             : null;
 

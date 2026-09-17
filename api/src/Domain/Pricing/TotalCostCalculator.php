@@ -24,6 +24,18 @@ final readonly class TotalCostCalculator
     ) {
     }
 
+    /**
+     * Heeft het zin een treinprijs op te halen?
+     *
+     * De aanroeper betaalt voor het ophalen (een Apify-run), dus die moet kunnen
+     * weten of de uitkomst wordt gebruikt. Hier, niet in de aanroeper, zodat er
+     * één plek is die de schakelaar kent.
+     */
+    public function usesTrainCost(): bool
+    {
+        return $this->trainCostEnabled;
+    }
+
     public function calculate(Itinerary $itinerary, Traveller $traveller, ?Money $trainCost): TotalCost
     {
         $baggageCost = $this->baggage->costFor(

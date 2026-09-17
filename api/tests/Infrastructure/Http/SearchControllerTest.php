@@ -191,6 +191,48 @@ final class SearchControllerTest extends WebTestCase
             'de frontend moet kunnen melden dat de transfer HEL→TKU ontbreekt — anders is dit een onzichtbare nul');
     }
 
+    public function test_with_the_train_switched_off_the_train_source_is_never_called(): void
+    {
+        // Geld, niet alleen snelheid: ApifyTrainPriceSource start een synchrone
+        // actor-run, en het tegoed is ~20-50 runs per maand. Een uitkomst ophalen
+        // die de calculator daarna weggooit, is er één te veel.
+        $client = static::createClient();
+
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [self::aFinnairFlight()]);
+        static::getContainer()->set(FlightPriceSource::class, $flights);
+
+        $trains = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
+        static::getContainer()->set(TrainPriceSource::class, $trains);
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(0, $trains->callCount,
+            'de treinbron mag niet worden aangeroepen als de transfer uitstaat');
+    }
+
+    public function test_with_the_train_switched_on_the_train_source_is_called(): void
+    {
+        // De andere kant van dezelfde naad: de bewaking mag het ophalen niet
+        // permanent uitzetten voor als de schakelaar weer aangaat.
+        self::enableTrainCost();
+        $client = static::createClient();
+
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [self::aFinnairFlight()]);
+        static::getContainer()->set(FlightPriceSource::class, $flights);
+
+        $trains = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
+        static::getContainer()->set(TrainPriceSource::class, $trains);
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(1, $trains->callCount,
+            'met de transfer aan hoort de treinprijs één keer te worden opgehaald');
+    }
+
     public function test_unknown_train_price_sets_trainCostKnown_false_and_indicative_true(): void
     {
         self::enableTrainCost();
