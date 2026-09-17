@@ -21,13 +21,4 @@ final readonly class TotalCost
     {
         return $this->basePrice->add($this->baggageCost)->add($this->trainCost);
     }
-
-    public function rankingTotal(Money $trainEstimate): Money
-    {
-        if ($this->trainCostKnown) {
-            return $this->total();
-        }
-
-        return $this->total()->add($trainEstimate);
-    }
 }

@@ -17,7 +17,6 @@ Kopieer `api/.env` naar `api/.env.local` en vul in:
 | `APIFY_TOKEN` | apify.com — $5 gratis tegoed per maand |
 | `FARE_UPGRADE_AY` | Finnair Light→Plus in euro's — **16** (vast tarief) |
 | `FARE_UPGRADE_KL` | KLM Light→Plus in euro's — **25** (schatting; dynamisch geprijsd) |
-| `TRAIN_PRICE_ESTIMATE` | Schatting treinprijs HEL⇄TKU in euro's — **35** (alleen voor sortering als de echte prijs ontbreekt) |
 
 Zonder `FARE_UPGRADE_AY` en `FARE_UPGRADE_KL` **weigert de eerste zoekopdracht**
 met een 500 — ontbrekend levert `Environment variable not found`, leeglaten

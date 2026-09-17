@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { plannedTrips, search } from './api'
 import OptionCard from './components/OptionCard.vue'
-import type { Direction, SearchResult, Trip, TravellerId } from './types'
+import type { Direction, Option, SearchResult, Trip, TravellerId } from './types'
 
 const date = ref('2026-10-29')
 const direction = ref<Direction>('nl-fi')
@@ -40,6 +40,15 @@ async function run() {
     loading.value = false
   }
 }
+
+// Opties met bekende treinprijs zijn gerangschikt op totaalprijs.
+// Opties met onbekende treinprijs staan achteraan en zijn niet vergeleken.
+const rankedOptions = computed<Option[]>(() =>
+  result.value?.options.filter(o => o.cost.trainCostKnown) ?? [],
+)
+const unrankedOptions = computed<Option[]>(() =>
+  result.value?.options.filter(o => !o.cost.trainCostKnown) ?? [],
+)
 </script>
 
 <template>
@@ -77,11 +86,23 @@ async function run() {
       <p v-if="result.options.length === 0">
         Geen opties die aan de regels voldoen op deze datum.
       </p>
+
       <OptionCard
-        v-for="(option, i) in result.options"
-        :key="i"
+        v-for="(option, i) in rankedOptions"
+        :key="'ranked-' + i"
         :option="option"
       />
+
+      <template v-if="unrankedOptions.length > 0">
+        <p class="unranked-notice" data-testid="unranked-notice">
+          Niet gerangschikt — treinprijs onbekend
+        </p>
+        <OptionCard
+          v-for="(option, i) in unrankedOptions"
+          :key="'unranked-' + i"
+          :option="option"
+        />
+      </template>
     </template>
   </main>
 </template>
@@ -95,4 +116,5 @@ input, select, button { padding: .5rem; font: inherit; }
 .trips span { color: #666; font-size: .9rem; }
 .trips button { background: #eef3ff; border: 1px solid #c7d7ff; border-radius: 999px; cursor: pointer; }
 .error { color: #b00020; }
+.unranked-notice { color: #666; font-size: .85rem; margin: .75rem 0 .25rem; border-top: 1px solid #e0e0e0; padding-top: .5rem; }
 </style>

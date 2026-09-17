@@ -147,6 +147,82 @@ final class SearchControllerTest extends WebTestCase
         self::assertTrue($body['options'][0]['cost']['indicative']);
     }
 
+    public function test_option_with_unknown_train_price_ranks_last_without_estimate(): void
+    {
+        // Bevinding 1: geen schatting, geen aanname.
+        // Opties met onbekende treinprijs worden achteraan gezet (trainCostKnown=false),
+        // ook als hun getoonde totaal lager is dan een gerangschikte optie.
+        // SAS doorgaand €150 (trainCostKnown=true) staat vóór Finnair via HEL €140
+        // (trainCostKnown=false), ook al is €140 numeriek lager dan €150.
+        // Deze test gaat door de echte Symfony-bedrading; de vorige twee Criticals
+        // (factor-100 en sorteerfout) waren in unit-tests onzichtbaar.
+        $client = static::createClient();
+
+        // Finnair via HEL: basisprijs €140, onbekende treinprijs → achteraan
+        $helFlight = new Itinerary(
+            Carrier::Finnair,
+            [new Segment(
+                Airport::Ams,
+                Airport::Hel,
+                new \DateTimeImmutable('2026-10-29 13:00'),
+                new \DateTimeImmutable('2026-10-29 16:45'),
+                'AY842',
+            )],
+            Money::fromEuros(140),
+            RoutePattern::ViaHelsinkiWithTrain,
+        );
+
+        // SAS doorgaand naar TKU: basisprijs €150, geen trein → wél gerangschikt
+        $tkuFlight = new Itinerary(
+            Carrier::Sas,
+            [
+                new Segment(
+                    Airport::Ams,
+                    Airport::Arn,
+                    new \DateTimeImmutable('2026-10-29 09:00'),
+                    new \DateTimeImmutable('2026-10-29 11:00'),
+                    'SK552',
+                ),
+                new Segment(
+                    Airport::Arn,
+                    Airport::Tku,
+                    new \DateTimeImmutable('2026-10-29 12:30'),
+                    new \DateTimeImmutable('2026-10-29 14:10'),
+                    'SK721',
+                ),
+            ],
+            Money::fromEuros(150),
+            RoutePattern::ThroughTicket,
+        );
+
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [$helFlight]);
+        $flights->give(Airport::Ams, Airport::Tku, [$tkuFlight]);
+        static::getContainer()->set(FlightPriceSource::class, $flights);
+
+        // Onbekende treinprijs: Finnair-optie heeft trainCostKnown=false
+        static::getContainer()->set(
+            TrainPriceSource::class,
+            FixedTrainPriceSource::withUnknownPrice(),
+        );
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        self::assertResponseIsSuccessful();
+
+        $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertCount(2, $body['options']);
+        // SAS staat eerste: trainCostKnown=true, gerangschikt op €150
+        self::assertSame('SK', $body['options'][0]['carrier'],
+            'SAS doorgaand (trainCostKnown=true, €150) staat eerst — gerangschikt op totaalprijs.');
+        // Finnair staat tweede: trainCostKnown=false → achteraan, geen schatting
+        self::assertSame('AY', $body['options'][1]['carrier'],
+            'Finnair via HEL (trainCostKnown=false, €140) staat achteraan — niet gerangschikt.');
+        self::assertFalse($body['options'][1]['cost']['trainCostKnown'],
+            'Finnair-optie heeft trainCostKnown=false in de JSON-respons.');
+    }
+
     private static function aFinnairFlight(): Itinerary
     {
         return new Itinerary(
