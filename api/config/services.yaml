@@ -65,3 +65,8 @@ when@test:
         App\Domain\Port\TrainPriceSource:
             alias: App\Infrastructure\Source\ApifyTrainPriceSource
             public: true
+        # Blootgesteld voor LoggerConfigurationTest: bewijst dat het logger:-blok
+        # in de productiedefinitie de drempelwaarde op 'warning' houdt.
+        test.logger:
+            alias: logger
+            public: true
