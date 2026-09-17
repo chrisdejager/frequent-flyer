@@ -1,0 +1,300 @@
+{
+  "origin": "AMS",
+  "destination": "HEL",
+  "departure_date": "2026-10-17",
+  "itineraries": [
+    {
+      "price": {
+        "amount": 248,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "outbound": {
+        "carrier": "Air Baltic",
+        "duration_minutes": 735,
+        "segments": [
+          {
+            "marketing_carrier_code": "BT",
+            "flight_number": "620",
+            "operating_carrier_name": "Air Baltic",
+            "departure_airport": "AMS",
+            "departure_time_local": "2026-10-17T19:05:00",
+            "departure_timezone": "Europe/Amsterdam",
+            "departure_time_utc": "2026-10-17T17:05:00Z",
+            "arrival_airport": "RIX",
+            "arrival_time_local": "2026-10-17T22:15:00",
+            "arrival_timezone": "Europe/Riga",
+            "arrival_time_utc": "2026-10-17T19:15:00Z",
+            "duration_minutes": 130,
+            "aircraft": "Airbus A220-300 Passenger"
+          },
+          {
+            "marketing_carrier_code": "BT",
+            "flight_number": "301",
+            "operating_carrier_name": "Air Baltic",
+            "departure_airport": "RIX",
+            "departure_time_local": "2026-10-18T07:20:00",
+            "departure_timezone": "Europe/Riga",
+            "departure_time_utc": "2026-10-18T04:20:00Z",
+            "arrival_airport": "HEL",
+            "arrival_time_local": "2026-10-18T08:20:00",
+            "arrival_timezone": "Europe/Helsinki",
+            "arrival_time_utc": "2026-10-18T05:20:00Z",
+            "duration_minutes": 60,
+            "aircraft": "Airbus A220-300 Passenger"
+          }
+        ]
+      },
+      "cabin_class": "economy",
+      "requires_self_transfer": false,
+      "ignav_id": "4987aa68277c000000eda54c179394fa"
+    },
+    {
+      "price": {
+        "amount": 266,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "outbound": {
+        "carrier": "Finnair",
+        "duration_minutes": 140,
+        "segments": [
+          {
+            "marketing_carrier_code": "AY",
+            "flight_number": "1302",
+            "operating_carrier_name": "Finnair",
+            "departure_airport": "AMS",
+            "departure_time_local": "2026-10-17T11:55:00",
+            "departure_timezone": "Europe/Amsterdam",
+            "departure_time_utc": "2026-10-17T09:55:00Z",
+            "arrival_airport": "HEL",
+            "arrival_time_local": "2026-10-17T15:15:00",
+            "arrival_timezone": "Europe/Helsinki",
+            "arrival_time_utc": "2026-10-17T12:15:00Z",
+            "duration_minutes": 140,
+            "aircraft": "Airbus A350"
+          }
+        ]
+      },
+      "cabin_class": "economy",
+      "requires_self_transfer": false,
+      "ignav_id": "0ea5aa41342f00000056346ef96d746d"
+    },
+    {
+      "price": {
+        "amount": 266,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "outbound": {
+        "carrier": "Finnair",
+        "duration_minutes": 140,
+        "segments": [
+          {
+            "marketing_carrier_code": "AY",
+            "flight_number": "1306",
+            "operating_carrier_name": "Finnair",
+            "departure_airport": "AMS",
+            "departure_time_local": "2026-10-17T19:25:00",
+            "departure_timezone": "Europe/Amsterdam",
+            "departure_time_utc": "2026-10-17T17:25:00Z",
+            "arrival_airport": "HEL",
+            "arrival_time_local": "2026-10-17T22:45:00",
+            "arrival_timezone": "Europe/Helsinki",
+            "arrival_time_utc": "2026-10-17T19:45:00Z",
+            "duration_minutes": 140,
+            "aircraft": "Airbus A330"
+          }
+        ]
+      },
+      "cabin_class": "economy",
+      "requires_self_transfer": false,
+      "ignav_id": "f28f612f20160000008398116a431060"
+    },
+    {
+      "price": {
+        "amount": 273,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "outbound": {
+        "carrier": "KLM",
+        "duration_minutes": 140,
+        "segments": [
+          {
+            "marketing_carrier_code": "KL",
+            "flight_number": "1253",
+            "operating_carrier_name": "KLM",
+            "departure_airport": "AMS",
+            "departure_time_local": "2026-10-17T14:20:00",
+            "departure_timezone": "Europe/Amsterdam",
+            "departure_time_utc": "2026-10-17T12:20:00Z",
+            "arrival_airport": "HEL",
+            "arrival_time_local": "2026-10-17T17:40:00",
+            "arrival_timezone": "Europe/Helsinki",
+            "arrival_time_utc": "2026-10-17T14:40:00Z",
+            "duration_minutes": 140,
+            "aircraft": "Boeing 737"
+          }
+        ]
+      },
+      "cabin_class": "economy",
+      "requires_self_transfer": false,
+      "ignav_id": "f60792e7dede000000cac361c3234ba8"
+    },
+    {
+      "price": {
+        "amount": 302,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "outbound": {
+        "carrier": "KLM",
+        "duration_minutes": 140,
+        "segments": [
+          {
+            "marketing_carrier_code": "KL",
+            "flight_number": "1251",
+            "operating_carrier_name": "KLM",
+            "departure_airport": "AMS",
+            "departure_time_local": "2026-10-17T09:45:00",
+            "departure_timezone": "Europe/Amsterdam",
+            "departure_time_utc": "2026-10-17T07:45:00Z",
+            "arrival_airport": "HEL",
+            "arrival_time_local": "2026-10-17T13:05:00",
+            "arrival_timezone": "Europe/Helsinki",
+            "arrival_time_utc": "2026-10-17T10:05:00Z",
+            "duration_minutes": 140,
+            "aircraft": "Airbus A321neo"
+          }
+        ]
+      },
+      "cabin_class": "economy",
+      "requires_self_transfer": false,
+      "ignav_id": "ab8e61d7bcc90000000d65eec927e9e8"
+    },
+    {
+      "price": {
+        "amount": 386,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "outbound": {
+        "carrier": "KLM",
+        "duration_minutes": 145,
+        "segments": [
+          {
+            "marketing_carrier_code": "KL",
+            "flight_number": "1255",
+            "operating_carrier_name": "KLM",
+            "departure_airport": "AMS",
+            "departure_time_local": "2026-10-17T21:00:00",
+            "departure_timezone": "Europe/Amsterdam",
+            "departure_time_utc": "2026-10-17T19:00:00Z",
+            "arrival_airport": "HEL",
+            "arrival_time_local": "2026-10-18T00:25:00",
+            "arrival_timezone": "Europe/Helsinki",
+            "arrival_time_utc": "2026-10-17T21:25:00Z",
+            "duration_minutes": 145,
+            "aircraft": "Airbus A321neo"
+          }
+        ]
+      },
+      "cabin_class": "economy",
+      "requires_self_transfer": false,
+      "ignav_id": "9d96c18a2d690000005360df65f00742"
+    },
+    {
+      "price": {
+        "amount": 442,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "outbound": {
+        "carrier": "Scandinavian Airlines",
+        "duration_minutes": 270,
+        "segments": [
+          {
+            "marketing_carrier_code": "SK",
+            "flight_number": "548",
+            "operating_carrier_name": "Scandinavian Airlines",
+            "departure_airport": "AMS",
+            "departure_time_local": "2026-10-17T14:55:00",
+            "departure_timezone": "Europe/Amsterdam",
+            "departure_time_utc": "2026-10-17T12:55:00Z",
+            "arrival_airport": "CPH",
+            "arrival_time_local": "2026-10-17T16:20:00",
+            "arrival_timezone": "Europe/Copenhagen",
+            "arrival_time_utc": "2026-10-17T14:20:00Z",
+            "duration_minutes": 85,
+            "aircraft": "Airbus A320neo"
+          },
+          {
+            "marketing_carrier_code": "SK",
+            "flight_number": "1716",
+            "operating_carrier_name": "Scandinavian Airlines",
+            "departure_airport": "CPH",
+            "departure_time_local": "2026-10-17T17:50:00",
+            "departure_timezone": "Europe/Copenhagen",
+            "departure_time_utc": "2026-10-17T15:50:00Z",
+            "arrival_airport": "HEL",
+            "arrival_time_local": "2026-10-17T20:25:00",
+            "arrival_timezone": "Europe/Helsinki",
+            "arrival_time_utc": "2026-10-17T17:25:00Z",
+            "duration_minutes": 95,
+            "aircraft": "Canadair RJ 900"
+          }
+        ]
+      },
+      "cabin_class": "economy",
+      "requires_self_transfer": false,
+      "ignav_id": "28d3df3e64a7000000fa66acc38b0dbe"
+    },
+    {
+      "price": {
+        "amount": 547,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "outbound": {
+        "carrier": "Turkish Airlines",
+        "duration_minutes": 650,
+        "segments": [
+          {
+            "marketing_carrier_code": "TK",
+            "flight_number": "1956",
+            "operating_carrier_name": "Turkish Airlines",
+            "departure_airport": "AMS",
+            "departure_time_local": "2026-10-17T23:20:00",
+            "departure_timezone": "Europe/Amsterdam",
+            "departure_time_utc": "2026-10-17T21:20:00Z",
+            "arrival_airport": "IST",
+            "arrival_time_local": "2026-10-18T03:40:00",
+            "arrival_timezone": "Europe/Istanbul",
+            "arrival_time_utc": "2026-10-18T00:40:00Z",
+            "duration_minutes": 200,
+            "aircraft": "Airbus A321neo"
+          },
+          {
+            "marketing_carrier_code": "TK",
+            "flight_number": "1761",
+            "operating_carrier_name": "Turkish Airlines",
+            "departure_airport": "IST",
+            "departure_time_local": "2026-10-18T07:30:00",
+            "departure_timezone": "Europe/Istanbul",
+            "departure_time_utc": "2026-10-18T04:30:00Z",
+            "arrival_airport": "HEL",
+            "arrival_time_local": "2026-10-18T11:10:00",
+            "arrival_timezone": "Europe/Helsinki",
+            "arrival_time_utc": "2026-10-18T08:10:00Z",
+            "duration_minutes": 220,
+            "aircraft": "Airbus A321neo"
+          }
+        ]
+      },
+      "cabin_class": "economy",
+      "requires_self_transfer": false,
+      "ignav_id": "2829fdcdac19000000fa8e2802a33071"
+    }
+  ]
+}
