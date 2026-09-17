@@ -83,6 +83,10 @@ De partner is wél flexibel. Als ±1 dag substantieel scheelt, wordt dat getoond
 als **apart gemarkeerde suggestie** — nooit vermengd met de resultaten voor de
 gevraagde dag.
 
+> **Niet gebouwd in fase 1 — bewust uitgesteld naar fase 2** (besluit van de
+> eigenaar, 17 sep 2026). De ±1-dag-suggestie voor de partner is niet geïmplementeerd;
+> de zoeker toont altijd alleen de gevraagde datum.
+
 ---
 
 ## 4. Bagage en totaalprijs
@@ -312,7 +316,7 @@ Data-credits, draaien offline en zijn deterministisch.
 | Fase | Inhoud |
 |---|---|
 | **1** | Zoeken + regels + bagage + totaalprijs + dashboard. Alleen 25 en 29 oktober 2026. |
-| 2 | Prijsgeschiedenis vastleggen; Playwright e2e; **Plus-prijs naast Light tonen (§4)**; **KL alleen tonen als het echt goedkoper is (§3)** |
+| 2 | Prijsgeschiedenis vastleggen; Playwright e2e; **Plus-prijs naast Light tonen (§4)**; **KL alleen tonen als het echt goedkoper is (§3)**; **±1-dag-suggestie voor de partner (§3)** |
 | 3 | Kortings- en high-alert-meldingen op het dashboard |
 | 4 | Google Calendar inlezen in plaats van handmatige reislijst |
 

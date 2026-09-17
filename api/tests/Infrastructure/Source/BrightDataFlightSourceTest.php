@@ -758,6 +758,41 @@ final class BrightDataFlightSourceTest extends TestCase
             'Bij gemengde SAS+KLM legs moet KLM worden gekozen (conservatieve keuze: hoogste bagagetoeslag)');
     }
 
+    public function test_two_leg_offer_carrier_priority_klm_first_leg_over_sas_second_leg(): void
+    {
+        // Spiegelstuk van test_two_leg_offer_with_both_allowed_carriers_is_accepted:
+        // nu staat KLM op been 0 en SAS op been 1 (omgekeerde volgorde).
+        // Garandeert dat prioriteit werkt ongeacht been-volgorde, en dat een
+        // mutatie "neem carrier van het laatste been" hier rood gaat.
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [[
+                'flights' => [
+                    [
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 09:00'],
+                        'arrival_airport'   => ['id' => 'ARN', 'time' => '2026-10-29 11:00'],
+                        'airline'           => 'KLM',
+                        'flight_number'     => 'KL789',
+                    ],
+                    [
+                        'departure_airport' => ['id' => 'ARN', 'time' => '2026-10-29 12:30'],
+                        'arrival_airport'   => ['id' => 'TKU', 'time' => '2026-10-29 14:10'],
+                        'airline'           => 'SAS',
+                        'flight_number'     => 'SK552',
+                    ],
+                ],
+                'price' => 150,
+            ]],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Tku, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found, 'Aanbod met KLM op been 0 en SAS op been 1 moet worden geaccepteerd');
+        // KLM heeft hogere prioriteit dan SAS — en staat hier op been 0, niet been 1.
+        // Een mutatie die "de carrier van het laatste been neemt" zou SAS teruggeven → rood.
+        self::assertSame(Carrier::Klm, $found[0]->carrier,
+            'Bij KLM op been 0 en SAS op been 1 moet KLM worden gekozen (prioriteit, niet been-volgorde)');
+    }
+
     public function test_two_leg_offer_carrier_priority_klm_over_finnair(): void
     {
         // Patroon B: Finnair AMS→HEL + KLM HEL→TKU — KLM heeft prioriteit
@@ -861,6 +896,78 @@ final class BrightDataFlightSourceTest extends TestCase
         $found = $source->search(Airport::Ams, Airport::Tku, new \DateTimeImmutable('2026-10-29'));
 
         self::assertSame([], $found, 'Aanbod met Ryanair op leg 0 moet worden overgeslagen');
+    }
+
+    public function test_offer_for_wrong_destination_is_skipped(): void
+    {
+        // Bevinding 1a: zoekroute AMS→TKU, payload bevat AMS→ARN → verwacht []
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [[
+                'flights' => [[
+                    'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 09:00'],
+                    'arrival_airport'   => ['id' => 'ARN', 'time' => '2026-10-29 11:00'],
+                    'airline'           => 'SAS',
+                    'flight_number'     => 'SK552',
+                ]],
+                'price' => 150,
+            ]],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Tku, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $found,
+            'Vlucht AMS→ARN bij een AMS→TKU-zoekopdracht moet worden overgeslagen');
+    }
+
+    public function test_offer_for_reversed_route_is_skipped(): void
+    {
+        // Bevinding 1b: zoekroute AMS→HEL, payload bevat HEL→AMS (omgekeerd) → verwacht []
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [[
+                'flights' => [[
+                    'departure_airport' => ['id' => 'HEL', 'time' => '2026-10-29 14:00'],
+                    'arrival_airport'   => ['id' => 'AMS', 'time' => '2026-10-29 16:45'],
+                    'airline'           => 'Finnair',
+                    'flight_number'     => 'AY 841',
+                ]],
+                'price' => 80,
+            ]],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $found,
+            'Vlucht HEL→AMS bij een AMS→HEL-zoekopdracht (omgekeerde route) moet worden overgeslagen');
+    }
+
+    public function test_non_array_flights_value_is_skipped_without_crashing(): void
+    {
+        // Bevinding 2: 'flights' => 'oops' mag geen PHP-warning of exception geven
+        $source = self::sourceReturning(json_encode([
+            'best_flights' => [
+                // Geldig aanbod
+                [
+                    'flights' => [[
+                        'departure_airport' => ['id' => 'AMS', 'time' => '2026-10-29 13:00'],
+                        'arrival_airport'   => ['id' => 'HEL', 'time' => '2026-10-29 16:45'],
+                        'airline'           => 'Finnair',
+                        'flight_number'     => 'AY 842',
+                    ]],
+                    'price' => 134,
+                ],
+                // Rot aanbod: 'flights' is een string, geen array
+                [
+                    'flights' => 'oops',
+                    'price'   => 99,
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertCount(1, $found,
+            'Non-array flights-waarde wordt overgeslagen zonder exception; het geldige aanbod blijft');
+        self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
     private static function sourceReturning(string $body, ?\Psr\Log\LoggerInterface $logger = null): BrightDataFlightSource

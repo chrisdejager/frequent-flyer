@@ -118,7 +118,7 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
                 continue;
             }
 
-            $itinerary = $this->toItinerary($offer);
+            $itinerary = $this->toItinerary($offer, $from, $to);
 
             if (null !== $itinerary) {
                 $itineraries[] = $itinerary;
@@ -142,11 +142,11 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
     /**
      * @param array<string, mixed> $offer
      */
-    private function toItinerary(array $offer): ?Itinerary
+    private function toItinerary(array $offer, Airport $from, Airport $to): ?Itinerary
     {
         $legs = $offer['flights'] ?? [];
 
-        if ([] === $legs || !isset($offer['price'])) {
+        if (!is_array($legs) || [] === $legs || !isset($offer['price'])) {
             return null;
         }
 
@@ -180,10 +180,10 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
         $segments = [];
 
         foreach ($legs as $leg) {
-            $from = Airport::tryFrom($leg['departure_airport']['id'] ?? '');
-            $to = Airport::tryFrom($leg['arrival_airport']['id'] ?? '');
+            $legFrom = Airport::tryFrom($leg['departure_airport']['id'] ?? '');
+            $legTo = Airport::tryFrom($leg['arrival_airport']['id'] ?? '');
 
-            if (null === $from || null === $to) {
+            if (null === $legFrom || null === $legTo) {
                 return null;
             }
 
@@ -209,8 +209,8 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
             // ook dat hoort één aanbieding te laten vervallen, niet de hele zoekopdracht.
             try {
                 $segments[] = new Segment(
-                    $from,
-                    $to,
+                    $legFrom,
+                    $legTo,
                     $departAt,
                     $arriveAt,
                     str_replace(' ', '', (string) ($leg['flight_number'] ?? '')),
@@ -226,6 +226,12 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
 
         $origin = $segments[0]->from;
         $destination = $segments[count($segments) - 1]->to;
+
+        // Routecontrole: het aanbod moet exact de gevraagde route bedienen.
+        // Een vlucht AMS→ARN bij een AMS→TKU-zoekopdracht wordt hier overgeslagen.
+        if ($origin !== $from || $destination !== $to) {
+            return null;
+        }
 
         // Helsinki is een eindpunt van de vlucht (vertrek of aankomst): de VR-trein HEL–TKU hoort erbij.
         // Let op: dit gaat over het eindpunt van dit ticket, niet over een tussenlandige overstap —

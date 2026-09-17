@@ -207,15 +207,10 @@ final class SearchFlightsHandlerTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         // De handler zoekt voor FiToNl zowel HEL→AMS als TKU→AMS op.
-        // We laten de MockHttpClient voor beide calls hetzelfde antwoord geven,
-        // maar TKU→AMS bevat geen geldige vluchten (HEL/AMS/Finnair is de enige sleutel).
-        // Omdat de JSON dezelfde vlucht bevat (HEL→AMS) voor beide calls, maar Tku-routes
-        // Airport::tryFrom('HEL') and Airport::tryFrom('AMS') opleveren (dus geldig),
-        // zouden we de vlucht dubbel krijgen. Geef voor TKU→AMS een leeg antwoord.
-        $callIndex = 0;
-        $client = new MockHttpClient(function () use ($helToAmsJson, &$callIndex): MockResponse {
-            return new MockResponse(0 === $callIndex++ ? $helToAmsJson : '{"best_flights":[]}');
-        });
+        // Beide calls geven hetzelfde antwoord (HEL→AMS). De routecontrole in de adapter
+        // slaat de HEL→AMS-vlucht automatisch over bij de TKU→AMS-zoekopdracht,
+        // zodat we exact één resultaat krijgen.
+        $client = new MockHttpClient(new MockResponse($helToAmsJson));
 
         $source = new BrightDataFlightSource($client, 'test-token', 'serp_zone');
         $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);

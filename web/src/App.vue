@@ -83,8 +83,14 @@ const unrankedOptions = computed<Option[]>(() =>
     <p v-if="error" class="error">{{ error }}</p>
 
     <template v-if="result">
+      <p class="traveller-label">Prijzen voor {{ result.traveller.name }}</p>
+
       <p v-if="result.options.length === 0">
         Geen opties die aan de regels voldoen op deze datum.
+      </p>
+
+      <p v-if="unrankedOptions.length > 0" class="unranked-notice" data-testid="unranked-notice">
+        Niet gerangschikt — treinprijs onbekend
       </p>
 
       <OptionCard
@@ -94,9 +100,6 @@ const unrankedOptions = computed<Option[]>(() =>
       />
 
       <template v-if="unrankedOptions.length > 0">
-        <p class="unranked-notice" data-testid="unranked-notice">
-          Niet gerangschikt — treinprijs onbekend
-        </p>
         <OptionCard
           v-for="(option, i) in unrankedOptions"
           :key="'unranked-' + i"
@@ -116,5 +119,6 @@ input, select, button { padding: .5rem; font: inherit; }
 .trips span { color: #666; font-size: .9rem; }
 .trips button { background: #eef3ff; border: 1px solid #c7d7ff; border-radius: 999px; cursor: pointer; }
 .error { color: #b00020; }
+.traveller-label { font-size: .85rem; color: #555; margin-bottom: .75rem; }
 .unranked-notice { color: #666; font-size: .85rem; margin: .75rem 0 .25rem; border-top: 1px solid #e0e0e0; padding-top: .5rem; }
 </style>
