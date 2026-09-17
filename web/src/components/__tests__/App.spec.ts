@@ -28,6 +28,7 @@ const rankedOption = {
     totalFormatted: '€ 156,50',
     indicative: false,
     trainCostKnown: true,
+    trainCostIncluded: true,
   },
 }
 
@@ -49,6 +50,7 @@ const unrankedOption = {
     totalFormatted: '€ 199,00',
     indicative: true,
     trainCostKnown: false,
+    trainCostIncluded: true,
   },
 }
 

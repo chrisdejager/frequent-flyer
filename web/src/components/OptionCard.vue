@@ -17,6 +17,8 @@ interface CostRow {
   label: string
   cents: number
   unknown?: boolean
+  /** Bewust niet meegeteld — anders dan "onbekend", want de optie blijft gerangschikt. */
+  excluded?: boolean
 }
 
 const rows = computed(() => {
@@ -30,6 +32,7 @@ const rows = computed(() => {
       label: 'Trein HEL–TKU',
       cents: props.option.cost.trainCost,
       unknown: !props.option.cost.trainCostKnown,
+      excluded: !props.option.cost.trainCostIncluded,
     })
   }
 
@@ -56,10 +59,15 @@ const rows = computed(() => {
     <dl>
       <div v-for="row in rows" :key="row.label" data-testid="cost-row">
         <dt>{{ row.label }}</dt>
-        <dd v-if="row.unknown">onbekend</dd>
+        <dd v-if="row.excluded" data-testid="train-excluded">niet meegerekend</dd>
+        <dd v-else-if="row.unknown">onbekend</dd>
         <dd v-else>{{ euro(row.cents) }}</dd>
       </div>
     </dl>
+
+    <p v-if="!option.cost.trainCostIncluded" class="excluded-notice" data-testid="excluded-notice">
+      Totaal is exclusief transfer HEL→TKU
+    </p>
 
     <footer>{{ option.flightNumbers.join(' · ') }}</footer>
   </article>

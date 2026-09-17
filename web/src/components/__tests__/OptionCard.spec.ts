@@ -21,6 +21,7 @@ const viaHelsinki: Option = {
     totalFormatted: '€ 156,50',
     indicative: false,
     trainCostKnown: true,  // nieuw veld
+    trainCostIncluded: true,
   },
 }
 
@@ -114,6 +115,31 @@ describe('OptionCard', () => {
     expect(card.text()).toContain('16:45')
   })
 
+  it('meldt dat de transfer niet is meegerekend als trainCostIncluded false is', () => {
+    // Anders dan "onbekend": de optie blijft gerangschikt, maar het totaal is
+    // onvolledig. Zonder deze melding is € 0,00 niet te onderscheiden van gratis.
+    const excludedTrain: Option = {
+      ...viaHelsinki,
+      cost: {
+        ...viaHelsinki.cost,
+        trainCost: 0,
+        trainCostKnown: true,
+        trainCostIncluded: false,
+      },
+    }
+
+    const card = mount(OptionCard, { props: { option: excludedTrain } })
+
+    expect(card.find('[data-testid="train-excluded"]').text()).toBe('niet meegerekend')
+    expect(card.find('[data-testid="excluded-notice"]').text()).toContain('exclusief transfer HEL→TKU')
+  })
+
+  it('meldt niets over een ontbrekende transfer als die wél is meegerekend', () => {
+    const card = mount(OptionCard, { props: { option: viaHelsinki } })
+
+    expect(card.find('[data-testid="excluded-notice"]').exists()).toBe(false)
+  })
+
   it('toont "onbekend" in de treinregel als trainCostKnown false is', () => {
     const unknownTrain: Option = {
       ...viaHelsinki,
@@ -121,6 +147,7 @@ describe('OptionCard', () => {
         ...viaHelsinki.cost,
         trainCost: 0,      // TotalCostCalculator zet trainCost op 0 als de prijs onbekend is
         trainCostKnown: false,
+        trainCostIncluded: true,
         indicative: true,
       },
     }

@@ -10,6 +10,8 @@ export interface Cost {
   totalFormatted: string
   indicative: boolean
   trainCostKnown: boolean
+  /** False = de transfer HEL–TKU zit bewust niet in dit totaal. */
+  trainCostIncluded: boolean
 }
 
 export interface Option {
