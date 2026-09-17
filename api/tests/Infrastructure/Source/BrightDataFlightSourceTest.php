@@ -677,6 +677,56 @@ final class BrightDataFlightSourceTest extends TestCase
         self::assertSame('AY842', $found[0]->segments[0]->flightNumber);
     }
 
+    public function test_http_error_returns_empty_array_and_logs_warning(): void
+    {
+        // Bevinding 3: een HTTP-fout (bijv. 429 quota exceeded) mag niet leiden tot HTTP 500.
+        // De treinbron vat dit al op; de vluchtbron moet hetzelfde doen.
+        $warnings = [];
+        $logger = new class($warnings) extends \Psr\Log\AbstractLogger {
+            public function __construct(private array &$log) {}
+            public function log($level, string|\Stringable $message, array $context = []): void
+            {
+                $this->log[] = ['level' => $level, 'message' => (string) $message];
+            }
+        };
+
+        $client = new \Symfony\Component\HttpClient\MockHttpClient(
+            new \Symfony\Component\HttpClient\Response\MockResponse('', ['http_code' => 429]),
+        );
+
+        $source = new BrightDataFlightSource($client, 'test-token', 'serp_zone', $logger);
+        $result = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $result, 'HTTP-fout moet lege array teruggeven, geen exception');
+        self::assertCount(1, $warnings, 'HTTP-fout moet als warning worden gelogd');
+        self::assertSame('warning', $warnings[0]['level']);
+    }
+
+    public function test_non_json_response_body_returns_empty_array_and_logs_warning(): void
+    {
+        // Bevinding 3: een HTML-body (bijv. foutpagina van de proxy) gooit JsonException.
+        // Dit mag niet leiden tot HTTP 500; spiegelt ApifyTrainPriceSource::fetch().
+        $warnings = [];
+        $logger = new class($warnings) extends \Psr\Log\AbstractLogger {
+            public function __construct(private array &$log) {}
+            public function log($level, string|\Stringable $message, array $context = []): void
+            {
+                $this->log[] = ['level' => $level, 'message' => (string) $message];
+            }
+        };
+
+        $client = new \Symfony\Component\HttpClient\MockHttpClient(
+            new \Symfony\Component\HttpClient\Response\MockResponse('<html>Error</html>'),
+        );
+
+        $source = new BrightDataFlightSource($client, 'test-token', 'serp_zone', $logger);
+        $result = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+
+        self::assertSame([], $result, 'Niet-JSON body moet lege array teruggeven, geen exception');
+        self::assertCount(1, $warnings, 'JSON-fout moet als warning worden gelogd');
+        self::assertSame('warning', $warnings[0]['level']);
+    }
+
     public function test_two_leg_offer_with_both_allowed_carriers_is_accepted(): void
     {
         // Patroon B: SAS AMS→ARN + KLM ARN→TKU (beide toegestaan)

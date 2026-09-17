@@ -57,19 +57,39 @@ final readonly class BrightDataFlightSource implements FlightPriceSource
 
     public function search(Airport $from, Airport $to, \DateTimeImmutable $date): array
     {
-        $response = $this->http->request('POST', self::ENDPOINT, [
-            'headers' => [
-                'Authorization: Bearer '.$this->apiToken,
-                'Content-Type: application/json',
-            ],
-            'json' => [
-                'zone' => $this->zone,
-                'format' => 'json',
-                'url' => $this->googleFlightsUrl($from, $to, $date),
-            ],
-        ]);
+        try {
+            $response = $this->http->request('POST', self::ENDPOINT, [
+                'headers' => [
+                    'Authorization: Bearer '.$this->apiToken,
+                    'Content-Type: application/json',
+                ],
+                'json' => [
+                    'zone' => $this->zone,
+                    'format' => 'json',
+                    'url' => $this->googleFlightsUrl($from, $to, $date),
+                ],
+            ]);
 
-        $payload = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Symfony\Contracts\HttpClient\Exception\ExceptionInterface $e) {
+            $this->logger?->warning('Bright Data HTTP-fout bij ophalen vluchten ({from}→{to}, {date}): {reason}', [
+                'from'   => $from->value,
+                'to'     => $to->value,
+                'date'   => $date->format('Y-m-d'),
+                'reason' => $e->getMessage(),
+            ]);
+
+            return [];
+        } catch (\JsonException $e) {
+            $this->logger?->warning('Bright Data gaf onleesbare JSON voor vluchten ({from}→{to}, {date}): {reason}', [
+                'from'   => $from->value,
+                'to'     => $to->value,
+                'date'   => $date->format('Y-m-d'),
+                'reason' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
 
         // Als noch best_flights noch other_flights aanwezig is, heeft de bron zijn
         // antwoordvorm gewijzigd (hernoemd veld, foutobject {"error":"…"}, lege payload).
