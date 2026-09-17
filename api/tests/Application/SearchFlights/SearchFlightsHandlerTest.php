@@ -224,6 +224,7 @@ final class SearchFlightsHandlerTest extends TestCase
             FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
             new TotalCostCalculator(new BaggagePolicy($rates), $rates),
             new NullPriceHistory(),
+            3500, // €35 schatting
         );
 
         $result = $handler(new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'chris'));
@@ -235,6 +236,53 @@ final class SearchFlightsHandlerTest extends TestCase
             'basis €80 + trein €22,50 = €102,50 (Finnair Silver: gratis bagage); adapter moet HEL als oorsprong herkennen als ViaHelsinkiWithTrain');
     }
 
+    public function test_unknown_train_price_uses_estimate_for_sorting_not_display(): void
+    {
+        // Scenario uit de spec: Finnair via HEL €140 met onbekende treinprijs staat
+        // ONDER SAS doorgaand €150, omdat €140 + schatting €35 = €175 > €150.
+        // Maar het getoonde totaal van Finnair blijft €140, niet €175.
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [
+            self::viaHel(Carrier::Finnair, 140, '13:00', '16:45'),
+        ]);
+        $flights->give(Airport::Ams, Airport::Tku, [
+            self::throughTicket(Carrier::Sas, 150),
+        ]);
+
+        $result = $this->handlerWithEstimate($flights, FixedTrainPriceSource::withUnknownPrice(), 3500)(
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
+        );
+
+        self::assertCount(2, $result->options);
+        // SAS staat eerste (€150 < €175 rangschikking)
+        self::assertSame(15000, $result->options[0]->cost->total()->cents,
+            'SAS doorgaand staat eerste: €150');
+        // Finnair staat tweede, maar het GETOONDE totaal is €140, niet €175
+        self::assertSame(14000, $result->options[1]->cost->total()->cents,
+            'Finnair getoond als €140 — de schatting is NIET zichtbaar in total()');
+    }
+
+    public function test_known_train_price_sorting_unchanged(): void
+    {
+        // Geen regressie: bij bekende treinprijs verandert de volgorde niet.
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [
+            self::viaHel(Carrier::Finnair, 134, '13:00', '16:45'),
+        ]);
+        $flights->give(Airport::Ams, Airport::Tku, [
+            self::throughTicket(Carrier::Sas, 150),
+        ]);
+
+        $result = $this->handlerWithEstimate($flights, FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)), 3500)(
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
+        );
+
+        self::assertCount(2, $result->options);
+        // SAS €150 staat eerste, Finnair €134+€22.50=€156.50 staat tweede
+        self::assertSame(15000, $result->options[0]->cost->total()->cents, 'SAS: €150');
+        self::assertSame(15650, $result->options[1]->cost->total()->cents, 'Finnair: €156,50');
+    }
+
     private function handler(InMemoryFlightPriceSource $flights, FixedTrainPriceSource $train): SearchFlightsHandler
     {
         $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
@@ -244,6 +292,23 @@ final class SearchFlightsHandlerTest extends TestCase
             $train,
             new TotalCostCalculator(new BaggagePolicy($rates), $rates),
             new NullPriceHistory(),
+            3500, // €35 schatting — doet er niet toe als de treinprijs bekend is
+        );
+    }
+
+    private function handlerWithEstimate(
+        InMemoryFlightPriceSource $flights,
+        FixedTrainPriceSource $train,
+        int $estimateCents,
+    ): SearchFlightsHandler {
+        $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
+
+        return new SearchFlightsHandler(
+            $flights,
+            $train,
+            new TotalCostCalculator(new BaggagePolicy($rates), $rates),
+            new NullPriceHistory(),
+            $estimateCents,
         );
     }
 

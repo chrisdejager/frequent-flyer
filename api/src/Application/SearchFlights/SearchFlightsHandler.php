@@ -6,6 +6,7 @@ namespace App\Application\SearchFlights;
 
 use App\Domain\Flight\Airport;
 use App\Domain\Flight\Itinerary;
+use App\Domain\Flight\Money;
 use App\Domain\Flight\RoutePattern;
 use App\Domain\Port\FlightPriceSource;
 use App\Domain\Port\PriceHistory;
@@ -16,12 +17,16 @@ use App\Domain\Traveller\Traveller;
 
 final readonly class SearchFlightsHandler
 {
+    private Money $trainPriceEstimate;
+
     public function __construct(
         private FlightPriceSource $flights,
         private TrainPriceSource $trains,
         private TotalCostCalculator $calculator,
         private PriceHistory $history,
+        int $trainPriceEstimateCents,
     ) {
+        $this->trainPriceEstimate = Money::fromCents($trainPriceEstimateCents);
     }
 
     public function __invoke(SearchFlightsQuery $query): SearchResult
@@ -53,10 +58,12 @@ final readonly class SearchFlightsHandler
             );
         }
 
+        $estimate = $this->trainPriceEstimate;
+
         usort(
             $options,
             static fn (PricedItinerary $a, PricedItinerary $b): int
-                => $a->cost->total()->cents <=> $b->cost->total()->cents,
+                => $a->cost->rankingTotal($estimate)->cents <=> $b->cost->rankingTotal($estimate)->cents,
         );
 
         return new SearchResult($options, $traveller, $searchedAt);
