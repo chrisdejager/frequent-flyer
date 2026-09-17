@@ -54,6 +54,7 @@ final readonly class SearchResultPresenter
                 'totalFormatted' => $cost->total()->format(),
                 'indicative' => $cost->indicative,
                 'trainCostKnown' => $cost->trainCostKnown,
+                'trainCostIncluded' => $cost->trainCostIncluded,
             ],
         ];
     }

@@ -23,7 +23,54 @@ final class TotalCostCalculatorTest extends TestCase
     protected function setUp(): void
     {
         $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
-        $this->calculator = new TotalCostCalculator(new BaggagePolicy($rates), $rates);
+        $this->calculator = new TotalCostCalculator(new BaggagePolicy($rates), $rates, trainCostEnabled: true);
+    }
+
+    private static function calculatorWithTrainEnabled(bool $enabled): TotalCostCalculator
+    {
+        $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
+
+        return new TotalCostCalculator(new BaggagePolicy($rates), $rates, trainCostEnabled: $enabled);
+    }
+
+    public function test_with_the_train_disabled_a_hel_route_costs_zero_but_stays_ranked(): void
+    {
+        $cost = self::calculatorWithTrainEnabled(false)->calculate(
+            self::viaHel(Carrier::Finnair, 134),
+            Traveller::chris(),
+            Money::fromEuros(22.50),
+        );
+
+        self::assertTrue($cost->trainCost->isZero(), 'trein staat uit → geen treinkosten in het totaal');
+        self::assertSame(13400, $cost->total()->cents, 'alleen de ticketprijs (Finnair Silver: gratis bagage)');
+        self::assertTrue($cost->trainCostKnown,
+            'trainCostKnown moet true blijven, anders belandt élke Helsinki-optie in de ongerangschikte bak');
+        self::assertFalse($cost->trainCostIncluded,
+            'de UI moet kunnen zien dat de transfer HEL→TKU niet in dit totaal zit');
+    }
+
+    public function test_with_the_train_disabled_a_through_ticket_is_not_marked_as_incomplete(): void
+    {
+        $cost = self::calculatorWithTrainEnabled(false)->calculate(
+            self::throughTicket(Carrier::Sas, 150),
+            Traveller::chris(),
+            null,
+        );
+
+        self::assertTrue($cost->trainCostIncluded,
+            'een doorgaand ticket heeft geen treinbeen, dus er ontbreekt niets');
+    }
+
+    public function test_with_the_train_enabled_the_price_is_still_added(): void
+    {
+        $cost = self::calculatorWithTrainEnabled(true)->calculate(
+            self::viaHel(Carrier::Finnair, 134),
+            Traveller::chris(),
+            Money::fromEuros(22.50),
+        );
+
+        self::assertSame(2250, $cost->trainCost->cents);
+        self::assertTrue($cost->trainCostIncluded);
     }
 
     public function test_train_cost_is_added_for_the_helsinki_pattern(): void
@@ -102,7 +149,7 @@ final class TotalCostCalculatorTest extends TestCase
     {
         // Een KLM-reisoptie, maar met nultarief voor bagagekosten
         $rates = FareUpgradeRates::fromConfig(['AY' => 16, 'KL' => 0]);
-        $calculator = new TotalCostCalculator(new BaggagePolicy($rates), $rates);
+        $calculator = new TotalCostCalculator(new BaggagePolicy($rates), $rates, trainCostEnabled: true);
 
         $cost = $calculator->calculate(
             self::throughTicket(Carrier::Klm, 120),

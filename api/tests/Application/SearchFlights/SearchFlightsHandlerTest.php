@@ -222,7 +222,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $handler = new SearchFlightsHandler(
             $source,
             FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
-            new TotalCostCalculator(new BaggagePolicy($rates), $rates),
+            new TotalCostCalculator(new BaggagePolicy($rates), $rates, trainCostEnabled: true),
             new NullPriceHistory(),
         );
 
@@ -271,7 +271,7 @@ final class SearchFlightsHandlerTest extends TestCase
         return new SearchFlightsHandler(
             $flights,
             $train,
-            new TotalCostCalculator(new BaggagePolicy($rates), $rates),
+            new TotalCostCalculator(new BaggagePolicy($rates), $rates, trainCostEnabled: true),
             new NullPriceHistory(),
         );
     }

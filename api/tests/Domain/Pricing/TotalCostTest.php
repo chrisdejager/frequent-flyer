@@ -17,8 +17,9 @@ final class TotalCostTest extends TestCase
             basePrice:      Money::fromEuros(140.00),
             baggageCost:    Money::zero(),
             trainCost:      Money::zero(),
-            indicative:     true,
-            trainCostKnown: false,
+            indicative:        true,
+            trainCostKnown:    false,
+            trainCostIncluded: true,
         );
 
         self::assertSame(14000, $cost->total()->cents,

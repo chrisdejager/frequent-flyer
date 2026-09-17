@@ -14,6 +14,13 @@ final readonly class TotalCostCalculator
     public function __construct(
         private BaggagePolicy $baggage,
         private FareUpgradeRates $rates,
+        /**
+         * Staat de transfer Helsinki–Turku aan?
+         *
+         * Bewust zonder standaardwaarde: elke aanroeper moet expliciet kiezen, zodat
+         * een nieuwe bedrading niet stil de verkeerde kant op valt.
+         */
+        private bool $trainCostEnabled,
     ) {
     }
 
@@ -25,13 +32,23 @@ final readonly class TotalCostCalculator
         );
 
         $isHelRoute = RoutePattern::ViaHelsinkiWithTrain === $itinerary->pattern;
-        $trainCostKnown = true;
 
-        if ($isHelRoute) {
+        if (!$isHelRoute) {
+            // Doorgaand ticket: geen treinbeen, dus er ontbreekt niets.
+            $train = Money::zero();
+            $trainCostKnown = true;
+            $trainCostIncluded = true;
+        } elseif (!$this->trainCostEnabled) {
+            // Transfer tijdelijk uitgezet. De optie blijft meedoen aan de sortering
+            // (trainCostKnown blijft true), maar het totaal is aantoonbaar onvolledig —
+            // daarom moet de UI het via $trainCostIncluded kunnen melden.
+            $train = Money::zero();
+            $trainCostKnown = true;
+            $trainCostIncluded = false;
+        } else {
             $train = $trainCost ?? Money::zero();
             $trainCostKnown = null !== $trainCost;
-        } else {
-            $train = Money::zero();
+            $trainCostIncluded = true;
         }
 
         // Indicatief als: de bagagekosten geschat zijn, OF de treinprijs onbekend is.
@@ -39,11 +56,12 @@ final readonly class TotalCostCalculator
             || ($isHelRoute && !$trainCostKnown);
 
         return new TotalCost(
-            basePrice:      $itinerary->basePrice,
-            baggageCost:    $baggageCost,
-            trainCost:      $train,
-            indicative:     $indicative,
-            trainCostKnown: $trainCostKnown,
+            basePrice:         $itinerary->basePrice,
+            baggageCost:       $baggageCost,
+            trainCost:         $train,
+            indicative:        $indicative,
+            trainCostKnown:    $trainCostKnown,
+            trainCostIncluded: $trainCostIncluded,
         );
     }
 }

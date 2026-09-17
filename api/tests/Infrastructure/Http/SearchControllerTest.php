@@ -18,8 +18,46 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class SearchControllerTest extends WebTestCase
 {
+    private ?string $originalTrainCostEnabled = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->originalTrainCostEnabled = $_ENV['TRAIN_COST_ENABLED'] ?? null;
+    }
+
+    protected function tearDown(): void
+    {
+        // Herstellen, niet wissen: %env(bool:TRAIN_COST_ENABLED)% gooit een
+        // EnvNotFoundException als de variabele verdwijnt, en dan geeft élke
+        // volgende test stil een 500 in plaats van zijn eigen resultaat.
+        if (null === $this->originalTrainCostEnabled) {
+            unset($_ENV['TRAIN_COST_ENABLED'], $_SERVER['TRAIN_COST_ENABLED']);
+        } else {
+            $_ENV['TRAIN_COST_ENABLED'] = $this->originalTrainCostEnabled;
+            $_SERVER['TRAIN_COST_ENABLED'] = $this->originalTrainCostEnabled;
+        }
+
+        parent::tearDown();
+    }
+
+    /**
+     * Zet de transfer HEL–TKU expliciet aan voor tests die over de treinsemantiek gaan.
+     *
+     * Zonder dit meten die tests stil iets anders zodra TRAIN_COST_ENABLED in .env
+     * verandert — en de semantiek die ze vastleggen (onbekende treinprijs → achteraan,
+     * geen schatting) moet blijven werken voor als de schakelaar weer aangaat.
+     * Moet vóór createClient() staan: daarna is de container al gebouwd.
+     */
+    private static function enableTrainCost(): void
+    {
+        $_ENV['TRAIN_COST_ENABLED'] = '1';
+        $_SERVER['TRAIN_COST_ENABLED'] = '1';
+    }
+
     public function test_it_returns_priced_options_as_json(): void
     {
+        self::enableTrainCost();
         $client = static::createClient();
 
         $flights = new InMemoryFlightPriceSource();
@@ -126,8 +164,36 @@ final class SearchControllerTest extends WebTestCase
         self::assertTrue($body['options'][0]['cost']['trainCostKnown']);
     }
 
+    public function test_with_the_train_switched_off_hel_options_report_an_incomplete_total(): void
+    {
+        // De andere stand van de schakelaar, door de échte container. Geen
+        // enableTrainCost(): dit is de configuratie die nu werkelijk draait.
+        $client = static::createClient();
+
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [self::aFinnairFlight()]);
+        static::getContainer()->set(FlightPriceSource::class, $flights);
+
+        static::getContainer()->set(
+            TrainPriceSource::class,
+            FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
+        );
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $cost = $body['options'][0]['cost'];
+
+        self::assertSame(0, $cost['trainCost'], 'de transfer telt niet mee');
+        self::assertSame(13400, $cost['total'], 'totaal is alleen de ticketprijs');
+        self::assertTrue($cost['trainCostKnown'], 'de optie blijft meedoen aan de sortering');
+        self::assertFalse($cost['trainCostIncluded'],
+            'de frontend moet kunnen melden dat de transfer HEL→TKU ontbreekt — anders is dit een onzichtbare nul');
+    }
+
     public function test_unknown_train_price_sets_trainCostKnown_false_and_indicative_true(): void
     {
+        self::enableTrainCost();
         $client = static::createClient();
 
         $flights = new InMemoryFlightPriceSource();
@@ -156,6 +222,7 @@ final class SearchControllerTest extends WebTestCase
         // (trainCostKnown=false), ook al is €140 numeriek lager dan €150.
         // Deze test gaat door de echte Symfony-bedrading; de vorige twee Criticals
         // (factor-100 en sorteerfout) waren in unit-tests onzichtbaar.
+        self::enableTrainCost();
         $client = static::createClient();
 
         // Finnair via HEL: basisprijs €140, onbekende treinprijs → achteraan

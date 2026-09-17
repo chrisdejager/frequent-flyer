@@ -49,6 +49,10 @@ services:
 
     App\Domain\Port\TrainPriceSource: '@App\Infrastructure\Source\ApifyTrainPriceSource'
 
+    App\Domain\Pricing\TotalCostCalculator:
+        arguments:
+            $trainCostEnabled: '%env(bool:TRAIN_COST_ENABLED)%'
+
     App\Domain\Pricing\FareUpgradeRates:
         factory: ['App\Domain\Pricing\FareUpgradeRates', 'fromConfig']
         arguments:
