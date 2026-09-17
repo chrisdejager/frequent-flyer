@@ -68,6 +68,14 @@ Alleen **Finnair (AY)**, **SAS (SK)** en **KLM (KL)**.
 AY en SK krijgen voorrang vanwege de statussen; KL wordt alleen getoond als het
 daadwerkelijk goedkoper is.
 
+> **Niet gebouwd in fase 1 — bewust uitgesteld naar fase 2** (besluit van de
+> eigenaar, 17 sep 2026). Alle drie de maatschappijen worden getoond, puur op
+> prijs gesorteerd; er is geen KL-specifieke filter en geen voorrang voor
+> AY/SK. Let op het gevolg voor §5: die verdedigt de summiere
+> `indicative`-markering met het argument dat KLM bij een marginaal verschil
+> toch al weggefilterd zou zijn. Die redenering gaat in fase 1 dus niet op —
+> de markering is het enige vangnet voor de geschatte KLM-bagagetoeslag.
+
 ### Datumflexibiliteit
 
 Standaard **vaste dag**. Chris zit vast aan zorgafspraken met de co-ouder.
@@ -93,6 +101,12 @@ als ruimbagage mee. Er worden dus géén bagagekosten bij SAS gerekend.
 
 Voor Finnair en KLM toont het systeem naast de Light-prijs ook de **Plus-prijs**,
 zodat je kunt zien of los handbagage bijkopen of meteen Plus nemen goedkoper is.
+
+> **Niet gebouwd in fase 1 — bewust uitgesteld naar fase 2** (besluit van de
+> eigenaar, 17 sep 2026). Fase 1 rekent één bedrag als bagagekosten, namelijk
+> het Light→Plus-tarief uit `FARE_UPGRADE_AY` / `FARE_UPGRADE_KL`. De
+> vergelijking "los bijkopen versus meteen Plus" bestaat dus niet; daarvoor
+> zijn twee tarieven per maatschappij nodig in plaats van één.
 
 ### Treinkosten
 
@@ -298,7 +312,7 @@ Data-credits, draaien offline en zijn deterministisch.
 | Fase | Inhoud |
 |---|---|
 | **1** | Zoeken + regels + bagage + totaalprijs + dashboard. Alleen 25 en 29 oktober 2026. |
-| 2 | Prijsgeschiedenis vastleggen; Playwright e2e |
+| 2 | Prijsgeschiedenis vastleggen; Playwright e2e; **Plus-prijs naast Light tonen (§4)**; **KL alleen tonen als het echt goedkoper is (§3)** |
 | 3 | Kortings- en high-alert-meldingen op het dashboard |
 | 4 | Google Calendar inlezen in plaats van handmatige reislijst |
 
