@@ -13,8 +13,6 @@ use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\Money;
 use App\Domain\Flight\RoutePattern;
 use App\Domain\Flight\Segment;
-use App\Domain\Pricing\BaggagePolicy;
-use App\Domain\Pricing\FareUpgradeRates;
 use App\Domain\Pricing\TotalCostCalculator;
 use App\Infrastructure\Persistence\NullPriceHistory;
 use App\Infrastructure\Source\IgnavFlightSource;
@@ -61,8 +59,10 @@ final class SearchFlightsHandlerTest extends TestCase
         self::assertSame(13400, $result->options[0]->itinerary->basePrice->cents);
     }
 
-    public function test_the_partner_gets_a_higher_total_on_finnair(): void
+    public function test_chris_and_partner_get_the_same_total_on_finnair(): void
     {
+        // Bagagekosten zijn eruit (versimpeling): de reiziger mag het totaal niet
+        // meer beïnvloeden.
         $flights = new InMemoryFlightPriceSource();
         $flights->give(Airport::Ams, Airport::Hel, [self::viaHel(Carrier::Finnair, 134, '13:00', '16:45')]);
 
@@ -72,7 +72,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $partner = $handler(new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'partner'));
 
         self::assertSame(15650, $chris->options[0]->cost->total()->cents);
-        self::assertSame(19150, $partner->options[0]->cost->total()->cents);
+        self::assertSame(15650, $partner->options[0]->cost->total()->cents);
     }
 
     public function test_the_train_price_is_not_fetched_when_no_helsinki_option_survives(): void
@@ -158,13 +158,7 @@ final class SearchFlightsHandlerTest extends TestCase
 
         self::assertCount(1, $result->options);
         self::assertSame(1, $train->callCount, 'treinprijs moet worden opgehaald voor HEL→AMS');
-        // basis € 80,00 + bagage € 0 (chris/Finnair silver = gratis) + trein € 22,50 = € 102,50
-        // Baggagebeleid: Finnair Silver geeft gratis bagage, dus bagage = €0
-        // Trein €22,50 = 2250 cent
-        // Basis €80 = 8000 cent
-        // Totaal = 8000 + 2250 = 10250
-        self::assertSame(10250, $result->options[0]->cost->total()->cents,
-            'basis €80 + trein €22,50 = €102,50 (Finnair Silver: gratis bagage)');
+        self::assertSame(10250, $result->options[0]->cost->total()->cents, 'basis €80 + trein €22,50 = €102,50');
     }
 
     public function test_return_flight_departing_before_noon_is_rejected(): void
@@ -218,11 +212,10 @@ final class SearchFlightsHandlerTest extends TestCase
         $client = new MockHttpClient(new MockResponse($helToAmsJson));
 
         $source = new IgnavFlightSource($client, 'test-key');
-        $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
         $handler = new SearchFlightsHandler(
             $source,
             FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
-            new TotalCostCalculator(new BaggagePolicy($rates), $rates, trainCostEnabled: true),
+            new TotalCostCalculator(trainCostEnabled: true),
             new NullPriceHistory(),
         );
 
@@ -230,9 +223,8 @@ final class SearchFlightsHandlerTest extends TestCase
 
         self::assertCount(1, $result->options, 'Één geldige HEL→AMS Finnair-vlucht verwacht');
 
-        // basis €80 + bagage €0 (chris/Finnair Silver = gratis handbagage) + trein €22,50 = €102,50
         self::assertSame(10250, $result->options[0]->cost->total()->cents,
-            'basis €80 + trein €22,50 = €102,50 (Finnair Silver: gratis bagage); adapter moet HEL als oorsprong herkennen als ViaHelsinkiWithTrain');
+            'basis €80 + trein €22,50 = €102,50; adapter moet HEL als oorsprong herkennen als ViaHelsinkiWithTrain');
     }
 
     public function test_unknown_train_price_option_goes_last_without_estimate(): void
@@ -266,12 +258,10 @@ final class SearchFlightsHandlerTest extends TestCase
 
     private function handler(InMemoryFlightPriceSource $flights, FixedTrainPriceSource $train): SearchFlightsHandler
     {
-        $rates = FareUpgradeRates::fromConfig(['AY' => 35, 'KL' => 40]);
-
         return new SearchFlightsHandler(
             $flights,
             $train,
-            new TotalCostCalculator(new BaggagePolicy($rates), $rates, trainCostEnabled: true),
+            new TotalCostCalculator(trainCostEnabled: true),
             new NullPriceHistory(),
         );
     }

@@ -52,7 +52,7 @@ final readonly class SearchFlightsHandler
 
             $priced = new PricedItinerary(
                 $itinerary,
-                $this->calculator->calculate($itinerary, $traveller, $trainCost),
+                $this->calculator->calculate($itinerary, $trainCost),
             );
 
             // Opties met een bekende treinprijs worden gerangschikt op totaalprijs.

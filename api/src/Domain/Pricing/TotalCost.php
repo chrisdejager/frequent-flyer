@@ -10,7 +10,6 @@ final readonly class TotalCost
 {
     public function __construct(
         public Money $basePrice,
-        public Money $baggageCost,
         public Money $trainCost,
         public bool $indicative,
         public bool $trainCostKnown,
@@ -31,6 +30,6 @@ final readonly class TotalCost
 
     public function total(): Money
     {
-        return $this->basePrice->add($this->baggageCost)->add($this->trainCost);
+        return $this->basePrice->add($this->trainCost);
     }
 }

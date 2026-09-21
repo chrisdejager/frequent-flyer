@@ -4,7 +4,6 @@ export type TravellerId = 'chris' | 'partner'
 
 export interface Cost {
   basePrice: number
-  baggageCost: number
   trainCost: number
   total: number
   totalFormatted: string

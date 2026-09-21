@@ -25,7 +25,6 @@ interface CostRow {
 const rows = computed(() => {
   const r: CostRow[] = [
     { label: 'Vlucht', cents: props.option.cost.basePrice },
-    { label: 'Bagage', cents: props.option.cost.baggageCost },
   ]
 
   if (props.option.pattern === 'via_hel_train') {

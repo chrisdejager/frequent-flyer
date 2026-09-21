@@ -1,7 +1,13 @@
 # Leiden ↔ Turku vluchtzoeker
 
-Zoekt de goedkoopste reis tussen Leiden en Turku met een **eerlijke** totaalprijs:
-de VR-trein Helsinki⇄Turku en de bagagekosten per reiziger tellen mee.
+Zoekt de goedkoopste reis tussen Leiden en Turku. Het totaal is de ticketprijs
+plus de VR-trein Helsinki⇄Turku waar van toepassing. HEL<>AMS toont alleen
+directe vluchten, TKU<>AMS alleen vluchten met precies 1 overstap.
+
+Bagagekosten tellen bewust niet mee (versimpeling, 2026-09-21) — de eerdere
+per-reiziger-berekening (`BaggagePolicy`/`FareUpgradeRates`) rekende ook mis
+bij een expliciet gekozen reiziger. Terughalen kan uit de git-historie vóór
+deze wijziging als dat ooit weer nodig is.
 
 ## Lees dit eerst bij een nieuwe sessie
 

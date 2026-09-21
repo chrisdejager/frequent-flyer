@@ -24,7 +24,6 @@ const rankedOption = {
   flightNumbers: ['AY842'],
   cost: {
     basePrice: 13400,
-    baggageCost: 0,
     trainCost: 2250,
     total: 15650,
     totalFormatted: '€ 156,50',
@@ -48,7 +47,6 @@ const unrankedOption = {
   flightNumbers: ['KL1234', 'KL5678'],
   cost: {
     basePrice: 19900,
-    baggageCost: 0,
     trainCost: 0,
     total: 19900,
     totalFormatted: '€ 199,00',

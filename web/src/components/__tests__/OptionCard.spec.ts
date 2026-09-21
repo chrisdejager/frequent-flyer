@@ -17,7 +17,6 @@ const viaHelsinki: Option = {
   flightNumbers: ['AY842'],
   cost: {
     basePrice: 13400,
-    baggageCost: 0,
     trainCost: 2250,
     total: 15650,
     totalFormatted: '€ 156,50',
@@ -39,24 +38,22 @@ describe('OptionCard', () => {
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
     const rows = card.findAll('[data-testid="cost-row"]')
 
-    expect(rows).toHaveLength(3)
+    expect(rows).toHaveLength(2)
     expect(rows[0].text()).toContain('Vlucht')
-    expect(rows[1].text()).toContain('Bagage')
-    expect(rows[2].text()).toContain('Trein')
+    expect(rows[1].text()).toContain('Trein')
 
     // Ook de bedragen toetsen: met alleen de labels zou een kapotte
     // centen-omrekening onopgemerkt blijven, terwijl juist deze opbouw
     // moet laten zien waarom een optie wint.
     expect(rows[0].text()).toContain('€ 134,00')
-    expect(rows[1].text()).toContain('€ 0,00')
-    expect(rows[2].text()).toContain('€ 22,50')
+    expect(rows[1].text()).toContain('€ 22,50')
   })
 
   it('telt de uitgesplitste bedragen op tot het getoonde totaal', () => {
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
-    const { basePrice, baggageCost, trainCost, total } = viaHelsinki.cost
+    const { basePrice, trainCost, total } = viaHelsinki.cost
 
-    expect(basePrice + baggageCost + trainCost).toBe(total)
+    expect(basePrice + trainCost).toBe(total)
     expect(card.text()).toContain('€ 156,50')
   })
 
@@ -69,7 +66,7 @@ describe('OptionCard', () => {
 
     const card = mount(OptionCard, { props: { option: through } })
 
-    expect(card.findAll('[data-testid="cost-row"]')).toHaveLength(2)
+    expect(card.findAll('[data-testid="cost-row"]')).toHaveLength(1)
   })
 
   it('markeert een indicatieve prijs', () => {
@@ -77,7 +74,7 @@ describe('OptionCard', () => {
       ...viaHelsinki,
       carrier: 'KL',
       carrierLabel: 'KLM',
-      cost: { ...viaHelsinki.cost, baggageCost: 4000, indicative: true },
+      cost: { ...viaHelsinki.cost, indicative: true },
     }
 
     const card = mount(OptionCard, { props: { option: klm } })

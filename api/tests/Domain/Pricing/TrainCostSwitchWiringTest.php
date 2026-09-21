@@ -11,7 +11,6 @@ use App\Domain\Flight\Money;
 use App\Domain\Flight\RoutePattern;
 use App\Domain\Flight\Segment;
 use App\Domain\Pricing\TotalCostCalculator;
-use App\Domain\Traveller\Traveller;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -33,7 +32,6 @@ final class TrainCostSwitchWiringTest extends KernelTestCase
 
         $cost = $calculator->calculate(
             self::viaHel(),
-            Traveller::chris(),
             Money::fromEuros(22.50),
         );
 

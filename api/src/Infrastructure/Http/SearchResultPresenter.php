@@ -50,7 +50,6 @@ final readonly class SearchResultPresenter
             ),
             'cost' => [
                 'basePrice' => $cost->basePrice->cents,
-                'baggageCost' => $cost->baggageCost->cents,
                 'trainCost' => $cost->trainCost->cents,
                 'total' => $cost->total()->cents,
                 'totalFormatted' => $cost->total()->format(),

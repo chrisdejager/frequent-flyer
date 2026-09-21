@@ -14,9 +14,8 @@ final class TotalCostTest extends TestCase
     {
         // Bewijst dat total() zelf niet verandert — het getoonde bedrag blijft €140
         $cost = new TotalCost(
-            basePrice:      Money::fromEuros(140.00),
-            baggageCost:    Money::zero(),
-            trainCost:      Money::zero(),
+            basePrice:         Money::fromEuros(140.00),
+            trainCost:         Money::zero(),
             indicative:        true,
             trainCostKnown:    false,
             trainCostIncluded: true,
