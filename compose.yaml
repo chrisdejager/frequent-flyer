@@ -1,6 +1,7 @@
 services:
   php:
     build: ./docker/php
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./api:/app
     working_dir: /app
