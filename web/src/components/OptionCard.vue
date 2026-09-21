@@ -42,22 +42,19 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <article class="card">
-    <header>
+  <article class="row">
+    <div class="flight">
       <strong>{{ option.carrierLabel }}</strong>
-      <span>{{ time(option.departAt, option.origin) }} → {{ time(option.arriveAt, option.destination) }}</span>
-      <span v-if="option.stops > 0">
-        via {{ option.via }} ({{ option.connectionMinutes }} min)
-      </span>
-      <span v-else>direct</span>
-    </header>
+      <span class="numbers">{{ option.flightNumbers.join(' · ') }}</span>
+    </div>
 
-    <p class="total">
-      {{ option.cost.totalFormatted }}
-      <em v-if="option.cost.indicative" data-testid="indicative">indicatief</em>
-    </p>
+    <div class="route">
+      <span class="times">{{ time(option.departAt, option.origin) }} → {{ time(option.arriveAt, option.destination) }}</span>
+      <span v-if="option.stops > 0" class="stops">via {{ option.via }} ({{ option.connectionMinutes }} min)</span>
+      <span v-else class="stops">direct</span>
+    </div>
 
-    <dl>
+    <dl class="breakdown">
       <div v-for="row in rows" :key="row.label" data-testid="cost-row">
         <dt>{{ row.label }}</dt>
         <dd v-if="row.excluded" data-testid="train-excluded">niet meegerekend</dd>
@@ -66,20 +63,38 @@ const rows = computed(() => {
       </div>
     </dl>
 
-    <p v-if="!option.cost.trainCostIncluded" class="excluded-notice" data-testid="excluded-notice">
-      Totaal is exclusief transfer HEL→TKU
-    </p>
-
-    <footer>{{ option.flightNumbers.join(' · ') }}</footer>
+    <div class="total">
+      <strong>{{ option.cost.totalFormatted }}</strong>
+      <em v-if="option.cost.indicative" data-testid="indicative">indicatief</em>
+      <small
+        v-if="!option.cost.trainCostIncluded"
+        class="excluded-notice"
+        data-testid="excluded-notice"
+      >Totaal is exclusief transfer HEL→TKU</small>
+    </div>
   </article>
 </template>
 
 <style scoped>
-.card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: .75rem; }
-header { display: flex; gap: .75rem; flex-wrap: wrap; color: #555; }
-.total { font-size: 1.5rem; margin: .5rem 0; }
-.total em { font-size: .8rem; color: #a15c00; font-style: normal; }
-dl div { display: flex; justify-content: space-between; border-top: 1px solid #f0f0f0; padding: .2rem 0; }
-dt, dd { margin: 0; }
-footer { margin-top: .5rem; color: #888; font-size: .85rem; }
+.row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) minmax(9rem, 1fr) minmax(14rem, 2fr) minmax(7rem, auto);
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #eee;
+  padding: .5rem 0;
+}
+.flight { display: flex; flex-direction: column; }
+.numbers { font-size: .8rem; color: #888; }
+.route { display: flex; flex-direction: column; color: #555; font-size: .9rem; }
+.stops { font-size: .8rem; color: #888; }
+
+.breakdown { display: flex; flex-wrap: wrap; gap: 0; font-size: .85rem; color: #555; }
+.breakdown div { display: flex; gap: .3rem; padding: 0 .6rem; border-left: 1px solid #ddd; }
+.breakdown div:first-child { padding-left: 0; border-left: none; }
+.breakdown dt, .breakdown dd { margin: 0; }
+
+.total { display: flex; flex-direction: column; align-items: flex-end; text-align: right; font-size: 1.15rem; }
+.total em { font-size: .75rem; color: #a15c00; font-style: normal; }
+.excluded-notice { font-size: .7rem; color: #888; font-weight: normal; }
 </style>

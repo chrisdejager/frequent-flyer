@@ -112,7 +112,7 @@ const unrankedOptions = computed<Option[]>(() =>
 
 <style>
 body { font-family: system-ui, sans-serif; margin: 0; background: #fafafa; }
-main { max-width: 42rem; margin: 0 auto; padding: 1.5rem; }
+main { max-width: 64rem; margin: 0 auto; padding: 1.5rem; }
 form { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
 input, select, button { padding: .5rem; font: inherit; }
 .trips { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
