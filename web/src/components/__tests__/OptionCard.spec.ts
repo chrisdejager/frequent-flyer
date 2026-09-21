@@ -7,6 +7,8 @@ const viaHelsinki: Option = {
   carrier: 'AY',
   carrierLabel: 'Finnair',
   pattern: 'via_hel_train',
+  origin: 'AMS',
+  destination: 'HEL',
   departAt: '2026-10-29T13:00:00+00:00',
   arriveAt: '2026-10-29T16:45:00+00:00',
   stops: 0,
@@ -108,11 +110,14 @@ describe('OptionCard', () => {
     expect(card.text()).toContain('90 min')
   })
 
-  it('toont de tijden zoals de bron ze gaf, niet omgerekend naar de browserzone', () => {
+  it('toont vertrek- en aankomsttijd in de lokale tijd van dat vliegveld, niet in UTC', () => {
+    // viaHelsinki: departAt 13:00 UTC vanaf AMS (CET, UTC+1 na de zomertijd),
+    // arriveAt 16:45 UTC in HEL (EET, UTC+2). Puur UTC tonen (het oude gedrag)
+    // is voor de reiziger fout: een Helsinki-tijd die 2 uur achterloopt.
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
 
-    expect(card.text()).toContain('13:00')
-    expect(card.text()).toContain('16:45')
+    expect(card.text()).toContain('14:00')
+    expect(card.text()).toContain('18:45')
   })
 
   it('meldt dat de transfer niet is meegerekend als trainCostIncluded false is', () => {

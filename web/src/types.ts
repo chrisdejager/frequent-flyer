@@ -18,6 +18,8 @@ export interface Option {
   carrier: string
   carrierLabel: string
   pattern: Pattern
+  origin: string
+  destination: string
   departAt: string
   arriveAt: string
   stops: number

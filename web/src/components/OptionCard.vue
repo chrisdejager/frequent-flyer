@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Option } from '../types'
+import { timezoneFor } from '../airports'
 
 const props = defineProps<{ option: Option }>()
 
 const euro = (cents: number) => `€ ${(cents / 100).toFixed(2).replace('.', ',')}`
 
-const time = (iso: string) =>
+const time = (iso: string, airport: string) =>
   new Date(iso).toLocaleTimeString('nl-NL', {
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'UTC',
+    timeZone: timezoneFor(airport),
   })
 
 interface CostRow {
@@ -44,7 +45,7 @@ const rows = computed(() => {
   <article class="card">
     <header>
       <strong>{{ option.carrierLabel }}</strong>
-      <span>{{ time(option.departAt) }} → {{ time(option.arriveAt) }}</span>
+      <span>{{ time(option.departAt, option.origin) }} → {{ time(option.arriveAt, option.destination) }}</span>
       <span v-if="option.stops > 0">
         via {{ option.via }} ({{ option.connectionMinutes }} min)
       </span>

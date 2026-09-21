@@ -86,6 +86,25 @@ final class SearchControllerTest extends WebTestCase
         self::assertSame(15650, $body['options'][0]['cost']['total']);
     }
 
+    public function test_response_includes_origin_and_destination_so_the_frontend_can_localise_times(): void
+    {
+        // De tijden in de respons zijn UTC-instanten; zonder herkomst- en
+        // bestemmingsluchthaven kan de frontend ze niet in de juiste lokale
+        // tijdzone tonen (AMS != HEL != TKU-tijd).
+        $client = static::createClient();
+
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [self::aFinnairFlight()]);
+        static::getContainer()->set(FlightPriceSource::class, $flights);
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('AMS', $body['options'][0]['origin']);
+        self::assertSame('HEL', $body['options'][0]['destination']);
+    }
+
     public function test_a_missing_date_is_a_bad_request(): void
     {
         $client = static::createClient();

@@ -37,6 +37,8 @@ final readonly class SearchResultPresenter
             'carrier' => $itinerary->carrier->value,
             'carrierLabel' => $itinerary->carrier->label(),
             'pattern' => $itinerary->pattern->value,
+            'origin' => $itinerary->origin()->value,
+            'destination' => $itinerary->destination()->value,
             'departAt' => $itinerary->departAt()->format(\DATE_ATOM),
             'arriveAt' => $itinerary->arriveAt()->format(\DATE_ATOM),
             'stops' => $itinerary->stopCount(),
