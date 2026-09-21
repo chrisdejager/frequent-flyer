@@ -24,6 +24,7 @@ final readonly class RuleSet
         return new self(
             new AllowedCarriers(),
             new AllowedConnectionAirports(),
+            new RequiredStopCount(),
             new MaxConnectionDuration(120),
             new HelsinkiTimeWindow($direction),
         );

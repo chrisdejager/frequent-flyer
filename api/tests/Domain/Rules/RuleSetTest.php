@@ -118,6 +118,35 @@ final class RuleSetTest extends TestCase
         );
     }
 
+    public function test_a_via_helsinki_option_with_a_stop_is_rejected(): void
+    {
+        // Alleen directe vluchten voor HEL<>AMS.
+        $it = new Itinerary(
+            Carrier::Finnair,
+            [
+                self::segment(Airport::Ams, Airport::Cph, '2026-10-29 09:00', '2026-10-29 10:30', 'AY1'),
+                self::segment(Airport::Cph, Airport::Hel, '2026-10-29 11:30', '2026-10-29 14:00', 'AY2'),
+            ],
+            Money::fromEuros(150),
+            RoutePattern::ViaHelsinkiWithTrain,
+        );
+
+        self::assertNotNull(RuleSet::standard(Direction::NlToFi)->rejectionReason($it));
+    }
+
+    public function test_a_through_ticket_without_a_stop_is_rejected(): void
+    {
+        // Alleen 1-overstap-vluchten voor TKU<>AMS.
+        $it = new Itinerary(
+            Carrier::Klm,
+            [self::segment(Airport::Ams, Airport::Tku, '2026-10-29 09:00', '2026-10-29 12:00', 'KL1')],
+            Money::fromEuros(180),
+            RoutePattern::ThroughTicket,
+        );
+
+        self::assertNotNull(RuleSet::standard(Direction::NlToFi)->rejectionReason($it));
+    }
+
     public function test_filter_keeps_only_valid_options_and_renumbers(): void
     {
         $good = self::viaHel('2026-10-29 13:00', '2026-10-29 16:45', Carrier::Finnair);
