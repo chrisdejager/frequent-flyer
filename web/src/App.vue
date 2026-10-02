@@ -3,6 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { plannedTrips, search } from './api'
 import LegColumn from './components/LegColumn.vue'
 import TotalBar from './components/TotalBar.vue'
+import { chosenOption, defaultSelection } from './roundTrip'
 import type { Direction, LegState, Trip, TravellerId } from './types'
 
 const traveller = ref<TravellerId>('partner')
@@ -42,9 +43,11 @@ async function runLeg(leg: LegState) {
 
   try {
     leg.result = await search(leg.date, leg.direction, traveller.value)
+    leg.selected = defaultSelection(leg.result)
   } catch (e) {
     leg.error = e instanceof Error ? e.message : String(e)
     leg.result = null
+    leg.selected = null
   } finally {
     leg.loading = false
   }
@@ -94,7 +97,7 @@ const loading = () => out.loading || back.loading
     <template v-if="searched">
       <p v-if="out.result" class="traveller-label">Prijzen voor {{ out.result.traveller.name }}</p>
 
-      <TotalBar />
+      <TotalBar :out="chosenOption(out)" :back="chosenOption(back)" :back-requested="true" />
 
       <div class="columns">
         <LegColumn :title="`Heen — ${dayLabel(out.date)}`" :leg="out" />

@@ -7,7 +7,7 @@
 
 ## Slices
 - [x] Slice 1 — tracer bullet: twee datums, twee parallelle calls, twee kale kolommen, placeholder-totaal
-- [ ] Slice 2 — happy path: roundTrip.ts + money.ts, goedkoopste heen + terug als echt totaal
+- [x] Slice 2 — happy path: roundTrip.ts + money.ts, goedkoopste heen + terug als echt totaal
 - [ ] Slice 3 — zelf kiezen: klikbare OptionCard, totaal rekent mee
 - [ ] Slice 4 — terugdatum optioneel + datumcontrole
 - [ ] Slice 5 — robuust: fout per kant, geen opties, requestId tegen racecondities
@@ -23,3 +23,7 @@
   beide 200, twee kolommen. **Open voor slice 2/3:** de rechterkolom loopt buiten
   de 76rem-breedte — de min-breedtes van de `OptionCard`-grid passen niet in een
   halve kolom. De OptionCard-layout moet compacter in een kolom.
+- Slice 2 gezien in de echte app (2026-10-02): Finnair AY1302 € 139 + KLM KL1254 € 84
+  = € 223,00 in de totaalbalk. Mutaties (defaultSelection → altijd 0; combine telt
+  alleen heen) maken resp. 3 en 7 tests rood. Kolom-overloop staat nog open → slice 3.
+- Testhulpen staan in `web/src/__tests__/fixtures.ts` (`makeOption`, `makeResult`, `makeLeg`).

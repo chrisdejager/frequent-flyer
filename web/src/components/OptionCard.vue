@@ -2,10 +2,10 @@
 import { computed } from 'vue'
 import type { Option } from '../types'
 import { timezoneFor } from '../airports'
+import { euro } from '../money'
 
 const props = defineProps<{ option: Option }>()
 
-const euro = (cents: number) => `€ ${(cents / 100).toFixed(2).replace('.', ',')}`
 
 const time = (iso: string, airport: string) =>
   new Date(iso).toLocaleTimeString('nl-NL', {

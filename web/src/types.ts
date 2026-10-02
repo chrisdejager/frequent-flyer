@@ -1,6 +1,7 @@
 export type Pattern = 'via_hel_train' | 'through'
 export type Direction = 'nl-fi' | 'fi-nl'
 export type TravellerId = 'chris' | 'partner'
+export type StartCountry = 'nl' | 'fi'
 
 export interface Cost {
   basePrice: number

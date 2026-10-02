@@ -9,6 +9,7 @@ vi.mock('../../api', () => ({
 }))
 
 import { search } from '../../api'
+import { makeOption, makeResult } from '../../__tests__/fixtures'
 
 const rankedOption = {
   carrier: 'AY',
@@ -142,5 +143,28 @@ describe('App', () => {
     expect(columns[1].text()).toContain('Finnair')
 
     expect(wrapper.find('[data-testid="total-bar"]').exists()).toBe(true)
+  })
+})
+
+describe('App — totaal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('standaard is het totaal goedkoopste heen + goedkoopste terug', async () => {
+    // Per richting een eigen resultaat, met een ongerangschikte optie die
+    // goedkoper is maar niet als standaard gekozen mag worden.
+    vi.mocked(search).mockImplementation(async (_date, direction) =>
+      direction === 'nl-fi'
+        ? makeResult([makeOption('KLM', 15650), makeOption('SAS', 17000)])
+        : makeResult([makeOption('Goedkoop', 100, { trainCostKnown: false }), makeOption('Finnair', 9875)]),
+    )
+
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 255,25')
   })
 })

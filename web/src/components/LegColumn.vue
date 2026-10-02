@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import OptionCard from './OptionCard.vue'
-import type { LegState, Option } from '../types'
+import { partition } from '../roundTrip'
+import type { LegState } from '../types'
 
 const props = defineProps<{ title: string; leg: LegState }>()
 
 // Opties met bekende treinprijs zijn gerangschikt op totaalprijs.
 // Opties met onbekende treinprijs staan achteraan en zijn niet vergeleken.
-const rankedOptions = computed<Option[]>(() =>
-  props.leg.result?.options.filter(o => o.cost.trainCostKnown) ?? [],
-)
-const unrankedOptions = computed<Option[]>(() =>
-  props.leg.result?.options.filter(o => !o.cost.trainCostKnown) ?? [],
-)
+const groups = computed(() => partition(props.leg.result?.options ?? []))
 </script>
 
 <template>
@@ -28,19 +24,19 @@ const unrankedOptions = computed<Option[]>(() =>
       </p>
 
       <OptionCard
-        v-for="(option, i) in rankedOptions"
-        :key="'ranked-' + i"
+        v-for="{ option, index } in groups.ranked"
+        :key="index"
         :option="option"
       />
 
-      <template v-if="unrankedOptions.length > 0">
+      <template v-if="groups.unranked.length > 0">
         <p class="unranked-notice" data-testid="unranked-notice">
           Niet gerangschikt — treinprijs onbekend
         </p>
 
         <OptionCard
-          v-for="(option, i) in unrankedOptions"
-          :key="'unranked-' + i"
+          v-for="{ option, index } in groups.unranked"
+          :key="index"
           :option="option"
         />
       </template>
