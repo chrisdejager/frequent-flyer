@@ -13,6 +13,8 @@ deze wijziging als dat ooit weer nodig is.
 
 - **`.superpowers/sdd/OVERDRACHT.md`** — waar het werk staat, wat er open is, en
   welke beslissingen de eigenaar heeft genomen. Begin hier.
+- `docs/adr/` — blijvende besluiten (retour, vluchtbron, treinschakelaar, bagage).
+  Wijzig een besluit met een nieuw ADR, herschrijf nooit een oud.
 - `.superpowers/sdd/progress.md` — logboek van alle taken en reviewrondes.
 - `docs/superpowers/specs/2026-09-16-leiden-turku-vluchtzoeker-design.md` — de spec.
 
