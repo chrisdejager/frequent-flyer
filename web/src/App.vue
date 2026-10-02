@@ -3,10 +3,14 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { plannedTrips, search } from './api'
 import LegColumn from './components/LegColumn.vue'
 import TotalBar from './components/TotalBar.vue'
-import { chosenOption, defaultSelection, validateDates } from './roundTrip'
-import type { Direction, LegState, Trip, TravellerId } from './types'
+import { chosenOption, defaultSelection, legDirections, legForTrip, validateDates } from './roundTrip'
+import type { Direction, LegState, StartCountry, Trip, TravellerId } from './types'
 
 const traveller = ref<TravellerId>('partner')
+const start = ref<StartCountry>('nl')
+const directions = computed(() => legDirections(start.value))
+
+const arrow = (direction: Direction) => (direction === 'nl-fi' ? 'NL → FI' : 'FI → NL')
 
 const emptyLeg = (direction: Direction, date: string): LegState =>
   ({ direction, date, result: null, error: '', loading: false, selected: null })
@@ -25,7 +29,7 @@ onMounted(async () => {
 })
 
 function pick(trip: Trip) {
-  if (trip.direction === out.direction) {
+  if (legForTrip(trip, start.value) === 'out') {
     out.date = trip.date
   } else {
     back.date = trip.date
@@ -65,7 +69,8 @@ async function run() {
   }
 
   searched.value = { out: out.date, back: back.date }
-  Object.assign(back, { result: null, error: '', selected: null })
+  out.direction = directions.value.out
+  Object.assign(back, { direction: directions.value.back, result: null, error: '', selected: null })
 
   // Beide kanten tegelijk: twee losse enkele reizen, elk met hun eigen uitkomst.
   // Zonder terugdatum is het een enkele reis: één call.
@@ -94,16 +99,23 @@ const isDefault = computed(() =>
     </nav>
 
     <form @submit.prevent="run">
-      <label>Heen (NL → FI)
+      <label>Vertrek vanuit
+        <select v-model="start" data-testid="start">
+          <option value="nl">Nederland</option>
+          <option value="fi">Finland</option>
+        </select>
+      </label>
+
+      <label>Heen ({{ arrow(directions.out) }})
         <input v-model="out.date" type="date" required data-testid="out-date" />
       </label>
 
-      <label>Terug (FI → NL) — optioneel
+      <label>Terug ({{ arrow(directions.back) }}) — optioneel
         <input v-model="back.date" type="date" data-testid="back-date" />
       </label>
 
       <label>Reiziger
-        <select v-model="traveller">
+        <select v-model="traveller" data-testid="traveller">
           <option value="chris">Chris</option>
           <option value="partner">Partner</option>
         </select>

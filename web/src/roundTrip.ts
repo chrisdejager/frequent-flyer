@@ -1,4 +1,4 @@
-import type { Direction, LegState, Option, SearchResult, StartCountry } from './types'
+import type { Direction, LegState, Option, SearchResult, StartCountry, Trip } from './types'
 
 export function legDirections(start: StartCountry): { out: Direction; back: Direction } {
   return start === 'nl'
@@ -66,4 +66,9 @@ export function validateDates(outDate: string, backDate: string): string | null 
   }
 
   return null
+}
+
+/** Bij welke kant hoort deze geplande reis, gegeven het startland? */
+export function legForTrip(trip: Trip, start: StartCountry): 'out' | 'back' {
+  return trip.direction === legDirections(start).out ? 'out' : 'back'
 }

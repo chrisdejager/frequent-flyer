@@ -8,7 +8,7 @@ vi.mock('../../api', () => ({
   search: vi.fn(async (): Promise<SearchResult> => mockResult),
 }))
 
-import { search } from '../../api'
+import { plannedTrips, search } from '../../api'
 import { makeOption, makeResult } from '../../__tests__/fixtures'
 
 const rankedOption = {
@@ -283,5 +283,49 @@ describe('App — robuust', () => {
 
     expect(button.attributes('disabled')).toBeUndefined()
     expect(button.text()).toBe('Zoek')
+  })
+})
+
+describe('App — startland en geplande reizen', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(search).mockImplementation(async () => makeResult([makeOption('KLM', 15650)]))
+  })
+
+  it('start in Finland draait beide richtingen om', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.find('[data-testid="start"]').setValue('fi')
+
+    expect(wrapper.find('form').text()).toContain('Heen (FI → NL)')
+    expect(wrapper.find('form').text()).toContain('Terug (NL → FI)')
+
+    await wrapper.find('[data-testid="out-date"]').setValue('2026-10-25')
+    await wrapper.find('[data-testid="back-date"]').setValue('2026-10-29')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-25', 'fi-nl', 'partner')
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
+  })
+
+  it('een geplande reis vult de datum bij de juiste kant, gegeven het startland', async () => {
+    vi.mocked(plannedTrips).mockResolvedValueOnce([
+      { date: '2026-10-25', direction: 'fi-nl', traveller: 'chris' },
+      { date: '2026-10-29', direction: 'nl-fi', traveller: 'chris' },
+    ])
+
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.find('[data-testid="start"]').setValue('fi')
+
+    const [toNl, toFi] = wrapper.findAll('.trips button')
+    await toNl.trigger('click')
+    await toFi.trigger('click')
+
+    // Start in Finland: fi-nl is de heenreis, nl-fi de terugreis.
+    expect((wrapper.find('[data-testid="out-date"]').element as HTMLInputElement).value).toBe('2026-10-25')
+    expect((wrapper.find('[data-testid="back-date"]').element as HTMLInputElement).value).toBe('2026-10-29')
+    expect((wrapper.find('select[data-testid="traveller"]').element as HTMLSelectElement).value).toBe('chris')
   })
 })

@@ -11,7 +11,7 @@
 - [x] Slice 3 — zelf kiezen: klikbare OptionCard, totaal rekent mee
 - [x] Slice 4 — terugdatum optioneel + datumcontrole
 - [x] Slice 5 — robuust: fout per kant, geen opties, ontbrekende kant in totaalbalk (requestId geschrapt)
-- [ ] Slice 6 — startland NL/FI + geplande reizen naar de juiste kant
+- [x] Slice 6 — startland NL/FI + geplande reizen naar de juiste kant
 
 ## Notes for a fresh session
 - Verzoek eigenaar (2026-10-02): "Ik zou graag 2 datums kunnen kiezen voor heen
@@ -46,3 +46,8 @@
 - Slice 5 gezien in de echte app (2026-10-02): fi-nl via een fetch-stub op 503 gezet,
   nl-fi echt. Heenkolom blijft staan, terugkolom toont de fout, totaalbalk € 139,00 +
   "Terugreis ontbreekt — niet meegeteld". Knop `disabled` tijdens laden, daarna weer aan.
+- Slice 6 gezien in de echte app (2026-10-02): startland Finland, geplande reizen
+  "25 okt → Nederland" → Heen (FI → NL), "29 okt → Finland" → Terug (NL → FI).
+  Calls: 2026-10-25 fi-nl en 2026-10-29 nl-fi, beide 200; totaal KLM € 123 +
+  Finnair € 139 = € 262,00.
+- **Alle zes slices af.** Frontend 53/53 groen, build groen. Backend onaangeroerd.
