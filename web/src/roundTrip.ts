@@ -57,3 +57,13 @@ export function combine(out: Option | null, back: Option | null): Combined {
     indicative: chosen.some(o => o.cost.indicative),
   }
 }
+
+/** null = geldig; anders een melding. Lege terugdatum = enkele reis, dus geldig. */
+export function validateDates(outDate: string, backDate: string): string | null {
+  // 'YYYY-MM-DD' sorteert als tekst gelijk aan de datum zelf.
+  if (backDate !== '' && backDate < outDate) {
+    return 'Terugdatum ligt vóór de heendatum.'
+  }
+
+  return null
+}

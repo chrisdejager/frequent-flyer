@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chosenOption, combine, defaultSelection, legDirections, partition } from '../roundTrip'
+import { chosenOption, combine, defaultSelection, legDirections, partition, validateDates } from '../roundTrip'
 import { euro } from '../money'
 import { makeLeg, makeOption, makeResult } from './fixtures'
 
@@ -82,5 +82,19 @@ describe('roundTrip', () => {
 
     expect(combine(plain, plain).indicative).toBe(false)
     expect(combine(plain, makeOption('KLM', 1, { indicative: true })).indicative).toBe(true)
+  })
+})
+
+describe('validateDates', () => {
+  it('accepteert een lege terugdatum', () => {
+    expect(validateDates('2026-10-29', '')).toBeNull()
+  })
+
+  it('accepteert dezelfde dag heen en terug', () => {
+    expect(validateDates('2026-10-29', '2026-10-29')).toBeNull()
+  })
+
+  it('weigert een terugdatum vóór de heendatum', () => {
+    expect(validateDates('2026-10-29', '2026-10-28')).toBe('Terugdatum ligt vóór de heendatum.')
   })
 })

@@ -4,7 +4,13 @@ import { combine } from '../roundTrip'
 import { euro } from '../money'
 import type { Option } from '../types'
 
-const props = defineProps<{ out: Option | null; back: Option | null; backRequested: boolean }>()
+const props = defineProps<{
+  out: Option | null
+  back: Option | null
+  backRequested: boolean
+  /** True = de gekozen opties zijn de standaardkeuze (goedkoopste gerangschikte). */
+  isDefault: boolean
+}>()
 
 const combined = computed(() => combine(props.out, props.back))
 
@@ -20,7 +26,8 @@ const legLine = (option: Option) => `${option.carrierLabel} · ${option.flightNu
 
     <div class="sum">
       <strong data-testid="total-sum">{{ euro(combined.totalCents) }}</strong>
-      <small>Goedkoopste combinatie · los te boeken</small>
+      <small>{{ isDefault ? 'Goedkoopste combinatie' : 'Jouw keuze' }} · los te boeken</small>
+      <small v-if="!backRequested">Alleen heenreis</small>
       <small v-if="combined.indicative" class="warn">indicatief</small>
       <small v-if="combined.incomplete" class="warn">onvolledig — treinprijs onbekend</small>
       <small v-if="combined.excludesTransfer">exclusief transfer HEL→TKU</small>

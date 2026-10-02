@@ -91,7 +91,9 @@ defineProps<{ title: string; leg: LegState }>()
 defineEmits<{ select: [index: number] }>()
 
 // TotalBar.vue
-defineProps<{ out: Option | null; back: Option | null; backRequested: boolean }>()
+defineProps<{ out: Option | null; back: Option | null; backRequested: boolean; isDefault: boolean }>()
+// isDefault toegevoegd in slice 4 (eigenaarsbesluit 2026-10-02): "Goedkoopste combinatie"
+// vs. "Jouw keuze" zodra een kant afwijkt van defaultSelection.
 ```
 
 ## Call stack

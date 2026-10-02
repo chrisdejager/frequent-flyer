@@ -146,6 +146,17 @@ describe('App', () => {
   })
 })
 
+async function searchWith(outDate: string, backDate: string) {
+  const wrapper = mount(App)
+  await flushPromises()
+  await wrapper.find('[data-testid="out-date"]').setValue(outDate)
+  await wrapper.find('[data-testid="back-date"]').setValue(backDate)
+  await wrapper.find('form').trigger('submit')
+  await flushPromises()
+
+  return wrapper
+}
+
 describe('App — totaal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -160,12 +171,10 @@ describe('App — totaal', () => {
         : makeResult([makeOption('Goedkoop', 100, { trainCostKnown: false }), makeOption('Finnair', 9875)]),
     )
 
-    const wrapper = mount(App)
-    await flushPromises()
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
+    const wrapper = await searchWith('2026-10-29', '2026-11-09')
 
     expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 255,25')
+    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Goedkoopste combinatie')
   })
 
   it('een andere optie aanklikken past het totaal aan zonder nieuwe zoekactie', async () => {
@@ -175,18 +184,55 @@ describe('App — totaal', () => {
         : makeResult([makeOption('Finnair', 9875)]),
     )
 
-    const wrapper = mount(App)
-    await flushPromises()
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
+    const wrapper = await searchWith('2026-10-29', '2026-11-09')
     expect(vi.mocked(search)).toHaveBeenCalledTimes(2)
 
     // Tweede kaart van de heenkolom: SAS € 170,00.
     const outColumn = wrapper.findAll('[data-testid="leg-column"]')[0]
     await outColumn.findAll('article')[1].trigger('click')
 
+    const bar = wrapper.find('[data-testid="total-bar"]')
     expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 268,75')
-    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('SAS')
+    expect(bar.text()).toContain('SAS')
+    // Niet meer de goedkoopste — dan mag de balk dat ook niet beweren.
+    expect(bar.text()).toContain('Jouw keuze')
+    expect(bar.text()).not.toContain('Goedkoopste combinatie')
     expect(vi.mocked(search)).toHaveBeenCalledTimes(2)
+
+    // Terug naar de goedkoopste: de balk zegt het weer.
+    await outColumn.findAll('article')[0].trigger('click')
+    expect(bar.text()).toContain('Goedkoopste combinatie')
+  })
+})
+
+describe('App — datums', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(search).mockImplementation(async () => makeResult([makeOption('KLM', 15650)]))
+  })
+
+  it('zoekt maar één keer zonder terugdatum', async () => {
+    const wrapper = await searchWith('2026-10-29', '')
+
+    expect(vi.mocked(search)).toHaveBeenCalledOnce()
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
+    expect(wrapper.findAll('[data-testid="leg-column"]')).toHaveLength(1)
+    expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 156,50')
+    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Alleen heenreis')
+  })
+
+  it('zoekt niet bij een terugdatum vóór de heendatum en toont een melding', async () => {
+    const wrapper = await searchWith('2026-11-09', '2026-10-29')
+
+    expect(vi.mocked(search)).not.toHaveBeenCalled()
+    expect(wrapper.find('[data-testid="form-error"]').text()).toContain('Terugdatum ligt vóór de heendatum')
+    expect(wrapper.find('[data-testid="total-bar"]').exists()).toBe(false)
+  })
+
+  it('een terugdatum die ná het zoeken wordt ingevuld toont geen lege terugkolom', async () => {
+    const wrapper = await searchWith('2026-10-29', '')
+    await wrapper.find('[data-testid="back-date"]').setValue('2026-11-09')
+
+    expect(wrapper.findAll('[data-testid="leg-column"]')).toHaveLength(1)
   })
 })

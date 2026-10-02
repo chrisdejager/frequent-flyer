@@ -9,7 +9,7 @@
 - [x] Slice 1 — tracer bullet: twee datums, twee parallelle calls, twee kale kolommen, placeholder-totaal
 - [x] Slice 2 — happy path: roundTrip.ts + money.ts, goedkoopste heen + terug als echt totaal
 - [x] Slice 3 — zelf kiezen: klikbare OptionCard, totaal rekent mee
-- [ ] Slice 4 — terugdatum optioneel + datumcontrole
+- [x] Slice 4 — terugdatum optioneel + datumcontrole
 - [ ] Slice 5 — robuust: fout per kant, geen opties, requestId tegen racecondities
 - [ ] Slice 6 — startland NL/FI + geplande reizen naar de juiste kant
 
@@ -33,3 +33,13 @@
   Kolommen stapelen nu onder 70rem i.p.v. 52rem.
 - **Open copy-punt:** de totaalbalk zegt "Goedkoopste combinatie" ook nadat je zelf
   iets anders hebt gekozen. Voorgelegd aan de eigenaar.
+- Slice 4 gezien in de echte app (2026-10-02): terug < heen → melding, 0 calls;
+  lege terugdatum → 1 call, 1 kolom, "Alleen heenreis"; eigen keuze → "Jouw keuze".
+  Copy-punt "Goedkoopste combinatie" opgelost (eigenaar: "neem mee").
+  Kolomkoppen en de terugkolom volgen de datums van de **laatste zoekactie**
+  (`searched`), niet wat er sindsdien in het formulier staat.
+- **Valkuil dev-omgeving:** Vite's file-watcher (bind-mount) miste één edit; de
+  browser kreeg een oude `TotalBar`. Tests waren groen. `touch` op het bestand
+  lost het op. Bij twijfel: `curl localhost:8080/src/components/X.vue | grep`.
+- Geen `:min` op de terugdatum: Chrome blokkeert dan zelf het formulier met een
+  eigen tooltip en onze melding komt nooit; één controle, de onze.

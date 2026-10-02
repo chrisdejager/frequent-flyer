@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { plannedTrips, search } from './api'
 import LegColumn from './components/LegColumn.vue'
 import TotalBar from './components/TotalBar.vue'
-import { chosenOption, defaultSelection } from './roundTrip'
+import { chosenOption, defaultSelection, validateDates } from './roundTrip'
 import type { Direction, LegState, Trip, TravellerId } from './types'
 
 const traveller = ref<TravellerId>('partner')
@@ -12,10 +12,13 @@ const emptyLeg = (direction: Direction, date: string): LegState =>
   ({ direction, date, result: null, error: '', loading: false, selected: null })
 
 const out = reactive<LegState>(emptyLeg('nl-fi', '2026-10-29'))
-const back = reactive<LegState>(emptyLeg('fi-nl', '2026-11-09'))
+const back = reactive<LegState>(emptyLeg('fi-nl', ''))
 
 const trips = ref<Trip[]>([])
-const searched = ref(false)
+const formError = ref('')
+// De datums van de laatste zoekactie: kolomkoppen en de terugkolom volgen
+// wat er gezocht is, niet wat er sindsdien in het formulier is getypt.
+const searched = ref<{ out: string; back: string } | null>(null)
 
 onMounted(async () => {
   trips.value = await plannedTrips()
@@ -54,12 +57,29 @@ async function runLeg(leg: LegState) {
 }
 
 async function run() {
-  searched.value = true
+  formError.value = validateDates(out.date, back.date) ?? ''
+
+  if (formError.value) {
+    searched.value = null
+    return
+  }
+
+  searched.value = { out: out.date, back: back.date }
+  Object.assign(back, { result: null, error: '', selected: null })
+
   // Beide kanten tegelijk: twee losse enkele reizen, elk met hun eigen uitkomst.
-  await Promise.allSettled([runLeg(out), runLeg(back)])
+  // Zonder terugdatum is het een enkele reis: één call.
+  await Promise.allSettled(back.date ? [runLeg(out), runLeg(back)] : [runLeg(out)])
 }
 
 const loading = () => out.loading || back.loading
+
+const isDefaultLeg = (leg: LegState) =>
+  leg.selected === (leg.result ? defaultSelection(leg.result) : null)
+
+const isDefault = computed(() =>
+  isDefaultLeg(out) && (!searched.value?.back || isDefaultLeg(back)),
+)
 </script>
 
 <template>
@@ -78,8 +98,8 @@ const loading = () => out.loading || back.loading
         <input v-model="out.date" type="date" required data-testid="out-date" />
       </label>
 
-      <label>Terug (FI → NL)
-        <input v-model="back.date" type="date" required data-testid="back-date" />
+      <label>Terug (FI → NL) — optioneel
+        <input v-model="back.date" type="date" data-testid="back-date" />
       </label>
 
       <label>Reiziger
@@ -94,14 +114,26 @@ const loading = () => out.loading || back.loading
       </button>
     </form>
 
+    <p v-if="formError" class="error" data-testid="form-error">{{ formError }}</p>
+
     <template v-if="searched">
       <p v-if="out.result" class="traveller-label">Prijzen voor {{ out.result.traveller.name }}</p>
 
-      <TotalBar :out="chosenOption(out)" :back="chosenOption(back)" :back-requested="true" />
+      <TotalBar
+        :out="chosenOption(out)"
+        :back="chosenOption(back)"
+        :back-requested="searched.back !== ''"
+        :is-default="isDefault"
+      />
 
       <div class="columns">
-        <LegColumn :title="`Heen — ${dayLabel(out.date)}`" :leg="out" @select="i => (out.selected = i)" />
-        <LegColumn :title="`Terug — ${dayLabel(back.date)}`" :leg="back" @select="i => (back.selected = i)" />
+        <LegColumn :title="`Heen — ${dayLabel(searched.out)}`" :leg="out" @select="i => (out.selected = i)" />
+        <LegColumn
+          v-if="searched.back"
+          :title="`Terug — ${dayLabel(searched.back)}`"
+          :leg="back"
+          @select="i => (back.selected = i)"
+        />
       </div>
     </template>
   </main>
@@ -117,6 +149,7 @@ input, select, button { padding: .5rem; font: inherit; }
 .trips span { color: #666; font-size: .9rem; }
 .trips button { background: #eef3ff; border: 1px solid #c7d7ff; border-radius: 999px; cursor: pointer; }
 .traveller-label { font-size: .85rem; color: #555; margin-bottom: .75rem; }
+.error { color: #b00020; }
 .columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; }
 @media (max-width: 70rem) { .columns { grid-template-columns: 1fr; } }
 </style>
