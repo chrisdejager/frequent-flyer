@@ -4,8 +4,8 @@ import type { Option } from '../types'
 import { timezoneFor } from '../airports'
 import { euro } from '../money'
 
-const props = defineProps<{ option: Option }>()
-
+const props = withDefaults(defineProps<{ option: Option; selected?: boolean }>(), { selected: false })
+const emit = defineEmits<{ select: [] }>()
 
 const time = (iso: string, airport: string) =>
   new Date(iso).toLocaleTimeString('nl-NL', {
@@ -41,7 +41,16 @@ const rows = computed(() => {
 </script>
 
 <template>
-  <article class="row">
+  <article
+    class="row"
+    :class="{ selected }"
+    role="button"
+    tabindex="0"
+    :aria-pressed="selected ? 'true' : 'false'"
+    @click="emit('select')"
+    @keydown.enter.prevent="emit('select')"
+    @keydown.space.prevent="emit('select')"
+  >
     <div class="flight">
       <strong>{{ option.carrierLabel }}</strong>
       <span class="numbers">{{ option.flightNumbers.join(' · ') }}</span>
@@ -77,12 +86,16 @@ const rows = computed(() => {
 <style scoped>
 .row {
   display: grid;
-  grid-template-columns: minmax(7rem, 1fr) minmax(9rem, 1fr) minmax(14rem, 2fr) minmax(7rem, auto);
+  /* Smal genoeg voor een halve kolom naast de andere kant. */
+  grid-template-columns: minmax(5.5rem, 1fr) minmax(7rem, 1fr) minmax(10rem, 2fr) minmax(6rem, auto);
   align-items: center;
-  gap: 1rem;
+  gap: .75rem;
   border-bottom: 1px solid #eee;
-  padding: .5rem 0;
+  padding: .5rem .25rem;
+  cursor: pointer;
 }
+.row.selected { background: #eef3ff; outline: 1px solid #c7d7ff; }
+.row:focus-visible { outline: 2px solid #4a74d9; }
 .flight { display: flex; flex-direction: column; }
 .numbers { font-size: .8rem; color: #888; }
 .route { display: flex; flex-direction: column; color: #555; font-size: .9rem; }

@@ -163,4 +163,20 @@ describe('OptionCard', () => {
     expect(trainRow!.text()).not.toContain('€ 0,00')
     expect(card.find('[data-testid="indicative"]').exists()).toBe(true)
   })
+
+  it('klik op de kaart emit select', async () => {
+    const card = mount(OptionCard, { props: { option: viaHelsinki } })
+
+    await card.trigger('click')
+
+    expect(card.emitted('select')).toHaveLength(1)
+  })
+
+  it('selected markeert de kaart (aria-pressed)', () => {
+    const plain = mount(OptionCard, { props: { option: viaHelsinki } })
+    const chosen = mount(OptionCard, { props: { option: viaHelsinki, selected: true } })
+
+    expect(plain.attributes('aria-pressed')).toBe('false')
+    expect(chosen.attributes('aria-pressed')).toBe('true')
+  })
 })

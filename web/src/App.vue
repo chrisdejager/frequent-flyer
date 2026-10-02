@@ -100,8 +100,8 @@ const loading = () => out.loading || back.loading
       <TotalBar :out="chosenOption(out)" :back="chosenOption(back)" :back-requested="true" />
 
       <div class="columns">
-        <LegColumn :title="`Heen — ${dayLabel(out.date)}`" :leg="out" />
-        <LegColumn :title="`Terug — ${dayLabel(back.date)}`" :leg="back" />
+        <LegColumn :title="`Heen — ${dayLabel(out.date)}`" :leg="out" @select="i => (out.selected = i)" />
+        <LegColumn :title="`Terug — ${dayLabel(back.date)}`" :leg="back" @select="i => (back.selected = i)" />
       </div>
     </template>
   </main>
@@ -117,6 +117,6 @@ input, select, button { padding: .5rem; font: inherit; }
 .trips span { color: #666; font-size: .9rem; }
 .trips button { background: #eef3ff; border: 1px solid #c7d7ff; border-radius: 999px; cursor: pointer; }
 .traveller-label { font-size: .85rem; color: #555; margin-bottom: .75rem; }
-.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-@media (max-width: 52rem) { .columns { grid-template-columns: 1fr; } }
+.columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; }
+@media (max-width: 70rem) { .columns { grid-template-columns: 1fr; } }
 </style>

@@ -8,7 +8,7 @@
 ## Slices
 - [x] Slice 1 — tracer bullet: twee datums, twee parallelle calls, twee kale kolommen, placeholder-totaal
 - [x] Slice 2 — happy path: roundTrip.ts + money.ts, goedkoopste heen + terug als echt totaal
-- [ ] Slice 3 — zelf kiezen: klikbare OptionCard, totaal rekent mee
+- [x] Slice 3 — zelf kiezen: klikbare OptionCard, totaal rekent mee
 - [ ] Slice 4 — terugdatum optioneel + datumcontrole
 - [ ] Slice 5 — robuust: fout per kant, geen opties, requestId tegen racecondities
 - [ ] Slice 6 — startland NL/FI + geplande reizen naar de juiste kant
@@ -27,3 +27,9 @@
   = € 223,00 in de totaalbalk. Mutaties (defaultSelection → altijd 0; combine telt
   alleen heen) maken resp. 3 en 7 tests rood. Kolom-overloop staat nog open → slice 3.
 - Testhulpen staan in `web/src/__tests__/fixtures.ts` (`makeOption`, `makeResult`, `makeLeg`).
+- Slice 3 gezien in de echte app (2026-10-02): KLM KL1251 € 155 + SAS SK2727 € 169
+  aangeklikt → € 324,00, geen extra /api/search-calls. Kolom-overloop opgelost
+  (gemeten: rechterkolom eindigt op x=1568, gelijk aan de totaalbalk; was 1656).
+  Kolommen stapelen nu onder 70rem i.p.v. 52rem.
+- **Open copy-punt:** de totaalbalk zegt "Goedkoopste combinatie" ook nadat je zelf
+  iets anders hebt gekozen. Voorgelegd aan de eigenaar.

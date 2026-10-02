@@ -167,4 +167,26 @@ describe('App — totaal', () => {
 
     expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 255,25')
   })
+
+  it('een andere optie aanklikken past het totaal aan zonder nieuwe zoekactie', async () => {
+    vi.mocked(search).mockImplementation(async (_date, direction) =>
+      direction === 'nl-fi'
+        ? makeResult([makeOption('KLM', 15650), makeOption('SAS', 17000)])
+        : makeResult([makeOption('Finnair', 9875)]),
+    )
+
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(vi.mocked(search)).toHaveBeenCalledTimes(2)
+
+    // Tweede kaart van de heenkolom: SAS € 170,00.
+    const outColumn = wrapper.findAll('[data-testid="leg-column"]')[0]
+    await outColumn.findAll('article')[1].trigger('click')
+
+    expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 268,75')
+    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('SAS')
+    expect(vi.mocked(search)).toHaveBeenCalledTimes(2)
+  })
 })

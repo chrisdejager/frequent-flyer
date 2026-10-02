@@ -5,6 +5,7 @@ import { partition } from '../roundTrip'
 import type { LegState } from '../types'
 
 const props = defineProps<{ title: string; leg: LegState }>()
+const emit = defineEmits<{ select: [index: number] }>()
 
 // Opties met bekende treinprijs zijn gerangschikt op totaalprijs.
 // Opties met onbekende treinprijs staan achteraan en zijn niet vergeleken.
@@ -27,6 +28,8 @@ const groups = computed(() => partition(props.leg.result?.options ?? []))
         v-for="{ option, index } in groups.ranked"
         :key="index"
         :option="option"
+        :selected="index === leg.selected"
+        @select="emit('select', index)"
       />
 
       <template v-if="groups.unranked.length > 0">
@@ -38,6 +41,8 @@ const groups = computed(() => partition(props.leg.result?.options ?? []))
           v-for="{ option, index } in groups.unranked"
           :key="index"
           :option="option"
+          :selected="index === leg.selected"
+          @select="emit('select', index)"
         />
       </template>
     </template>
