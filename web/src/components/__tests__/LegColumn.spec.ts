@@ -46,4 +46,16 @@ describe('LegColumn', () => {
 
     expect(cards.map(c => c.attributes('aria-pressed'))).toEqual(['false', 'true'])
   })
+
+  it('toont de foutmelding van alleen deze kant', () => {
+    const leg = { ...makeLeg(null, null), error: 'ignav gaf een 503' }
+
+    expect(mount(LegColumn, { props: { title: 'Terug', leg } }).text()).toContain('ignav gaf een 503')
+  })
+
+  it('toont "geen opties" bij een leeg resultaat', () => {
+    const leg = makeLeg(makeResult([]), null)
+
+    expect(mount(LegColumn, { props: { title: 'Terug', leg } }).text()).toContain('Geen opties')
+  })
 })

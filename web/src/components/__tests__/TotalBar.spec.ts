@@ -40,4 +40,18 @@ describe('TotalBar', () => {
     expect(own.text()).toContain('Jouw keuze')
     expect(own.text()).not.toContain('Goedkoopste')
   })
+
+  it('meldt dat de terugreis ontbreekt als er een terugdatum was maar geen keuze', () => {
+    const missing = mount(TotalBar, { props: { out: makeOption('KLM', 100), back: null, backRequested: true, isDefault: true } })
+    const oneWay = mount(TotalBar, { props: { out: makeOption('KLM', 100), back: null, backRequested: false, isDefault: true } })
+
+    expect(missing.text()).toContain('Terugreis ontbreekt')
+    expect(oneWay.text()).not.toContain('ontbreekt')
+  })
+
+  it('meldt dat de heenreis ontbreekt als alleen terug gekozen is', () => {
+    const bar = mount(TotalBar, { props: { out: null, back: makeOption('KLM', 100), backRequested: true, isDefault: true } })
+
+    expect(bar.text()).toContain('Heenreis ontbreekt')
+  })
 })

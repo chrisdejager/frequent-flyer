@@ -29,8 +29,9 @@ in de draaiende app op http://localhost:8080 en lever hem af als één commit.
    - Een fout aan één kant laat de andere kant staan.
    - "Geen opties" per kant.
    - De totaalbalk meldt als de terugreis ontbreekt.
-   - `requestId` voorkomt dat een laat antwoord van een oudere zoekactie de
-     nieuwe overschrijft.
+   - ~~`requestId`~~ geschrapt (eigenaar, 2026-10-02): de Zoek-knop is tijdens
+     het laden uitgeschakeld, dus de race is via de UI niet te bereiken. Een
+     test legt die uitgeschakelde knop vast.
 6. **Startland en geplande reizen.**
    - Een keuze "Vertrek vanuit Nederland/Finland" draait beide richtingen om.
    - `legForTrip`: een geplande reis vult de datum bij de juiste kant.

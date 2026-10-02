@@ -10,7 +10,7 @@
 - [x] Slice 2 — happy path: roundTrip.ts + money.ts, goedkoopste heen + terug als echt totaal
 - [x] Slice 3 — zelf kiezen: klikbare OptionCard, totaal rekent mee
 - [x] Slice 4 — terugdatum optioneel + datumcontrole
-- [ ] Slice 5 — robuust: fout per kant, geen opties, requestId tegen racecondities
+- [x] Slice 5 — robuust: fout per kant, geen opties, ontbrekende kant in totaalbalk (requestId geschrapt)
 - [ ] Slice 6 — startland NL/FI + geplande reizen naar de juiste kant
 
 ## Notes for a fresh session
@@ -43,3 +43,6 @@
   lost het op. Bij twijfel: `curl localhost:8080/src/components/X.vue | grep`.
 - Geen `:min` op de terugdatum: Chrome blokkeert dan zelf het formulier met een
   eigen tooltip en onze melding komt nooit; één controle, de onze.
+- Slice 5 gezien in de echte app (2026-10-02): fi-nl via een fetch-stub op 503 gezet,
+  nl-fi echt. Heenkolom blijft staan, terugkolom toont de fout, totaalbalk € 139,00 +
+  "Terugreis ontbreekt — niet meegeteld". Knop `disabled` tijdens laden, daarna weer aan.

@@ -103,7 +103,6 @@ defineProps<{ out: Option | null; back: Option | null; backRequested: boolean; i
 App.run()
   validateDates(outDate, backDate)  → bij een fout: error tonen, return (geen call)
   legDirections(start)              → out.direction, back.direction
-  requestId++                       (antwoorden van een oudere zoekactie worden genegeerd)
   Promise.allSettled([
     search(out.date, out.direction, traveller),
     back.date ? search(back.date, back.direction, traveller) : skip,
@@ -189,8 +188,12 @@ rood wordt.
 2. **De keuze wordt bewaard als index in `result.options`**, niet als
    vluchtnummer. Dat werkt omdat een resultaat na het zoeken niet meer
    verandert; bij een nieuwe zoekactie wordt de keuze opnieuw gezet.
-3. **`requestId` tegen racecondities.** Zonder dit kan een trage oude zoekactie
-   de nieuwe overschrijven. Het is een kleine toevoeging, maar wel extra state.
+3. **`requestId` tegen racecondities — GESCHRAPT in slice 5** (eigenaar,
+   2026-10-02). De Zoek-knop staat tijdens het laden op `disabled`, en een
+   uitgeschakelde standaardknop blokkeert ook Enter-submit. De race is dus niet
+   te bereiken; de test `de zoekknop is uitgeschakeld zolang een kant nog laadt`
+   bewaakt dat. **Komt er ooit een manier om tijdens het laden te zoeken
+   (bv. een geplande reis die direct zoekt), dan moet dit terug.**
 4. **De terugkolom verschijnt pas als er een terugdatum is.** Zonder terugdatum
    ziet het scherm eruit als nu, met één kolom.
 5. **De datumfout staat boven het formulier** als algemene `error`, los van de

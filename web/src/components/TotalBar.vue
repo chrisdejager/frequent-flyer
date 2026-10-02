@@ -28,6 +28,8 @@ const legLine = (option: Option) => `${option.carrierLabel} · ${option.flightNu
       <strong data-testid="total-sum">{{ euro(combined.totalCents) }}</strong>
       <small>{{ isDefault ? 'Goedkoopste combinatie' : 'Jouw keuze' }} · los te boeken</small>
       <small v-if="!backRequested">Alleen heenreis</small>
+      <small v-if="!out" class="warn">Heenreis ontbreekt — niet meegeteld</small>
+      <small v-if="backRequested && !back" class="warn">Terugreis ontbreekt — niet meegeteld</small>
       <small v-if="combined.indicative" class="warn">indicatief</small>
       <small v-if="combined.incomplete" class="warn">onvolledig — treinprijs onbekend</small>
       <small v-if="combined.excludesTransfer">exclusief transfer HEL→TKU</small>

@@ -236,3 +236,52 @@ describe('App — datums', () => {
     expect(wrapper.findAll('[data-testid="leg-column"]')).toHaveLength(1)
   })
 })
+
+describe('App — robuust', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('een fout aan één kant laat de andere kant staan', async () => {
+    vi.mocked(search).mockImplementation(async (_date, direction) => {
+      if (direction === 'fi-nl') {
+        throw new Error('ignav gaf een 503')
+      }
+      return makeResult([makeOption('KLM', 15650)])
+    })
+
+    const wrapper = await searchWith('2026-10-29', '2026-11-09')
+    const [outColumn, backColumn] = wrapper.findAll('[data-testid="leg-column"]')
+
+    expect(outColumn.text()).toContain('KLM')
+    expect(backColumn.text()).toContain('ignav gaf een 503')
+    expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 156,50')
+    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Terugreis ontbreekt')
+  })
+
+  it('de zoekknop is uitgeschakeld zolang een kant nog laadt', async () => {
+    // Dit is wat een race tussen twee zoekacties voorkomt (eigenaarsbesluit
+    // slice 5: geen requestId). Zonder :disabled kan een tweede zoekactie
+    // starten terwijl de eerste nog loopt.
+    let releaseBack!: (r: SearchResult) => void
+    vi.mocked(search).mockImplementation((_date, direction) =>
+      direction === 'fi-nl'
+        ? new Promise(resolve => { releaseBack = resolve })
+        : Promise.resolve(makeResult([makeOption('KLM', 15650)])),
+    )
+
+    const wrapper = await searchWith('2026-10-29', '2026-11-09')
+    const button = wrapper.find('button[type="submit"]')
+
+    // Heen is binnen, terug nog niet: knop blijft dicht.
+    expect(wrapper.find('[data-testid="leg-column"]').text()).toContain('KLM')
+    expect(button.attributes('disabled')).toBeDefined()
+    expect(button.text()).toBe('Zoeken…')
+
+    releaseBack(makeResult([makeOption('Finnair', 9875)]))
+    await flushPromises()
+
+    expect(button.attributes('disabled')).toBeUndefined()
+    expect(button.text()).toBe('Zoek')
+  })
+})
