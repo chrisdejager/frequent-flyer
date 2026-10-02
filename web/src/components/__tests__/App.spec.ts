@@ -117,6 +117,30 @@ describe('App', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(vi.mocked(search)).toHaveBeenCalledOnce()
+    expect(vi.mocked(search)).toHaveBeenCalled()
+  })
+
+  it('zoekt heen en terug met de juiste richting en datum per kant', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+
+    await wrapper.find('[data-testid="out-date"]').setValue('2026-10-29')
+    await wrapper.find('[data-testid="back-date"]').setValue('2026-11-09')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(vi.mocked(search)).toHaveBeenCalledTimes(2)
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-11-09', 'fi-nl', 'partner')
+
+    // Beide kanten krijgen een eigen kolom met hun eigen opties.
+    const columns = wrapper.findAll('[data-testid="leg-column"]')
+    expect(columns).toHaveLength(2)
+    expect(columns[0].text()).toContain('Heen')
+    expect(columns[0].text()).toContain('Finnair')
+    expect(columns[1].text()).toContain('Terug')
+    expect(columns[1].text()).toContain('Finnair')
+
+    expect(wrapper.find('[data-testid="total-bar"]').exists()).toBe(true)
   })
 })

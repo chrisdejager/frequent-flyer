@@ -1,25 +1,31 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { plannedTrips, search } from './api'
-import OptionCard from './components/OptionCard.vue'
-import type { Direction, Option, SearchResult, Trip, TravellerId } from './types'
+import LegColumn from './components/LegColumn.vue'
+import TotalBar from './components/TotalBar.vue'
+import type { Direction, LegState, Trip, TravellerId } from './types'
 
-const date = ref('2026-10-29')
-const direction = ref<Direction>('nl-fi')
 const traveller = ref<TravellerId>('partner')
 
+const emptyLeg = (direction: Direction, date: string): LegState =>
+  ({ direction, date, result: null, error: '', loading: false, selected: null })
+
+const out = reactive<LegState>(emptyLeg('nl-fi', '2026-10-29'))
+const back = reactive<LegState>(emptyLeg('fi-nl', '2026-11-09'))
+
 const trips = ref<Trip[]>([])
-const result = ref<SearchResult | null>(null)
-const error = ref('')
-const loading = ref(false)
+const searched = ref(false)
 
 onMounted(async () => {
   trips.value = await plannedTrips()
 })
 
 function pick(trip: Trip) {
-  date.value = trip.date
-  direction.value = trip.direction
+  if (trip.direction === out.direction) {
+    out.date = trip.date
+  } else {
+    back.date = trip.date
+  }
   traveller.value = trip.traveller
 }
 
@@ -27,28 +33,30 @@ const label = (trip: Trip) =>
   `${new Date(trip.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'UTC' })} ` +
   `${trip.direction === 'nl-fi' ? '→ Finland' : '→ Nederland'}`
 
-async function run() {
-  loading.value = true
-  error.value = ''
+const dayLabel = (date: string) =>
+  new Date(date).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })
+
+async function runLeg(leg: LegState) {
+  leg.loading = true
+  leg.error = ''
 
   try {
-    result.value = await search(date.value, direction.value, traveller.value)
+    leg.result = await search(leg.date, leg.direction, traveller.value)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e)
-    result.value = null
+    leg.error = e instanceof Error ? e.message : String(e)
+    leg.result = null
   } finally {
-    loading.value = false
+    leg.loading = false
   }
 }
 
-// Opties met bekende treinprijs zijn gerangschikt op totaalprijs.
-// Opties met onbekende treinprijs staan achteraan en zijn niet vergeleken.
-const rankedOptions = computed<Option[]>(() =>
-  result.value?.options.filter(o => o.cost.trainCostKnown) ?? [],
-)
-const unrankedOptions = computed<Option[]>(() =>
-  result.value?.options.filter(o => !o.cost.trainCostKnown) ?? [],
-)
+async function run() {
+  searched.value = true
+  // Beide kanten tegelijk: twee losse enkele reizen, elk met hun eigen uitkomst.
+  await Promise.allSettled([runLeg(out), runLeg(back)])
+}
+
+const loading = () => out.loading || back.loading
 </script>
 
 <template>
@@ -63,62 +71,49 @@ const unrankedOptions = computed<Option[]>(() =>
     </nav>
 
     <form @submit.prevent="run">
-      <input v-model="date" type="date" required />
+      <label>Heen (NL → FI)
+        <input v-model="out.date" type="date" required data-testid="out-date" />
+      </label>
 
-      <select v-model="direction">
-        <option value="nl-fi">Nederland → Finland</option>
-        <option value="fi-nl">Finland → Nederland</option>
-      </select>
+      <label>Terug (FI → NL)
+        <input v-model="back.date" type="date" required data-testid="back-date" />
+      </label>
 
-      <select v-model="traveller">
-        <option value="chris">Chris</option>
-        <option value="partner">Partner</option>
-      </select>
+      <label>Reiziger
+        <select v-model="traveller">
+          <option value="chris">Chris</option>
+          <option value="partner">Partner</option>
+        </select>
+      </label>
 
-      <button type="submit" :disabled="loading">
-        {{ loading ? 'Zoeken…' : 'Zoek' }}
+      <button type="submit" :disabled="loading()">
+        {{ loading() ? 'Zoeken…' : 'Zoek' }}
       </button>
     </form>
 
-    <p v-if="error" class="error">{{ error }}</p>
+    <template v-if="searched">
+      <p v-if="out.result" class="traveller-label">Prijzen voor {{ out.result.traveller.name }}</p>
 
-    <template v-if="result">
-      <p class="traveller-label">Prijzen voor {{ result.traveller.name }}</p>
+      <TotalBar />
 
-      <p v-if="result.options.length === 0">
-        Geen opties die aan de regels voldoen op deze datum.
-      </p>
-
-      <OptionCard
-        v-for="(option, i) in rankedOptions"
-        :key="'ranked-' + i"
-        :option="option"
-      />
-
-      <template v-if="unrankedOptions.length > 0">
-        <p class="unranked-notice" data-testid="unranked-notice">
-          Niet gerangschikt — treinprijs onbekend
-        </p>
-
-        <OptionCard
-          v-for="(option, i) in unrankedOptions"
-          :key="'unranked-' + i"
-          :option="option"
-        />
-      </template>
+      <div class="columns">
+        <LegColumn :title="`Heen — ${dayLabel(out.date)}`" :leg="out" />
+        <LegColumn :title="`Terug — ${dayLabel(back.date)}`" :leg="back" />
+      </div>
     </template>
   </main>
 </template>
 
 <style>
 body { font-family: system-ui, sans-serif; margin: 0; background: #fafafa; }
-main { max-width: 64rem; margin: 0 auto; padding: 1.5rem; }
-form { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+main { max-width: 76rem; margin: 0 auto; padding: 1.5rem; }
+form { display: flex; gap: .75rem; flex-wrap: wrap; align-items: end; margin-bottom: 1.5rem; }
+label { display: flex; flex-direction: column; font-size: .75rem; color: #666; gap: .2rem; }
 input, select, button { padding: .5rem; font: inherit; }
 .trips { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
 .trips span { color: #666; font-size: .9rem; }
 .trips button { background: #eef3ff; border: 1px solid #c7d7ff; border-radius: 999px; cursor: pointer; }
-.error { color: #b00020; }
 .traveller-label { font-size: .85rem; color: #555; margin-bottom: .75rem; }
-.unranked-notice { color: #666; font-size: .85rem; margin: .75rem 0 .25rem; border-top: 1px solid #e0e0e0; padding-top: .5rem; }
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 52rem) { .columns { grid-template-columns: 1fr; } }
 </style>

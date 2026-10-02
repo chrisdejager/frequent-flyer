@@ -39,3 +39,14 @@ export interface Trip {
   direction: Direction
   traveller: TravellerId
 }
+
+export interface LegState {
+  direction: Direction
+  /** 'YYYY-MM-DD'; '' = deze kant wordt niet gezocht. */
+  date: string
+  result: SearchResult | null
+  error: string
+  loading: boolean
+  /** Index in result.options; null = niets gekozen. */
+  selected: number | null
+}

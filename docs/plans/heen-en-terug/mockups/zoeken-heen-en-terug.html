@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — heen en terug</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #fafafa; color: #222; }
+  main { max-width: 76rem; margin: 0 auto; padding: 1.5rem; }
+  .note { background: #fff8e1; border: 1px dashed #e0b84d; padding: .5rem .75rem; font-size: .8rem; color: #7a5b00; margin-bottom: 1rem; }
+  form { display: flex; gap: .75rem; flex-wrap: wrap; align-items: end; margin-bottom: 1rem; }
+  label { display: flex; flex-direction: column; font-size: .75rem; color: #666; gap: .2rem; }
+  input, select, button { padding: .5rem; font: inherit; }
+  .trips { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
+  .trips span { color: #666; font-size: .9rem; }
+  .trips button { background: #eef3ff; border: 1px solid #c7d7ff; border-radius: 999px; }
+
+  .totalbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+              background: #fff; border: 1px solid #ddd; border-radius: .5rem; padding: .75rem 1rem; margin-bottom: 1rem; }
+  .totalbar .legs { font-size: .9rem; color: #444; display: flex; flex-direction: column; gap: .15rem; }
+  .totalbar .sum { font-size: 1.5rem; font-weight: 700; text-align: right; }
+  .totalbar .sum small { display: block; font-size: .7rem; font-weight: normal; color: #888; }
+
+  .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 52rem) { .columns { grid-template-columns: 1fr; } }
+  h2 { font-size: 1rem; margin: 0 0 .25rem; }
+  .sub { font-size: .8rem; color: #888; margin: 0 0 .5rem; }
+
+  .row { display: grid; grid-template-columns: 1.2rem 1fr 1.2fr auto; gap: .75rem; align-items: center;
+         border-bottom: 1px solid #eee; padding: .5rem .25rem; cursor: pointer; }
+  .row.selected { background: #eef3ff; outline: 1px solid #c7d7ff; }
+  .flight { display: flex; flex-direction: column; }
+  .numbers, .stops { font-size: .75rem; color: #888; }
+  .route { display: flex; flex-direction: column; font-size: .85rem; color: #555; }
+  .total { text-align: right; font-weight: 600; }
+  .total small { display: block; font-size: .65rem; color: #888; font-weight: normal; }
+  .empty { color: #666; font-size: .9rem; padding: .75rem 0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="note">Mockup — niet functioneel. Bedragen en vluchten zijn verzonnen.</div>
+  <h1>Leiden ↔ Turku</h1>
+
+  <nav class="trips">
+    <span>Gepland:</span>
+    <button>29 okt → Finland</button>
+    <button>9 nov → Nederland</button>
+  </nav>
+
+  <form>
+    <label>Vertrek vanuit
+      <select><option>Nederland</option><option>Finland</option></select>
+    </label>
+    <label>Heen (NL → FI)
+      <input type="date" value="2026-10-29">
+    </label>
+    <label>Terug (FI → NL) — optioneel
+      <input type="date" value="2026-11-09">
+    </label>
+    <label>Reiziger
+      <select><option>Partner</option><option>Chris</option></select>
+    </label>
+    <button type="button">Zoek</button>
+  </form>
+
+  <section class="totalbar">
+    <div class="legs">
+      <span><strong>Heen</strong> do 29 okt · KLM 07:05 → 10:40 (HEL) · € 129,00</span>
+      <span><strong>Terug</strong> ma 9 nov · Finnair 06:20 → 09:15 via ARN · € 98,00</span>
+    </div>
+    <div class="sum">€ 227,00
+      <small>Goedkoopste combinatie · los te boeken</small>
+      <small>exclusief transfer HEL→TKU</small>
+    </div>
+  </section>
+
+  <div class="columns">
+    <section>
+      <h2>Heen — do 29 oktober</h2>
+      <p class="sub">Nederland → Finland · 4 opties</p>
+
+      <article class="row selected">
+        <input type="radio" name="out" checked>
+        <div class="flight"><strong>KLM</strong><span class="numbers">KL1167</span></div>
+        <div class="route">07:05 → 10:40 <span class="stops">AMS → HEL · direct</span></div>
+        <div class="total">€ 129,00<small>excl. transfer</small></div>
+      </article>
+      <article class="row">
+        <input type="radio" name="out">
+        <div class="flight"><strong>Finnair</strong><span class="numbers">AY1302</span></div>
+        <div class="route">11:10 → 14:35 <span class="stops">AMS → HEL · direct</span></div>
+        <div class="total">€ 141,00<small>excl. transfer</small></div>
+      </article>
+      <article class="row">
+        <input type="radio" name="out">
+        <div class="flight"><strong>SAS</strong><span class="numbers">SK552 · SK1708</span></div>
+        <div class="route">09:40 → 15:05 <span class="stops">AMS → TKU · via ARN (75 min)</span></div>
+        <div class="total">€ 176,00</div>
+      </article>
+      <article class="row">
+        <input type="radio" name="out">
+        <div class="flight"><strong>Finnair</strong><span class="numbers">AY1306 · AY371</span></div>
+        <div class="route">17:20 → 22:10 <span class="stops">AMS → TKU · via HEL (95 min)</span></div>
+        <div class="total">€ 204,00</div>
+      </article>
+    </section>
+
+    <section>
+      <h2>Terug — ma 9 november</h2>
+      <p class="sub">Finland → Nederland · 3 opties</p>
+
+      <article class="row selected">
+        <input type="radio" name="back" checked>
+        <div class="flight"><strong>Finnair</strong><span class="numbers">AY372 · AY835</span></div>
+        <div class="route">06:20 → 09:15 <span class="stops">TKU → AMS · via ARN (60 min)</span></div>
+        <div class="total">€ 98,00</div>
+      </article>
+      <article class="row">
+        <input type="radio" name="back">
+        <div class="flight"><strong>KLM</strong><span class="numbers">KL1168</span></div>
+        <div class="route">11:35 → 13:15 <span class="stops">HEL → AMS · direct</span></div>
+        <div class="total">€ 112,00<small>excl. transfer</small></div>
+      </article>
+      <article class="row">
+        <input type="radio" name="back">
+        <div class="flight"><strong>Finnair</strong><span class="numbers">AY1305</span></div>
+        <div class="route">18:05 → 19:45 <span class="stops">HEL → AMS · direct</span></div>
+        <div class="total">€ 133,00<small>excl. transfer</small></div>
+      </article>
+    </section>
+  </div>
+
+  <h3 style="margin-top:2.5rem;font-size:.9rem;color:#666">Variant: één kant heeft niets</h3>
+  <div class="columns">
+    <section><h2>Heen — do 29 oktober</h2><p class="sub">4 opties (zoals boven)</p></section>
+    <section>
+      <h2>Terug — ma 9 november</h2>
+      <p class="empty">Geen opties die aan de regels voldoen op deze datum. Het totaal hierboven toont dan alleen de heenreis.</p>
+    </section>
+  </div>
+</main>
+</body>
+</html>
