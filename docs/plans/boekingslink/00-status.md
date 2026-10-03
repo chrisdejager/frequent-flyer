@@ -119,3 +119,12 @@
   URL met de hand → SAS-vluchtlijst 26 nov, SK556 € 193.
   **Prijsprobleem SAS** (te hoge ignav-prijs in de ranglijst): apart oppakken ná
   slices 4–6 (eigenaar).
+- **Besluit eigenaar 2026-10-03: SAS-prijs = onbekend (bouwen ná slice 6).** "Nooit de
+  codeshare-prijs, altijd bij de maatschappij zelf boeken." De ignav-zoekrespons
+  maakt geen onderscheid (zelfde `status: verified`, geen veld dat het verraadt);
+  alleen booking-links laat het zien en dat kost een call per optie. Daarom: álle
+  SK-opties tonen met "prijs onbekend, zie flysas.com" in de niet-gerangschikte
+  bak, zonder extra calls. Terugdraaien zodra SAS weer eigen prijzen doorgeeft
+  (af en toe nameten). Raakt het domein: een vlucht zonder bekende prijs bestaat
+  nog niet. Idee "laagste OTA + € 10" vervalt: ignav gaf bij beide SAS-opties
+  géén third_party-links.
