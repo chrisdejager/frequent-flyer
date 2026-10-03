@@ -3,6 +3,10 @@ export type Direction = 'nl-fi' | 'fi-nl'
 export type TravellerId = 'chris' | 'partner'
 export type StartCountry = 'nl' | 'fi'
 
+export type BookingLinkResult =
+  | { status: 'found'; url: string; provider: string }
+  | { status: 'no_direct_link' }
+
 export interface Cost {
   basePrice: number
   trainCost: number

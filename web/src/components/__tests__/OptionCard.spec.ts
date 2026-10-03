@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import OptionCard from '../OptionCard.vue'
+import { bookingPageUrl } from '../../booking'
 import type { Option } from '../../types'
 
 const viaHelsinki: Option = {
@@ -178,5 +179,38 @@ describe('OptionCard', () => {
 
     expect(plain.attributes('aria-pressed')).toBe('false')
     expect(chosen.attributes('aria-pressed')).toBe('true')
+  })
+
+  describe('Boeken-knop', () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    it('opent de boekingspagina in een nieuw tabblad, zonder opener', async () => {
+      const open = vi.spyOn(window, 'open').mockReturnValue(null)
+      const card = mount(OptionCard, { props: { option: viaHelsinki } })
+
+      await card.find('[data-testid="book"]').trigger('click')
+
+      expect(open).toHaveBeenCalledWith(bookingPageUrl(viaHelsinki), '_blank', 'noopener')
+    })
+
+    it('een klik op Boeken selecteert de regel niet', async () => {
+      vi.spyOn(window, 'open').mockReturnValue(null)
+      const card = mount(OptionCard, { props: { option: viaHelsinki } })
+
+      await card.find('[data-testid="book"]').trigger('click')
+
+      expect(card.emitted('select')).toBeUndefined()
+    })
+
+    it('Enter of spatie op Boeken selecteert de regel niet', async () => {
+      vi.spyOn(window, 'open').mockReturnValue(null)
+      const card = mount(OptionCard, { props: { option: viaHelsinki } })
+      const button = card.find('[data-testid="book"]')
+
+      await button.trigger('keydown', { key: 'Enter' })
+      await button.trigger('keydown', { key: ' ' })
+
+      expect(card.emitted('select')).toBeUndefined()
+    })
   })
 })

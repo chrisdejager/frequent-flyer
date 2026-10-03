@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { Option } from '../types'
 import { timezoneFor } from '../airports'
 import { euro } from '../money'
+import { bookingPageUrl } from '../booking'
 
 const props = withDefaults(defineProps<{ option: Option; selected?: boolean }>(), { selected: false })
 const emit = defineEmits<{ select: [] }>()
@@ -38,6 +39,10 @@ const rows = computed(() => {
 
   return r
 })
+
+function openBooking() {
+  window.open(bookingPageUrl(props.option), '_blank', 'noopener')
+}
 </script>
 
 <template>
@@ -79,6 +84,7 @@ const rows = computed(() => {
         class="excluded-notice"
         data-testid="excluded-notice"
       >Totaal is exclusief transfer HEL→TKU</small>
+      <button type="button" class="book" data-testid="book" @click.stop="openBooking" @keydown.stop>Boeken ↗</button>
     </div>
   </article>
 </template>
@@ -109,4 +115,7 @@ const rows = computed(() => {
 .total { display: flex; flex-direction: column; align-items: flex-end; text-align: right; font-size: 1.15rem; }
 .total em { font-size: .75rem; color: #a15c00; font-style: normal; }
 .excluded-notice { font-size: .7rem; color: #888; font-weight: normal; }
+
+.book { margin-top: .25rem; font-size: .8rem; padding: .2rem .7rem; border: 1px solid #4a74d9; color: #4a74d9; background: #fff; border-radius: 4px; cursor: pointer; }
+.book:hover { background: #4a74d9; color: #fff; }
 </style>

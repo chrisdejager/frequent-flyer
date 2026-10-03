@@ -1,4 +1,4 @@
-import type { Direction, SearchResult, Trip, TravellerId } from './types'
+import type { BookingLinkResult, Direction, SearchResult, Trip, TravellerId } from './types'
 
 export async function search(
   date: string,
@@ -26,4 +26,16 @@ export async function plannedTrips(): Promise<Trip[]> {
   const body = await response.json()
 
   return body.trips
+}
+
+export async function fetchBookingLink(ref: string): Promise<BookingLinkResult> {
+  const params = new URLSearchParams({ ref })
+  const response = await fetch(`/api/booking-link?${params}`)
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ error: 'Onbekende fout' }))
+    throw new Error(body.error ?? `Boekingslink ophalen mislukte (${response.status})`)
+  }
+
+  return response.json()
 }
