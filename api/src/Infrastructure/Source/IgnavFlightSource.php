@@ -304,6 +304,8 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             $segments,
             $priceMoney,
             $trainNeeded ? RoutePattern::ViaHelsinkiWithTrain : RoutePattern::ThroughTicket,
+            // Zonder bruikbaar id blijft de optie gewoon staan, alleen zonder Boeken-knop.
+            is_string($offer['ignav_id'] ?? null) && '' !== $offer['ignav_id'] ? $offer['ignav_id'] : null,
         );
     }
 }

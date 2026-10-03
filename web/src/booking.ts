@@ -7,7 +7,11 @@ export const CARRIER_HOMEPAGES: Record<string, { label: string; url: string }> =
   SK: { label: 'SAS', url: 'https://www.flysas.com' },
 }
 
-export function bookingPageUrl(option: Option): string {
+export function bookingPageUrl(option: Option): string | null {
+  if (!option.bookingRef) {
+    return null
+  }
+
   const timeZone = timezoneFor(option.origin)
   const date = new Intl.DateTimeFormat('en-CA', {
     timeZone,
@@ -17,6 +21,7 @@ export function bookingPageUrl(option: Option): string {
   }).format(new Date(option.departAt))
 
   const params = new URLSearchParams({
+    ref: option.bookingRef,
     carrier: option.carrier,
     flight: option.flightNumbers.join(' · '),
     date,

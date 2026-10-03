@@ -180,6 +180,35 @@ final class IgnavFlightSourceTest extends TestCase
         self::assertSame('2026-10-17T12:15:00+00:00', $itineraries[0]->segments[0]->arriveAt->format('c'));
     }
 
+    public function test_it_carries_the_ignav_id_as_booking_ref(): void
+    {
+        $itineraries = $this->searchRealPayload();
+
+        // De eerste toegestane optie in de fixture is Finnair (BT ervoor valt af);
+        // een verschoven index geeft hier het id van Air Baltic of de tweede Finnair.
+        self::assertSame('0ea5aa41342f00000056346ef96d746d', $itineraries[0]->bookingRef);
+        self::assertSame('f60792e7dede000000cac361c3234ba8', $itineraries[2]->bookingRef);
+    }
+
+    public function test_a_missing_ignav_id_gives_a_null_booking_ref(): void
+    {
+        $offer = $this->offer();
+        unset($offer['ignav_id']);
+
+        $itineraries = $this->searchWith($offer);
+
+        self::assertCount(1, $itineraries);
+        self::assertNull($itineraries[0]->bookingRef);
+    }
+
+    public function test_a_non_string_ignav_id_gives_a_null_booking_ref(): void
+    {
+        $itineraries = $this->searchWith($this->offer(['ignav_id' => ['x']]));
+
+        self::assertCount(1, $itineraries);
+        self::assertNull($itineraries[0]->bookingRef);
+    }
+
     public function test_via_helsinki_gets_the_train_pattern(): void
     {
         $itineraries = $this->searchRealPayload();

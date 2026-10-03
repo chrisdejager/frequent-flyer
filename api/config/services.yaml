@@ -49,6 +49,13 @@ services:
 
     App\Domain\Port\TrainPriceSource: '@App\Infrastructure\Source\ApifyTrainPriceSource'
 
+    App\Infrastructure\Source\IgnavBookingLinkSource:
+        arguments:
+            $apiKey: '%env(IGNAV_API_KEY)%'
+            $logger: '@logger'
+
+    App\Domain\Port\BookingLinkSource: '@App\Infrastructure\Source\IgnavBookingLinkSource'
+
     App\Domain\Pricing\TotalCostCalculator:
         arguments:
             $trainCostEnabled: '%env(bool:TRAIN_COST_ENABLED)%'
@@ -60,6 +67,9 @@ when@test:
             public: true
         App\Domain\Port\TrainPriceSource:
             alias: App\Infrastructure\Source\ApifyTrainPriceSource
+            public: true
+        App\Domain\Port\BookingLinkSource:
+            alias: App\Infrastructure\Source\IgnavBookingLinkSource
             public: true
         # Blootgesteld voor LoggerConfigurationTest: bewijst dat het logger:-blok
         # in de productiedefinitie de drempelwaarde op 'warning' houdt.

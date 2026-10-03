@@ -7,7 +7,7 @@ function deps(overrides: Partial<BookingPageDeps> = {}): BookingPageDeps & { ren
 
   return {
     rendered,
-    search: '?carrier=KL&flight=KL1251&date=2026-10-29',
+    search: '?ref=0ea5aa41342f00000056346ef96d746d&carrier=KL&flight=KL1251&date=2026-10-29',
     render: (html: string) => { rendered.push(html) },
     fetchLink: vi.fn(async (): Promise<BookingLinkResult> => ({
       status: 'found',
@@ -46,5 +46,13 @@ describe('runBookingPage', () => {
     await runBookingPage(d)
 
     expect(d.navigate).toHaveBeenCalledWith('https://www.klm.nl/boeken')
+  })
+
+  it('vraagt de link op met de ref uit de querystring', async () => {
+    const d = deps()
+
+    await runBookingPage(d)
+
+    expect(d.fetchLink).toHaveBeenCalledWith('0ea5aa41342f00000056346ef96d746d')
   })
 })

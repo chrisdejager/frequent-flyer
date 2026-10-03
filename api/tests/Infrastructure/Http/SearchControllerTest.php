@@ -351,6 +351,38 @@ final class SearchControllerTest extends WebTestCase
             'Finnair-optie heeft trainCostKnown=false in de JSON-respons.');
     }
 
+    public function test_each_option_exposes_its_booking_ref(): void
+    {
+        $client = static::createClient();
+
+        $withRef = new Itinerary(
+            Carrier::Finnair,
+            [new Segment(
+                Airport::Ams,
+                Airport::Hel,
+                new \DateTimeImmutable('2026-10-29 13:00'),
+                new \DateTimeImmutable('2026-10-29 16:45'),
+                'AY842',
+            )],
+            Money::fromEuros(120), // goedkoper, dus gegarandeerd options[0]
+            RoutePattern::ViaHelsinkiWithTrain,
+            '0ea5aa41342f00000056346ef96d746d',
+        );
+
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [$withRef, self::aFinnairFlight()]);
+        static::getContainer()->set(FlightPriceSource::class, $flights);
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('0ea5aa41342f00000056346ef96d746d', $body['options'][0]['bookingRef']);
+        // Zonder ref staat de sleutel er wél, als null: de frontend toont dan geen knop.
+        self::assertArrayHasKey('bookingRef', $body['options'][1]);
+        self::assertNull($body['options'][1]['bookingRef']);
+    }
+
     private static function aFinnairFlight(): Itinerary
     {
         return new Itinerary(

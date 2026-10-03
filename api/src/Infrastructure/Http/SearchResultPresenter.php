@@ -57,6 +57,7 @@ final readonly class SearchResultPresenter
                 'trainCostKnown' => $cost->trainCostKnown,
                 'trainCostIncluded' => $cost->trainCostIncluded,
             ],
+            'bookingRef' => $itinerary->bookingRef,
         ];
     }
 }

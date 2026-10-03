@@ -14,6 +14,8 @@ final readonly class Itinerary
         public array $segments,
         public Money $basePrice,
         public RoutePattern $pattern,
+        /** Verwijzing van de bron om later een boekingslink op te vragen (ignav_id). */
+        public ?string $bookingRef = null,
     ) {
         if ([] === $segments) {
             throw new \InvalidArgumentException('Een reisoptie heeft minstens één segment.');

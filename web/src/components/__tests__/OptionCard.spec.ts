@@ -16,6 +16,7 @@ const viaHelsinki: Option = {
   via: null,
   connectionMinutes: null,
   flightNumbers: ['AY842'],
+  bookingRef: '0ea5aa41342f00000056346ef96d746d',
   cost: {
     basePrice: 13400,
     trainCost: 2250,
@@ -211,6 +212,12 @@ describe('OptionCard', () => {
       await button.trigger('keydown', { key: ' ' })
 
       expect(card.emitted('select')).toBeUndefined()
+    })
+
+    it('ontbreekt zonder bookingRef', () => {
+      const card = mount(OptionCard, { props: { option: { ...viaHelsinki, bookingRef: null } } })
+
+      expect(card.find('[data-testid="book"]').exists()).toBe(false)
     })
   })
 })

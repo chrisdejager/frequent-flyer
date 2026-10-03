@@ -31,6 +31,8 @@ export interface Option {
   connectionMinutes: number | null
   flightNumbers: string[]
   cost: Cost
+  /** Verwijzing om de boekingslink op te vragen; null = geen Boeken-knop. */
+  bookingRef: string | null
 }
 
 export interface SearchResult {

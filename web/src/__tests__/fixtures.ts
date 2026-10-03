@@ -13,6 +13,7 @@ export function makeOption(carrierLabel: string, total: number, cost: Partial<Co
     via: 'ARN',
     connectionMinutes: 60,
     flightNumbers: ['XX1'],
+    bookingRef: '0ea5aa41342f00000056346ef96d746d',
     cost: {
       basePrice: total,
       trainCost: 0,

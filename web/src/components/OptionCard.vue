@@ -40,8 +40,12 @@ const rows = computed(() => {
   return r
 })
 
+const bookingUrl = computed(() => bookingPageUrl(props.option))
+
 function openBooking() {
-  window.open(bookingPageUrl(props.option), '_blank', 'noopener')
+  if (bookingUrl.value) {
+    window.open(bookingUrl.value, '_blank', 'noopener')
+  }
 }
 </script>
 
@@ -84,7 +88,7 @@ function openBooking() {
         class="excluded-notice"
         data-testid="excluded-notice"
       >Totaal is exclusief transfer HEL→TKU</small>
-      <button type="button" class="book" data-testid="book" @click.stop="openBooking" @keydown.stop>Boeken ↗</button>
+      <button v-if="bookingUrl" type="button" class="book" data-testid="book" @click.stop="openBooking" @keydown.stop>Boeken ↗</button>
     </div>
   </article>
 </template>

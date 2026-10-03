@@ -1,0 +1,61 @@
+{
+  "itinerary": {
+    "price": {
+      "amount": 143.0,
+      "currency": "EUR",
+      "status": "verified"
+    },
+    "outbound": {
+      "carrier": "Finnair",
+      "duration_minutes": 145,
+      "segments": [
+        {
+          "marketing_carrier_code": "AY",
+          "flight_number": "1302",
+          "operating_carrier_name": "Finnair",
+          "departure_airport": "AMS",
+          "departure_time_local": "2026-10-29T11:20:00",
+          "departure_timezone": "Europe/Amsterdam",
+          "departure_time_utc": "2026-10-29T10:20:00Z",
+          "arrival_airport": "HEL",
+          "arrival_time_local": "2026-10-29T14:45:00",
+          "arrival_timezone": "Europe/Helsinki",
+          "arrival_time_utc": "2026-10-29T12:45:00Z",
+          "duration_minutes": 145,
+          "aircraft": "Airbus A350"
+        }
+      ]
+    },
+    "cabin_class": "economy",
+    "requires_self_transfer": false
+  },
+  "booking_options": [
+    {
+      "legs": [
+        "outbound"
+      ],
+      "links": [
+        {
+          "provider_name": "Finnair",
+          "provider_type": "airline",
+          "price": {
+            "amount": 143.0,
+            "currency": "EUR",
+            "status": "verified"
+          },
+          "url": "https://www.finnair.com/nl-en/booking/flight-selection?origin=AMS&destination=HEL&adults=1&b15s=0&c15s=0&children=0&infants=0&cabin=ECONOMY&departureDate=2026-10-29&directFlights=false&departureFlightNumbers=AY1302&utm_source=meta-search-engine&utm_medium=deeplink&utm_campaign=google-flight-search&utm_term=nl&utm_content=&gclid=ADowPOJgowQLcY353p5Z-GtQu9QFq2EjgjOEPJzKbjAJ2nIWNdi5bgB57VScGxpcCunAxGrpupM7KPkcFIUHoHVZsQON7vBlL0OdxAgHJ4lqRFZfFdw&gclsrc=gf"
+        },
+        {
+          "provider_name": "lastminute.com",
+          "provider_type": "third_party",
+          "price": {
+            "amount": 199.0,
+            "currency": "EUR",
+            "status": "verified"
+          },
+          "url": "https://www.lastminute.com/msr/route/gfs?Adult=1&PointOfSaleCountry=NL&DisplayedPrice=198.06&DisplayedPriceCurrency=EUR&UserLanguage=nl&UserCurrency=EUR&TripType=OneWay&Slice1=1&Cabin1=Economy&Carrier1=AY&DepartureDate1=2026-10-29&Origin1=AMS&Destination1=HEL&BookingCode1=Z&FlightNumber1=1302&ReferralId=GOOG_GFH_42&gclid=ADowPOJSE9-qPpnLFu6S_ENkFyQXOY2k7DwMU5MaJ7D6-AEUl9T16kjXBKXjNWHVfB-aPVeXT2RDT0E2cPw9ARC9InGSOIaBermpTIgQiLTLX0vzZKAZ&gclsrc=gf"
+        }
+      ]
+    }
+  ]
+}

@@ -7,7 +7,7 @@
 
 ## Slices
 - [x] Slice 1 — tracer bullet: knop → boeken.html → stub-endpoint → finnair.com
-- [ ] Slice 2 — happy path: ignav_id door de keten, echte adapter kiest de airline-link
+- [x] Slice 2 — happy path: ignav_id door de keten, echte adapter kiest de airline-link
 - [ ] Slice 3 — geen directe link: alleen third_party/niet-https → homepage; 400-validatie
 - [ ] Slice 4 — fouten: 502 → foutmelding in het tabblad
 - [ ] Slice 5 — cache: tweede klik kost geen ignav-call
@@ -58,3 +58,19 @@
   is de naad. Bewijs in de app: 1 echte zoekopdracht (2 calls) + klik op AY, KL
   en SK (3 link-calls). Vraag de eigenaar daarvóór niet opnieuw; dit is akkoord
   zodra hij "door met slice 2" zegt.
+- **Slice 2 af (2026-10-03).** `ignav_id` → `Itinerary::$bookingRef` → presenter →
+  `Option.bookingRef` → `?ref=` in `boeken.html`; knop alleen mét ref.
+  `IgnavBookingLinkSource` (haiku-agent tegen vooraf geschreven tests, daarna
+  ingekort) kiest de goedkoopste `airline`-link met https; controller echt via de
+  poort. Nog géén cache, foutafhandeling of ref-validatie (slices 3–5): een
+  ignav-fout geeft nu nog een 500. PHP 144/144 (ook `--network none`),
+  frontend 65/65, build groen. Mutaties: elke nieuwe test wordt rood zonder zijn
+  code; alleen het weghalen van de poort-alias blijft groen — Symfony
+  auto-aliast een interface met één implementatie, de alias is dus alleen expliciet.
+  **Bewijs (curl door de echte app; Chrome-extensie was niet verbonden):** 1 zoek
+  (2 calls), 6 opties allemaal met ref; 3 link-calls:
+  AY1302 → finnair.com-deeplink met `departureFlightNumbers=AY1302`;
+  KL1251 → klm.nl-deeplink met `KL1251`;
+  **SK556+SK2728 → klm.nl-deeplink met KL2858+KL8528** — dezelfde vluchten
+  (codeshare, 11:15 AMS via ARN, € 484), maar ignav gaf geen SAS-eigen link.
+  Dat is het geaccepteerde risico uit "least confident decisions" #1.

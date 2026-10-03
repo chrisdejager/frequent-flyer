@@ -23,6 +23,7 @@ const rankedOption = {
   via: null,
   connectionMinutes: null,
   flightNumbers: ['AY842'],
+  bookingRef: null,
   cost: {
     basePrice: 13400,
     trainCost: 2250,
@@ -46,6 +47,7 @@ const unrankedOption = {
   via: 'AMS',
   connectionMinutes: 60,
   flightNumbers: ['KL1234', 'KL5678'],
+  bookingRef: null,
   cost: {
     basePrice: 19900,
     trainCost: 0,
