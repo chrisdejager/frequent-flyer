@@ -94,3 +94,18 @@
   aangescherpt, nu rood. Bewijs: curl op 5 ongeldige refs → 400 in de echte app.
   Tabblad zelf niet in de browser getoond (Chrome-extensie niet verbonden); een
   echte vlucht zonder airline-link kennen we niet.
+- **Browserbewijs slice 2/3 (2026-10-03, Chrome).** Klik Boeken bij AY1302 → binnen
+  5 s finnair.com met AMS→HEL do 29 okt, AY1302; Finnair selecteerde de vlucht en
+  ging naar `passenger-details`, gaf daar "unexpected error in the booking system"
+  (aan hun kant; mogelijk geautomatiseerd tabblad — eigenaar test zelf). Klik bij
+  SK556 → klm.nl metasearch-landing met KL2858/KL8528; na de cookiebanner viel
+  het tabblad terug naar `/search/advanced` (niet uitgezocht). Slice 3-tabblad
+  getoond met fetch-stub: "Geen directe boekingslink van SAS gevonden" + flysas.com.
+- **‼ Prijsprobleem SAS (eigenaar ontdekt, 2026-10-03, vlucht 26-11).** ignav geeft
+  voor SAS-vluchten de prijs van de KLM-codeshare: SK556+SK2728 € 374 in de app,
+  € 193 op flysas.com; SK1556+SK2720 € 515 vs € 259. Google Flights toont bij SAS
+  ook "prijs niet beschikbaar" en OTA's ~€ 186. Gevolg: de app zet SAS onterecht
+  achteraan — raakt de kern (goedkoopste reis), niet alleen de boekingslink.
+  Workaround van de eigenaar, getest: `https://www.flysas.com/nl-en/book-new/revenue/travelers?origin=AMS&destination=TKU&outboundDate=2026-11-26&adults=1&youths=0&children=0&infants=0&outFlightNumbers=556%2C2728`
+  — zónder `outFareBasis` (kennen we niet) laat SAS de vluchtnummers vallen en
+  toont de vluchtlijst van die datum en route. Nog geen besluit.
