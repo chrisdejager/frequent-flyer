@@ -51,6 +51,7 @@ services:
 
     App\Infrastructure\Source\IgnavBookingLinkSource:
         arguments:
+            $cache: '@cache.app'
             $apiKey: '%env(IGNAV_API_KEY)%'
             $logger: '@logger'
 

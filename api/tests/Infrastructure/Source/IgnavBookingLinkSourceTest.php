@@ -8,6 +8,8 @@ use App\Domain\Booking\BookingLinkUnavailable;
 use App\Infrastructure\Source\IgnavBookingLinkSource;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use App\Tests\Double\SpyCacheItemPool;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -28,7 +30,7 @@ final class IgnavBookingLinkSourceTest extends TestCase
             return new MockResponse(json_encode($payload, JSON_THROW_ON_ERROR));
         });
 
-        return new IgnavBookingLinkSource($client, 'test-key');
+        return new IgnavBookingLinkSource($client, new ArrayAdapter(), 'test-key');
     }
 
     /**
@@ -219,10 +221,113 @@ final class IgnavBookingLinkSourceTest extends TestCase
     {
         // "Kon niet vragen" mag nooit als "er is geen link" eindigen: dat laatste
         // wordt straks een halfuur gecachet.
-        $source = new IgnavBookingLinkSource(new MockHttpClient($response), 'test-key');
+        $source = new IgnavBookingLinkSource(new MockHttpClient($response), new ArrayAdapter(), 'test-key');
 
         $this->expectException(BookingLinkUnavailable::class);
 
         $source->linkFor(self::REF);
+    }
+    // ---------------------------------------------------------------- cache
+
+    /**
+     * @param list<MockResponse> $responses
+     */
+    private static function counting(array $responses, int &$calls): MockHttpClient
+    {
+        return new MockHttpClient(function () use (&$responses, &$calls): MockResponse {
+            ++$calls;
+
+            return array_shift($responses) ?? throw new \LogicException('Meer HTTP-calls dan verwacht.');
+        });
+    }
+
+    public function test_a_second_request_is_served_from_cache(): void
+    {
+        $calls = 0;
+        $body = json_encode($this->realPayload(), JSON_THROW_ON_ERROR);
+        $source = new IgnavBookingLinkSource(
+            self::counting([new MockResponse($body), new MockResponse($body)], $calls),
+            new ArrayAdapter(),
+            'test-key',
+        );
+
+        $first = $source->linkFor(self::REF);
+        $second = $source->linkFor(self::REF);
+
+        self::assertSame(1, $calls);
+        self::assertSame($first->url, $second->url);
+        self::assertSame('Finnair', $second->provider);
+    }
+
+    public function test_the_link_is_cached_for_half_an_hour_under_its_ref(): void
+    {
+        $spy = new SpyCacheItemPool();
+        $source = new IgnavBookingLinkSource(
+            new MockHttpClient(new MockResponse(json_encode($this->realPayload(), JSON_THROW_ON_ERROR))),
+            $spy,
+            'test-key',
+        );
+
+        $source->linkFor(self::REF);
+
+        self::assertSame(['ignav.booking.'.self::REF => 1800], $spy->recordedTtls);
+    }
+
+    public function test_no_direct_link_is_cached_too(): void
+    {
+        $calls = 0;
+        $empty = '{"booking_options":[]}';
+        $source = new IgnavBookingLinkSource(
+            self::counting([new MockResponse($empty), new MockResponse($empty)], $calls),
+            new ArrayAdapter(),
+            'test-key',
+        );
+
+        $source->linkFor(self::REF);
+        $second = $source->linkFor(self::REF);
+
+        self::assertSame(1, $calls);
+        self::assertFalse($second->isDirect());
+    }
+
+    public function test_a_failure_is_not_cached(): void
+    {
+        $calls = 0;
+        $source = new IgnavBookingLinkSource(
+            self::counting([
+                new MockResponse('', ['http_code' => 500]),
+                new MockResponse(json_encode($this->realPayload(), JSON_THROW_ON_ERROR)),
+            ], $calls),
+            new ArrayAdapter(),
+            'test-key',
+        );
+
+        try {
+            $source->linkFor(self::REF);
+            self::fail('De eerste aanvraag had moeten mislukken.');
+        } catch (BookingLinkUnavailable) {
+        }
+
+        $second = $source->linkFor(self::REF);
+
+        self::assertSame(2, $calls);
+        self::assertSame('Finnair', $second->provider);
+    }
+
+    public function test_another_ref_is_not_served_from_the_first_refs_cache(): void
+    {
+        $calls = 0;
+        $body = json_encode($this->realPayload(), JSON_THROW_ON_ERROR);
+        $source = new IgnavBookingLinkSource(
+            self::counting([new MockResponse($body), new MockResponse('{"booking_options":[]}')], $calls),
+            new ArrayAdapter(),
+            'test-key',
+        );
+
+        $source->linkFor(self::REF);
+        $other = $source->linkFor('f94653c4a76b4452b56fbee1337d6352');
+
+        self::assertSame(2, $calls);
+        self::assertFalse($other->isDirect());
     }
 }

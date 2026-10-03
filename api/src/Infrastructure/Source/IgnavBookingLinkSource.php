@@ -7,6 +7,7 @@ namespace App\Infrastructure\Source;
 use App\Domain\Booking\BookingLink;
 use App\Domain\Booking\BookingLinkUnavailable;
 use App\Domain\Port\BookingLinkSource;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -17,14 +18,49 @@ final readonly class IgnavBookingLinkSource implements BookingLinkSource
     /** Gemeten 2026-10-03: maatschappij zelf = "airline", reisbureau = "third_party". */
     private const DIRECT_PROVIDER_TYPE = 'airline';
 
+    /** Een halfuur: een tweede klik op dezelfde vlucht kost dan geen ignav-call. */
+    private const TTL_SECONDS = 1800;
+
+    /** Staat in de cache voor "geen directe link", ook die spaart een call. */
+    private const NO_DIRECT_SENTINEL = '__no_direct_link__';
+
     public function __construct(
         private HttpClientInterface $http,
+        private CacheItemPoolInterface $cache,
         private string $apiKey,
         private ?LoggerInterface $logger = null,
     ) {
     }
 
     public function linkFor(string $bookingRef): BookingLink
+    {
+        $item = $this->cache->getItem('ignav.booking.'.$bookingRef);
+
+        if ($item->isHit()) {
+            $cached = $item->get();
+
+            if (is_array($cached) && is_string($cached['url'] ?? null) && is_string($cached['provider'] ?? null)) {
+                return BookingLink::direct($cached['url'], $cached['provider']);
+            }
+
+            if (self::NO_DIRECT_SENTINEL === $cached) {
+                return BookingLink::noDirectLink();
+            }
+            // Onherkenbare waarde: gewoon opnieuw vragen.
+        }
+
+        $link = $this->fetch($bookingRef);
+
+        // Alleen een echt antwoord komt hier; een storing heeft al gegooid en wordt
+        // dus nooit gecachet.
+        $item->set($link->isDirect() ? ['url' => $link->url, 'provider' => $link->provider] : self::NO_DIRECT_SENTINEL);
+        $item->expiresAfter(self::TTL_SECONDS);
+        $this->cache->save($item);
+
+        return $link;
+    }
+
+    private function fetch(string $bookingRef): BookingLink
     {
         $response = $this->http->request('POST', self::ENDPOINT, [
             'headers' => [

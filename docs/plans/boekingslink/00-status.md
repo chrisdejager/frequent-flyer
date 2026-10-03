@@ -10,7 +10,7 @@
 - [x] Slice 2 — happy path: ignav_id door de keten, echte adapter kiest de airline-link
 - [x] Slice 3 — geen directe link: alleen third_party/niet-https → homepage; 400-validatie
 - [x] Slice 4 — fouten: 502 → foutmelding in het tabblad
-- [ ] Slice 5 — cache: tweede klik kost geen ignav-call
+- [x] Slice 5 — cache: tweede klik kost geen ignav-call
 - [ ] Slice 6 — afronden: ADR-0006, overdracht, volledige suites
 
 ## Notes for a fresh session
@@ -138,3 +138,15 @@
   least-confident #6 voor een verzonnen id; een écht verlopen id niet gemeten).
   Bewijs: curl → 502 in de echte app, warning in de php-log. Tabblad niet in de
   browser getoond (extensie weer losgekoppeld).
+- **Slice 5 af (2026-10-03).** `IgnavBookingLinkSource` cachet in `cache.app`
+  (`ignav.booking.<ref>`, 1800 s): directe link als `[url, provider]`, "geen link"
+  als sentinel; storingen gooien vóór het opslaan en worden dus nooit gecachet.
+  Bedradingstest door de echte container (`http_client` vervangen door een
+  MockHttpClient, willekeurige ref omdat `cache.app` in test op schijf staat):
+  2 aanvragen → 1 call. PHP 176/176 (ook `--network none`), frontend 77/77.
+  Mutaties rood, behalve `@cache.system` i.p.v. `@cache.app` (cachet net zo goed;
+  geen gedragsverschil). **Bewijs echte app:** dezelfde ref 3× → 4,9 s, 0,012 s,
+  0,006 s, identieke antwoorden; browser: gecachete AY1302-ref springt direct
+  door naar finnair.com. Slice 4-tabblad nu ook in de browser gezien
+  ("De boekingslink kon niet worden opgehaald." + Finnair-link).
+  Ignav_id van een zoekopdracht ~2 uur eerder werkte nog.
