@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Boeken-knop</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 1.5rem; background: #fafafa; color: #222; }
+  h1 { font-size: 1.1rem; margin: 0 0 .25rem; }
+  h2 { font-size: .95rem; margin: 2rem 0 .5rem; color: #555; }
+  .note { font-size: .8rem; color: #888; margin: 0 0 1rem; }
+  .col { max-width: 40rem; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: .5rem 1rem; }
+  .row { display: grid; grid-template-columns: minmax(5.5rem,1fr) minmax(7rem,1fr) minmax(10rem,2fr) minmax(6rem,auto);
+         gap: .75rem; align-items: center; border-bottom: 1px solid #eee; padding: .5rem .25rem; cursor: pointer; }
+  .row:last-child { border-bottom: none; }
+  .row.selected { background: #eef3ff; outline: 1px solid #c7d7ff; }
+  .flight { display: flex; flex-direction: column; }
+  .small { font-size: .8rem; color: #888; }
+  .route { display: flex; flex-direction: column; color: #555; font-size: .9rem; }
+  .breakdown { font-size: .85rem; color: #555; }
+  .total { display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; font-size: 1.15rem; }
+  .book { font-size: .8rem; padding: .2rem .7rem; border: 1px solid #4a74d9; color: #4a74d9; background: #fff;
+          border-radius: 4px; cursor: pointer; }
+  .book:hover { background: #4a74d9; color: #fff; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 1rem; }
+  .tab { width: 22rem; border: 1px solid #ccc; border-radius: 6px; background: #fff; overflow: hidden; }
+  .bar { background: #e8e8e8; padding: .3rem .6rem; font-size: .75rem; color: #666; }
+  .page { padding: 2rem 1rem; text-align: center; font-size: .95rem; min-height: 6rem; }
+  .page a { color: #4a74d9; }
+</style>
+</head>
+<body>
+<h1>Leiden → Turku · heen 29 okt</h1>
+<p class="note">Wegwerp-mockup. Klik op een regel = selecteren (zoals nu). Klik op "Boeken" = nieuw tabblad, regel blijft ongemoeid.</p>
+
+<div class="col">
+  <div class="row selected">
+    <div class="flight"><strong>Finnair</strong><span class="small">AY1302</span></div>
+    <div class="route"><span>11:55 → 15:15</span><span class="small">direct</span></div>
+    <div class="breakdown">Vlucht € 139 · Trein HEL–TKU niet meegerekend</div>
+    <div class="total"><strong>€ 139,00</strong><button class="book">Boeken ↗</button></div>
+  </div>
+  <div class="row">
+    <div class="flight"><strong>KLM</strong><span class="small">KL1251 · KL1213</span></div>
+    <div class="route"><span>07:10 → 13:40</span><span class="small">via HEL (55 min)</span></div>
+    <div class="breakdown">Vlucht € 155</div>
+    <div class="total"><strong>€ 155,00</strong><button class="book">Boeken ↗</button></div>
+  </div>
+  <div class="row">
+    <div class="flight"><strong>SAS</strong><span class="small">SK550 · SK1720</span></div>
+    <div class="route"><span>06:30 → 14:05</span><span class="small">via ARN (80 min)</span></div>
+    <div class="breakdown">Vlucht € 169</div>
+    <div class="total"><strong>€ 169,00</strong><button class="book">Boeken ↗</button></div>
+  </div>
+</div>
+
+<h2>Het nieuwe tabblad na een klik op "Boeken"</h2>
+<div class="tabs">
+  <div class="tab"><div class="bar">Nieuw tabblad</div>
+    <div class="page">Boekingslink ophalen bij KLM…<br><span class="small">KL1251 · 29 okt</span></div></div>
+  <div class="tab"><div class="bar">Daarna → klm.nl/boeken/…</div>
+    <div class="page">(boekingsscherm van KLM met KL1251 op 29 okt)</div></div>
+  <div class="tab"><div class="bar">Geen directe link</div>
+    <div class="page">Geen directe boekingslink bij SAS gevonden voor SK550 op 29 okt.<br>
+      <a href="#">Verder op flysas.com</a></div></div>
+  <div class="tab"><div class="bar">Fout</div>
+    <div class="page">De boekingslink kon nu niet worden opgehaald.<br>
+      <span class="small">Probeer het zo nog eens; je zoekresultaten staan nog in het andere tabblad.</span></div></div>
+</div>
+</body>
+</html>

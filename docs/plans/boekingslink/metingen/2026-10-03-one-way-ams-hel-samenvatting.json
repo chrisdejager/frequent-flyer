@@ -1,0 +1,85 @@
+{
+  "itineraries": [
+    {
+      "ignav_id": "d10d6e8d0da24735b03dc184d0912c3d",
+      "price": {
+        "amount": 142.0,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "carrier": "Finnair"
+    },
+    {
+      "ignav_id": "8c1b2345ac504b329ecfdedf81629465",
+      "price": {
+        "amount": 155.0,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "carrier": "KLM"
+    },
+    {
+      "ignav_id": "7b9ef16e11c24d3681280843cb1a9cab",
+      "price": {
+        "amount": 158.0,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "carrier": "KLM"
+    },
+    {
+      "ignav_id": "ba92f818cd6743f9978ed69b794514c3",
+      "price": {
+        "amount": 166.0,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "carrier": "KLM"
+    },
+    {
+      "ignav_id": "4bad93d4ba934a0eb2e83e1b9798bc11",
+      "price": {
+        "amount": 189.0,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "carrier": "Lufthansa"
+    },
+    {
+      "ignav_id": "b167fb8ae6d640d5b87b4dedc2647cbc",
+      "price": {
+        "amount": 192.0,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "carrier": "Air Baltic"
+    },
+    {
+      "ignav_id": "651ae4e4656049038be08378d273998d",
+      "price": {
+        "amount": 192.0,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "carrier": "Air Baltic"
+    },
+    {
+      "ignav_id": "dc62f3c10304499cba7cf967d0f967f6",
+      "price": {
+        "amount": 238.0,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "carrier": "Finnair"
+    },
+    {
+      "ignav_id": "9fe18b90c53940eb92c673a57eb139e9",
+      "price": {
+        "amount": 341.0,
+        "currency": "EUR",
+        "status": "verified"
+      },
+      "carrier": "KLM"
+    }
+  ]
+}
