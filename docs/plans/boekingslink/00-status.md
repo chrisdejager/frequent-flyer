@@ -74,3 +74,11 @@
   **SK556+SK2728 → klm.nl-deeplink met KL2858+KL8528** — dezelfde vluchten
   (codeshare, 11:15 AMS via ARN, € 484), maar ignav gaf geen SAS-eigen link.
   Dat is het geaccepteerde risico uit "least confident decisions" #1.
+- **SAS → KLM-link verklaard (meting 2026-10-03, vlucht 26-11-2026).** Beide
+  SAS-opties (SK556+SK2728, SK1556+SK2720; volgens `operating_carrier_name`
+  helemaal door SAS gevlogen) gaven twee `airline`-links: KLM-deeplink mét prijs
+  en vluchten (KL-codeshare-nummers), en SAS als `http://www.flysas.com/nl/nl/?gclid=…`
+  — alleen de homepage, **http** en **zonder prijs**. De adapter laat die vallen
+  (geen https; geen prijs telt als duurste), dus KLM wint. Dat is gewenst: de
+  KLM-link landt op de juiste vluchten. Geen uitzondering maar structureel voor SAS.
+  Kosten deze meting: 2 zoek-calls + 2 link-calls (plus 1 ruwe zoek-call AMS→TKU 29-10).
