@@ -11,7 +11,7 @@
 - [x] Slice 3 — geen directe link: alleen third_party/niet-https → homepage; 400-validatie
 - [x] Slice 4 — fouten: 502 → foutmelding in het tabblad
 - [x] Slice 5 — cache: tweede klik kost geen ignav-call
-- [ ] Slice 6 — afronden: ADR-0006, overdracht, volledige suites
+- [x] Slice 6 — afronden: ADR-0006, overdracht, volledige suites
 
 ## Notes for a fresh session
 - Verzoek eigenaar (2026-10-02): "ik zou graag directe boeking links hebben in de
@@ -150,3 +150,8 @@
   door naar finnair.com. Slice 4-tabblad nu ook in de browser gezien
   ("De boekingslink kon niet worden opgehaald." + Finnair-link).
   Ignav_id van een zoekopdracht ~2 uur eerder werkte nog.
+- **Slice 6 af (2026-10-03).** ADR-0006 (op aanvraag, alleen de maatschappij zelf,
+  SAS zelf gebouwd, cache 30 min, storing ≠ geen link) + index. `OVERDRACHT.md` en
+  `progress.md` bijgewerkt (buiten git). Eindstand: PHP 176/176, ook
+  `--network none`; frontend 77/77; build met `dist/boeken.html`. **Feature af.**
+  Volgende: SAS-prijs = onbekend (eigen feature, gates opnieuw).

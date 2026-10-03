@@ -11,3 +11,4 @@ Superseded by ADR-NNNN).
 | [0003](0003-ignav-als-vluchtbron.md) | ignav als vluchtbron, in plaats van Bright Data | Accepted |
 | [0004](0004-transfer-hel-tku-achter-een-schakelaar.md) | Transfer HEL–TKU achter één schakelaar, standaard uit | Accepted |
 | [0005](0005-bagagekosten-niet-meerekenen.md) | Bagagekosten tellen niet mee | Accepted |
+| [0006](0006-boekingslink-op-aanvraag.md) | Boekingslink op aanvraag, alleen bij de maatschappij zelf (SAS zelf gebouwd) | Accepted |
