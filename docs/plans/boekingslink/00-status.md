@@ -9,7 +9,7 @@
 - [x] Slice 1 — tracer bullet: knop → boeken.html → stub-endpoint → finnair.com
 - [x] Slice 2 — happy path: ignav_id door de keten, echte adapter kiest de airline-link
 - [x] Slice 3 — geen directe link: alleen third_party/niet-https → homepage; 400-validatie
-- [ ] Slice 4 — fouten: 502 → foutmelding in het tabblad
+- [x] Slice 4 — fouten: 502 → foutmelding in het tabblad
 - [ ] Slice 5 — cache: tweede klik kost geen ignav-call
 - [ ] Slice 6 — afronden: ADR-0006, overdracht, volledige suites
 
@@ -128,3 +128,13 @@
   (af en toe nameten). Raakt het domein: een vlucht zonder bekende prijs bestaat
   nog niet. Idee "laagste OTA + € 10" vervalt: ignav gaf bij beide SAS-opties
   géén third_party-links.
+- **Slice 4 af (2026-10-03).** Elke niet-2xx, transportfout, onleesbare JSON,
+  `null` of ontbrekende/niet-lijst `booking_options` → `BookingLinkUnavailable`
+  (+ warning in de log) → 502 `{"error":"De boekingslink kon niet worden opgehaald."}`.
+  Een léége `booking_options` blijft "geen directe link". Tabblad: foutmelding
+  (ge-escaped) + homepage-link; zonder `ref` of `carrier` → "onvolledig", geen fetch.
+  PHP 170/170 (ook `--network none`), frontend 77/77, build groen; 10 mutaties
+  rood. **Gemeten:** onbekend ignav_id (`000…0`) → ignav **HTTP 400** (beantwoordt
+  least-confident #6 voor een verzonnen id; een écht verlopen id niet gemeten).
+  Bewijs: curl → 502 in de echte app, warning in de php-log. Tabblad niet in de
+  browser getoond (extensie weer losgekoppeld).

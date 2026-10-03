@@ -30,7 +30,7 @@ describe('runBookingPage', () => {
   })
 
   it('ontsmet waarden uit de querystring precies één keer', async () => {
-    const d = deps({ search: '?carrier=<b>X</b>&flight=<i>1</i>&date=2026-10-29' })
+    const d = deps({ search: '?ref=0ea5aa41342f00000056346ef96d746d&carrier=<b>X</b>&flight=<i>1</i>&date=2026-10-29' })
 
     await runBookingPage(d)
 
@@ -107,6 +107,39 @@ describe('runBookingPage', () => {
       await runBookingPage(d)
 
       expect(d.rendered.at(-1)).not.toContain('href=')
+    })
+  })
+  describe('fouten', () => {
+    it('toont een foutmelding als het ophalen mislukt, en springt nergens heen', async () => {
+      const d = deps({ fetchLink: vi.fn(async () => { throw new Error('De boekingslink kon niet worden opgehaald.') }) })
+
+      await runBookingPage(d)
+
+      const last = d.rendered.at(-1)!
+      expect(last).toContain('De boekingslink kon niet worden opgehaald.')
+      expect(last).toContain('href="https://www.klm.nl"')
+      expect(d.navigate).not.toHaveBeenCalled()
+    })
+
+    it('ontsmet de foutmelding', async () => {
+      const d = deps({ fetchLink: vi.fn(async () => { throw new Error('<img src=x onerror=alert(1)>') }) })
+
+      await runBookingPage(d)
+
+      expect(d.rendered.at(-1)).not.toContain('<img')
+    })
+
+    it.each([
+      ['zonder ref', '?carrier=KL&flight=KL1251&date=2026-10-29'],
+      ['met lege ref', '?ref=&carrier=KL&flight=KL1251&date=2026-10-29'],
+      ['zonder carrier', '?ref=0ea5aa41342f00000056346ef96d746d&flight=KL1251&date=2026-10-29'],
+    ])('vraagt %s niets op en meldt dat de link onvolledig is', async (_, search) => {
+      const d = deps({ search })
+
+      await runBookingPage(d)
+
+      expect(d.fetchLink).not.toHaveBeenCalled()
+      expect(d.rendered.at(-1)).toContain('Deze boekingslink is onvolledig')
     })
   })
 })

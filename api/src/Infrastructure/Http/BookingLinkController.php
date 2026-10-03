@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Http;
 
+use App\Domain\Booking\BookingLinkUnavailable;
 use App\Domain\Port\BookingLinkSource;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,7 +38,12 @@ final readonly class BookingLinkController
             return new JsonResponse(['error' => 'Ongeldige of ontbrekende ref.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $link = $this->source->linkFor($ref);
+        try {
+            $link = $this->source->linkFor($ref);
+        } catch (BookingLinkUnavailable) {
+            // De bron faalde, niet de aanvraag: 502, zodat het tabblad een melding toont.
+            return new JsonResponse(['error' => 'De boekingslink kon niet worden opgehaald.'], Response::HTTP_BAD_GATEWAY);
+        }
 
         if (!$link->isDirect()) {
             return new JsonResponse(['status' => 'no_direct_link']);

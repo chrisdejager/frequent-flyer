@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Infrastructure\Source;
 
 use App\Domain\Booking\BookingLink;
+use App\Domain\Booking\BookingLinkUnavailable;
 use App\Domain\Port\BookingLinkSource;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class IgnavBookingLinkSource implements BookingLinkSource
@@ -32,7 +34,26 @@ final readonly class IgnavBookingLinkSource implements BookingLinkSource
             'body' => json_encode(['ignav_id' => $bookingRef], JSON_THROW_ON_ERROR),
         ]);
 
-        $payload = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        try {
+            $payload = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (ExceptionInterface|\JsonException $e) {
+            // getContent() gooit bij elke niet-2xx en bij transportfouten; een verlopen
+            // ignav_id valt hier dus ook onder (hoe ignav dat meldt is niet gemeten).
+            $this->logger?->warning('ignav booking-links mislukt voor {ref}: {reason}', [
+                'ref' => $bookingRef,
+                'reason' => $e->getMessage(),
+            ]);
+
+            throw new BookingLinkUnavailable('Boekingslink kon niet worden opgehaald.', 0, $e);
+        }
+
+        // Een lege lijst is "geen links"; een ontbrekende of andere vorm is een
+        // gewijzigde of kapotte respons — dat mag niet als "geen directe link" gecachet worden.
+        if (!is_array($payload) || !is_array($payload['booking_options'] ?? null)) {
+            $this->logger?->warning('ignav booking-links zonder booking_options voor {ref}.', ['ref' => $bookingRef]);
+
+            throw new BookingLinkUnavailable('Onverwacht antwoord van de boekingsbron.');
+        }
 
         return $this->pickDirect($payload);
     }
@@ -40,15 +61,10 @@ final readonly class IgnavBookingLinkSource implements BookingLinkSource
     /** @param array<string,mixed> $payload */
     private function pickDirect(array $payload): BookingLink
     {
-        $options = $payload['booking_options'] ?? null;
-        if (!is_array($options)) {
-            return BookingLink::noDirectLink();
-        }
-
         $cheapest = null;
         $cheapestPrice = \INF;
 
-        foreach ($options as $option) {
+        foreach ($payload['booking_options'] as $option) {
             if (!is_array($option)) {
                 continue;
             }

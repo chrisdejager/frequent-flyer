@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\Source;
 
+use App\Domain\Booking\BookingLinkUnavailable;
 use App\Infrastructure\Source\IgnavBookingLinkSource;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -194,5 +196,33 @@ final class IgnavBookingLinkSourceTest extends TestCase
         $link = $this->sourceReturning($payload)->linkFor(self::REF);
 
         self::assertFalse($link->isDirect());
+    }
+    // ---------------------------------------------------------------- storingen
+
+    /**
+     * @return iterable<string, array{MockResponse}>
+     */
+    public static function unusableResponses(): iterable
+    {
+        yield 'HTTP 500' => [new MockResponse('{"error":"boom"}', ['http_code' => 500])];
+        yield 'HTTP 404 (mogelijk verlopen id)' => [new MockResponse('{"error":"not_found"}', ['http_code' => 404])];
+        yield 'HTTP 429' => [new MockResponse('', ['http_code' => 429])];
+        yield 'transportfout' => [new MockResponse('', ['error' => 'Connection refused'])];
+        yield 'HTML in plaats van JSON' => [new MockResponse('<html>Bad gateway</html>')];
+        yield 'JSON zonder booking_options' => [new MockResponse('{"itinerary":{}}')];
+        yield 'booking_options geen lijst' => [new MockResponse('{"booking_options":"oops"}')];
+        yield 'JSON null' => [new MockResponse('null')];
+    }
+
+    #[DataProvider('unusableResponses')]
+    public function test_an_unusable_answer_is_unavailable_not_no_direct_link(MockResponse $response): void
+    {
+        // "Kon niet vragen" mag nooit als "er is geen link" eindigen: dat laatste
+        // wordt straks een halfuur gecachet.
+        $source = new IgnavBookingLinkSource(new MockHttpClient($response), 'test-key');
+
+        $this->expectException(BookingLinkUnavailable::class);
+
+        $source->linkFor(self::REF);
     }
 }

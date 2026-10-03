@@ -86,4 +86,17 @@ final class BookingLinkControllerTest extends WebTestCase
         // Elke call naar ignav kost tegoed: een kapotte ref mag er nooit één opleveren.
         self::assertSame([], $source->calls);
     }
+    public function test_an_unavailable_source_is_502_with_a_message(): void
+    {
+        $client = static::createClient();
+
+        static::getContainer()->set(BookingLinkSource::class, FixedBookingLinkSource::unavailable());
+
+        $client->request('GET', '/api/booking-link?ref='.self::REF);
+
+        self::assertResponseStatusCodeSame(502);
+
+        $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('De boekingslink kon niet worden opgehaald.', $body['error'] ?? null);
+    }
 }
