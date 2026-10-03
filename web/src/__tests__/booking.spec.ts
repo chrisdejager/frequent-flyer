@@ -35,4 +35,38 @@ describe('bookingPageUrl', () => {
   it('geeft null zonder bookingRef: dan valt er niets op te vragen', () => {
     expect(bookingPageUrl({ ...makeOption('Finnair', 13900), bookingRef: null })).toBeNull()
   })
+  describe('SAS', () => {
+    // ignav geeft bij SAS alleen een http-homepage of de KLM-codeshare (± dubbele
+    // prijs, gemeten 2026-10-03). We bouwen de flysas.com-link daarom zelf.
+    const sas = {
+      ...makeOption('SAS', 37400),
+      carrier: 'SK',
+      origin: 'AMS',
+      destination: 'TKU',
+      departAt: '2026-11-26T10:15:00+00:00',
+      flightNumbers: ['SK556', 'SK2728'],
+    }
+
+    it('gaat rechtstreeks naar de vluchtkeuze op flysas.com', () => {
+      const url = new URL(bookingPageUrl(sas)!)
+
+      expect(url.origin + url.pathname).toBe('https://www.flysas.com/nl-en/book-new/revenue/travelers')
+      expect(url.searchParams.get('origin')).toBe('AMS')
+      expect(url.searchParams.get('destination')).toBe('TKU')
+      expect(url.searchParams.get('outboundDate')).toBe('2026-11-26')
+      expect(url.searchParams.get('adults')).toBe('1')
+      expect(url.searchParams.get('outFlightNumbers')).toBe('556,2728')
+    })
+
+    it('heeft geen bookingRef nodig', () => {
+      expect(bookingPageUrl({ ...sas, bookingRef: null })).toMatch(/^https:\/\/www\.flysas\.com\//)
+    })
+
+    it('neemt de vertrekdatum in de tijdzone van de vertrekluchthaven', () => {
+      // 23:30 UTC op 25 nov is 01:30 op 26 nov in Turku.
+      const url = new URL(bookingPageUrl({ ...sas, origin: 'TKU', destination: 'AMS', departAt: '2026-11-25T23:30:00+00:00' })!)
+
+      expect(url.searchParams.get('outboundDate')).toBe('2026-11-26')
+    })
+  })
 })

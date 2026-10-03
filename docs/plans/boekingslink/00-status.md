@@ -109,3 +109,13 @@
   Workaround van de eigenaar, getest: `https://www.flysas.com/nl-en/book-new/revenue/travelers?origin=AMS&destination=TKU&outboundDate=2026-11-26&adults=1&youths=0&children=0&infants=0&outFlightNumbers=556%2C2728`
   — zónder `outFareBasis` (kennen we niet) laat SAS de vluchtnummers vallen en
   toont de vluchtlijst van die datum en route. Nog geen besluit.
+- **Besluit eigenaar 2026-10-03: SAS-link zelf bouwen.** Bij `carrier === 'SK'` opent
+  de knop direct `https://www.flysas.com/nl-en/book-new/revenue/travelers?origin…&
+  outboundDate…&adults=1…&outFlightNumbers=556,2728` — geen ignav-call, geen
+  `bookingRef` nodig (`web/src/booking.ts`, `sasBookingUrl`). Wijkt af van "direct =
+  provider_type airline" (Gate 2/3); vastleggen in ADR-0006 (slice 6).
+  `carrier` SK betekent altijd: alle benen SK (prioriteit KL > AY > SK in de adapter).
+  Frontend 72/72, 4 mutaties rood. Browser: knop opent precies die URL; dezelfde
+  URL met de hand → SAS-vluchtlijst 26 nov, SK556 € 193.
+  **Prijsprobleem SAS** (te hoge ignav-prijs in de ranglijst): apart oppakken ná
+  slices 4–6 (eigenaar).
