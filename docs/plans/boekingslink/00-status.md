@@ -8,7 +8,7 @@
 ## Slices
 - [x] Slice 1 — tracer bullet: knop → boeken.html → stub-endpoint → finnair.com
 - [x] Slice 2 — happy path: ignav_id door de keten, echte adapter kiest de airline-link
-- [ ] Slice 3 — geen directe link: alleen third_party/niet-https → homepage; 400-validatie
+- [x] Slice 3 — geen directe link: alleen third_party/niet-https → homepage; 400-validatie
 - [ ] Slice 4 — fouten: 502 → foutmelding in het tabblad
 - [ ] Slice 5 — cache: tweede klik kost geen ignav-call
 - [ ] Slice 6 — afronden: ADR-0006, overdracht, volledige suites
@@ -82,3 +82,15 @@
   (geen https; geen prijs telt als duurste), dus KLM wint. Dat is gewenst: de
   KLM-link landt op de juiste vluchten. Geen uitzondering maar structureel voor SAS.
   Kosten deze meting: 2 zoek-calls + 2 link-calls (plus 1 ruwe zoek-call AMS→TKU 29-10).
+- **Slice 3 af (2026-10-03).** `no_direct_link` → tabblad met "Geen directe
+  boekingslink van X gevonden" + link naar de homepage (alleen bij AY/KL/SK;
+  `Object.hasOwn`, anders werd `carrier=constructor` een "bekende" maatschappij
+  met `href="undefined"`). Controller: 400 bij elke ref die niet `^[0-9a-f]{32}\z`
+  is, ook `?ref[]=` en een afsluitende newline (`$` liet die door — test eerst
+  rood, daarna `\z`); bron dan nooit aangeroepen. Tweede gemeten fixture
+  `ignav-booking-links-sas.json` (SAS http-homepage zonder prijs). PHP 161/161
+  (ook `--network none`), frontend 69/69, build groen. Mutaties: alle rood, op één
+  na die een gat liet zien — `return` na `navigate` weghalen bleef groen; test
+  aangescherpt, nu rood. Bewijs: curl op 5 ongeldige refs → 400 in de echte app.
+  Tabblad zelf niet in de browser getoond (Chrome-extensie niet verbonden); een
+  echte vlucht zonder airline-link kennen we niet.

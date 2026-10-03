@@ -7,6 +7,7 @@ namespace App\Infrastructure\Http;
 use App\Domain\Port\BookingLinkSource;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -17,6 +18,9 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AsController]
 final readonly class BookingLinkController
 {
+    /** Vorm van een ignav_id, zoals gemeten in zoekresponsen. \z, want $ laat een afsluitende newline door. */
+    private const REF_PATTERN = '/^[0-9a-f]{32}\z/';
+
     public function __construct(private BookingLinkSource $source)
     {
     }
@@ -24,7 +28,16 @@ final readonly class BookingLinkController
     #[Route('/api/booking-link', methods: ['GET'])]
     public function __invoke(Request $request): JsonResponse
     {
-        $link = $this->source->linkFor($request->query->getString('ref'));
+        // all() in plaats van getString(): ?ref[]=… zou daar een exception geven.
+        $ref = $request->query->all()['ref'] ?? null;
+
+        // Elke aanvraag bij ignav kost tegoed; een ref die geen ignav_id kan zijn,
+        // komt er niet doorheen.
+        if (!is_string($ref) || 1 !== preg_match(self::REF_PATTERN, $ref)) {
+            return new JsonResponse(['error' => 'Ongeldige of ontbrekende ref.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $link = $this->source->linkFor($ref);
 
         if (!$link->isDirect()) {
             return new JsonResponse(['status' => 'no_direct_link']);

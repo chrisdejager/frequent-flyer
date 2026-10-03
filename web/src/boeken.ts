@@ -25,7 +25,9 @@ export async function runBookingPage(deps: BookingPageDeps): Promise<void> {
   const ref = params.get('ref')
 
   // Alles uit de querystring komt van buiten: pas bij het renderen escapen, precies één keer.
-  const label = CARRIER_HOMEPAGES[carrier]?.label ?? carrier
+  // hasOwn: anders is "constructor" uit de querystring een "bekende" maatschappij.
+  const homepage = Object.hasOwn(CARRIER_HOMEPAGES, carrier) ? CARRIER_HOMEPAGES[carrier] : undefined
+  const label = homepage?.label ?? carrier
 
   deps.render(`<p>Boekingslink ophalen bij ${escape(label)}…</p><p class="small">${escape(flight)} · ${escape(date)}</p>`)
 
@@ -33,6 +35,16 @@ export async function runBookingPage(deps: BookingPageDeps): Promise<void> {
 
   if (result.status === 'found') {
     deps.navigate(result.url)
+    return
   }
-  // andere uitkomsten worden in latere slices afgehandeld
+
+  const onward = homepage
+    ? `<p><a href="${homepage.url}">Zoek deze vlucht op de site van ${escape(homepage.label)} ↗</a></p>`
+    : ''
+
+  deps.render(
+    `<p>Geen directe boekingslink van ${escape(label)} gevonden.</p>`
+    + `<p class="small">${escape(flight)} · ${escape(date)}</p>`
+    + onward,
+  )
 }

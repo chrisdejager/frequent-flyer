@@ -125,4 +125,74 @@ final class IgnavBookingLinkSourceTest extends TestCase
 
         self::assertSame('https://www.klm.nl/goedkoop', $link->url);
     }
+    // ------------------------------------------------------ geen directe link
+
+    /**
+     * Gemeten 3 okt 2026 voor SK556+SK2728 op 26 nov: SAS levert alleen
+     * http://www.flysas.com/nl/nl/ zonder prijs, KLM een codeshare-deeplink mét prijs.
+     *
+     * @return array<string, mixed>
+     */
+    private function sasPayload(): array
+    {
+        return json_decode(
+            (string) file_get_contents(__DIR__.'/fixtures/ignav-booking-links-sas.json'),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+    }
+
+    public function test_the_measured_sas_http_homepage_loses_to_the_klm_deeplink(): void
+    {
+        $link = $this->sourceReturning($this->sasPayload())->linkFor(self::REF);
+
+        self::assertSame('KLM', $link->provider);
+        self::assertStringStartsWith('https://www.klm.nl/', (string) $link->url);
+    }
+
+    public function test_the_sas_http_homepage_alone_is_no_direct_link(): void
+    {
+        $payload = $this->sasPayload();
+        $payload['booking_options'][0]['links'] = array_values(array_filter(
+            $payload['booking_options'][0]['links'],
+            static fn (array $l): bool => 'KLM' !== $l['provider_name'],
+        ));
+
+        $link = $this->sourceReturning($payload)->linkFor(self::REF);
+
+        self::assertFalse($link->isDirect());
+    }
+
+    public function test_ota_links_alone_give_no_direct_link(): void
+    {
+        $payload = $this->realPayload();
+        $payload['booking_options'][0]['links'] = array_values(array_filter(
+            $payload['booking_options'][0]['links'],
+            static fn (array $l): bool => 'airline' !== $l['provider_type'],
+        ));
+
+        $link = $this->sourceReturning($payload)->linkFor(self::REF);
+
+        self::assertFalse($link->isDirect());
+        self::assertNull($link->url);
+    }
+
+    public function test_no_booking_options_at_all_is_no_direct_link(): void
+    {
+        $link = $this->sourceReturning(['booking_options' => []])->linkFor(self::REF);
+
+        self::assertFalse($link->isDirect());
+    }
+
+    public function test_a_javascript_url_is_never_used(): void
+    {
+        $payload = ['booking_options' => [['legs' => ['outbound'], 'links' => [
+            self::link('Finnair', 'airline', 1.0, 'javascript:alert(1)'),
+        ]]]];
+
+        $link = $this->sourceReturning($payload)->linkFor(self::REF);
+
+        self::assertFalse($link->isDirect());
+    }
 }
