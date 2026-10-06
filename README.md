@@ -1,10 +1,11 @@
 # Leiden ↔ Turku vluchtzoeker
 
 Zoekt de goedkoopste reisopties tussen Leiden en Turku, met een totaalprijs
-die de VR-trein en de bagagekosten per reiziger meerekent.
+die de VR-trein meerekent (bagagekosten bewust niet, zie ADR-0005).
 
-- [Ontwerp](docs/superpowers/specs/2026-09-16-leiden-turku-vluchtzoeker-design.md)
-- [Implementatieplan fase 1](docs/superpowers/plans/2026-09-16-vluchtzoeker-fase-1.md)
+- [Stand van zaken](docs/plans/README.md)
+- [Ontwerp fase 1](docs/plans/vluchtzoeker-fase-1/spec.md)
+- [Implementatieplan fase 1](docs/plans/vluchtzoeker-fase-1/plan.md)
 
 ## Instellen
 

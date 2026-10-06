@@ -63,4 +63,4 @@ won omdat het een echte API is, en omdat er een echte respons als fixture naast 
   adapter schrijven.
 
 ## Action Items
-1. [x] Gebouwd volgens `docs/superpowers/plans/2026-09-17-ignav-flightsource.md`.
+1. [x] Gebouwd volgens `docs/plans/ignav-flightsource/plan.md`.

@@ -4,22 +4,18 @@ Zoekt de goedkoopste reis tussen Leiden en Turku. Het totaal is de ticketprijs
 plus de VR-trein Helsinki⇄Turku waar van toepassing. HEL<>AMS toont alleen
 directe vluchten, TKU<>AMS alleen vluchten met precies 1 overstap.
 
-Bagagekosten tellen bewust niet mee (versimpeling, 2026-09-21) — de eerdere
-per-reiziger-berekening (`BaggagePolicy`/`FareUpgradeRates`) rekende ook mis
-bij een expliciet gekozen reiziger. Terughalen kan uit de git-historie vóór
-deze wijziging als dat ooit weer nodig is.
+Bagagekosten tellen bewust niet mee (versimpeling) — waarom, en hoe je het
+terughaalt, staat in `docs/adr/0005-bagagekosten-niet-meerekenen.md`.
 
 ## Lees dit eerst bij een nieuwe sessie
 
-- **`.superpowers/sdd/OVERDRACHT.md`** — waar het werk staat, wat er open is, en
-  welke beslissingen de eigenaar heeft genomen. Begin hier.
-- `docs/adr/` — blijvende besluiten (retour, vluchtbron, treinschakelaar, bagage).
+- **`docs/plans/README.md`** — waar het werk staat, wat er open is, en welke
+  beslissingen de eigenaar heeft genomen. Begin hier.
+- `docs/plans/<feature>/` — één map per feature (software-factory-workflow),
+  met de stand in `00-status.md`. Nieuwe features komen hier ook.
+- `docs/adr/` — blijvende besluiten.
   Wijzig een besluit met een nieuw ADR, herschrijf nooit een oud.
-- `.superpowers/sdd/progress.md` — logboek van alle taken en reviewrondes.
-- `docs/superpowers/specs/2026-09-16-leiden-turku-vluchtzoeker-design.md` — de spec.
-
-Beide `.superpowers`-bestanden staan buiten git (scratch), maar zijn wel de
-actuele stand van zaken.
+- `docs/plans/vluchtzoeker-fase-1/` — intake, spec, plan en logboek van fase 1.
 
 ## Draaien
 

@@ -2,7 +2,7 @@
 
 **Datum:** 2026-09-16
 **Status:** goedgekeurd, klaar voor implementatieplan
-**Bron van eisen:** [`INTAKE.md`](../../../INTAKE.md)
+**Bron van eisen:** [`intake.md`](intake.md)
 
 ---
 
