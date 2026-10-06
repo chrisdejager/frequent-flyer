@@ -1,14 +1,12 @@
 # Vluchtzoeker fase 1 — implementatieplan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Zoek voor één datum de goedkoopste reisopties Leiden ↔ Turku, met een totaalprijs die de VR-trein en de bagagekosten per reiziger meerekent, getoond in een Vue-dashboard.
 
 **Architecture:** Symfony 7 met een framework-vrije domeinlaag (`src/Domain`) waarin alle regel-, bagage- en prijslogica zit zonder I/O. Externe prijsbronnen zitten achter `Port`-interfaces met adapters in `src/Infrastructure`. Een losse Vue 3 SPA praat via JSON met de API. Alles draait in Docker Compose.
 
 **Tech Stack:** PHP 8.4, Symfony 7.2, PHPUnit 11, Vue 3 + Vite + TypeScript, nginx, Docker Compose. Geen database in fase 1.
 
-**Spec:** [`../specs/2026-09-16-leiden-turku-vluchtzoeker-design.md`](../specs/2026-09-16-leiden-turku-vluchtzoeker-design.md)
+**Spec:** [`spec.md`](spec.md)
 
 ## Global Constraints
 

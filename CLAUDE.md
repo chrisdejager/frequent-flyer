@@ -11,8 +11,9 @@ terughaalt, staat in `docs/adr/0005-bagagekosten-niet-meerekenen.md`.
 
 - **`docs/plans/README.md`** — waar het werk staat, wat er open is, en welke
   beslissingen de eigenaar heeft genomen. Begin hier.
-- `docs/plans/<feature>/` — één map per feature (software-factory-workflow),
-  met de stand in `00-status.md`. Nieuwe features komen hier ook.
+- `docs/plans/<feature>/` — één map per feature: `00-status.md` (stand),
+  `01-product.md` t/m `04-slices.md`, mockups en metingen.
+  Nieuwe features komen hier ook.
 - `docs/adr/` — blijvende besluiten.
   Wijzig een besluit met een nieuw ADR, herschrijf nooit een oud.
 - `docs/plans/vluchtzoeker-fase-1/` — intake, spec, plan en logboek van fase 1.

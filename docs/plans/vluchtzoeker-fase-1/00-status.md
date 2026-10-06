@@ -1,7 +1,7 @@
 # Status: vluchtzoeker fase 1
 
-Afgerond (sep 2026), gebouwd vóór de gate-workflow; daarom zijn er geen
-gate-documenten.
+Afgerond (sep 2026). Ouder dan de indeling met `01-product.md` t/m
+`04-slices.md`; deze map bevat in plaats daarvan:
 
 - `intake.md` — de oorspronkelijke eisen
 - `spec.md` — het ontwerp

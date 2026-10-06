@@ -7,8 +7,6 @@
 > (treinprijs niet meer ophalen als de schakelaar uitstaat — dat stond niet in dit
 > plan, maar kwam boven toen de eigenaar de app voor het eerst met de hand draaide).
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Vervang `BrightDataFlightSource` door `IgnavFlightSource`, die tegen de
 échte ignav-API werkt, en zet de treinprijs tijdelijk uit achter één schakelaar.
 

@@ -1,6 +1,6 @@
 # Vluchtzoeker fase 1 — voortgang
 
-Plan: docs/superpowers/plans/2026-09-16-vluchtzoeker-fase-1.md
+Plan: docs/plans/vluchtzoeker-fase-1/plan.md
 Branch: feature/vluchtzoeker-fase-1
 Startcommit: ddcf372
 
