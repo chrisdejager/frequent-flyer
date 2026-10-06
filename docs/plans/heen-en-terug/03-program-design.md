@@ -177,7 +177,7 @@ App.pick(trip)
 - `een geplande terugreis vult de terugdatum`
 - `toont de naam van de reiziger na een zoekopdracht` (bestaat al)
 
-Bewijs met een mutatie, per de werkwijze in `CLAUDE.md`. Bij elke fix of regel
+Bewijs met een mutatie, per de werkwijze in `AGENTS.md`. Bij elke fix of regel
 draai ik de test één keer tegen de code zonder die regel en laat ik zien dat hij
 rood wordt.
 

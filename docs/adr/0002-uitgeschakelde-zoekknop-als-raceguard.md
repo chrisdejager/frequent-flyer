@@ -15,7 +15,7 @@ Bij het bouwen bleek de race via de UI niet te bereiken:
   (HTML-spec, impliciete submission).
 
 De test die de race aantoonde, vuurde `submit` rechtstreeks op het formulier af en
-werkte daarmee om de echte UI heen. CLAUDE.md zegt daarover: "Wantrouw een test
+werkte daarmee om de echte UI heen. AGENTS.md zegt daarover: "Wantrouw een test
 die om een probleem heen werkt in plaats van het te dichten."
 
 ## Decision
