@@ -14,7 +14,7 @@ final readonly class Segment
         public string $flightNumber,
     ) {
         if ($arriveAt <= $departAt) {
-            throw new \InvalidArgumentException('Aankomst moet na vertrek liggen.');
+            throw new \InvalidArgumentException('Arrival must be after departure.');
         }
     }
 }

@@ -28,9 +28,9 @@ final class SearchControllerTest extends WebTestCase
 
     protected function tearDown(): void
     {
-        // Herstellen, niet wissen: %env(bool:TRAIN_COST_ENABLED)% gooit een
-        // EnvNotFoundException als de variabele verdwijnt, en dan geeft élke
-        // volgende test stil een 500 in plaats van zijn eigen resultaat.
+        // Restore, don't delete: %env(bool:TRAIN_COST_ENABLED)% throws an
+        // EnvNotFoundException if the variable disappears, and then every
+        // subsequent test silently gets a 500 instead of its own result.
         if (null === $this->originalTrainCostEnabled) {
             unset($_ENV['TRAIN_COST_ENABLED'], $_SERVER['TRAIN_COST_ENABLED']);
         } else {
@@ -42,12 +42,12 @@ final class SearchControllerTest extends WebTestCase
     }
 
     /**
-     * Zet de transfer HEL–TKU expliciet aan voor tests die over de treinsemantiek gaan.
+     * Explicitly enables the HEL–TKU transfer for tests about train semantics.
      *
-     * Zonder dit meten die tests stil iets anders zodra TRAIN_COST_ENABLED in .env
-     * verandert — en de semantiek die ze vastleggen (onbekende treinprijs → achteraan,
-     * geen schatting) moet blijven werken voor als de schakelaar weer aangaat.
-     * Moet vóór createClient() staan: daarna is de container al gebouwd.
+     * Without this those tests silently measure something else as soon as TRAIN_COST_ENABLED
+     * changes in .env — and the semantics they establish (unknown train price → at the end,
+     * no estimate) must keep working for when the toggle turns back on.
+     * Must come before createClient(): after that the container is already built.
      */
     private static function enableTrainCost(): void
     {
@@ -88,9 +88,9 @@ final class SearchControllerTest extends WebTestCase
 
     public function test_response_includes_origin_and_destination_so_the_frontend_can_localise_times(): void
     {
-        // De tijden in de respons zijn UTC-instanten; zonder herkomst- en
-        // bestemmingsluchthaven kan de frontend ze niet in de juiste lokale
-        // tijdzone tonen (AMS != HEL != TKU-tijd).
+        // The times in the response are UTC instants; without origin and
+        // destination airport the frontend cannot show them in the correct local
+        // time zone (AMS != HEL != TKU time).
         $client = static::createClient();
 
         $flights = new InMemoryFlightPriceSource();
@@ -145,12 +145,12 @@ final class SearchControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        // Een FlightPriceSource die een InvalidArgumentException gooit,
-        // alsof Money of Itinerary kapotte brondata heeft gekregen.
+        // A FlightPriceSource that throws InvalidArgumentException,
+        // as if Money or Itinerary received corrupt source data.
         $broken = new class implements FlightPriceSource {
             public function search(Airport $from, Airport $to, \DateTimeImmutable $date): array
             {
-                throw new \InvalidArgumentException('Bedrag mag niet negatief zijn.');
+                throw new \InvalidArgumentException('Amount must not be negative.');
             }
         };
 
@@ -159,7 +159,7 @@ final class SearchControllerTest extends WebTestCase
         $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
 
         self::assertResponseStatusCodeSame(500,
-            'Een \InvalidArgumentException uit de databron hoort een 500 te zijn, niet een 400.');
+            'An InvalidArgumentException from the data source should be 500, not 400.');
     }
 
     public function test_trainCostKnown_is_present_in_json_response(): void
@@ -185,8 +185,8 @@ final class SearchControllerTest extends WebTestCase
 
     public function test_with_the_train_switched_off_hel_options_report_an_incomplete_total(): void
     {
-        // De andere stand van de schakelaar, door de échte container. Geen
-        // enableTrainCost(): dit is de configuratie die nu werkelijk draait.
+        // The other toggle state, through the real container. No
+        // enableTrainCost(): this is the configuration that's actually running.
         $client = static::createClient();
 
         $flights = new InMemoryFlightPriceSource();
@@ -203,18 +203,18 @@ final class SearchControllerTest extends WebTestCase
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $cost = $body['options'][0]['cost'];
 
-        self::assertSame(0, $cost['trainCost'], 'de transfer telt niet mee');
-        self::assertSame(13400, $cost['total'], 'totaal is alleen de ticketprijs');
-        self::assertTrue($cost['trainCostKnown'], 'de optie blijft meedoen aan de sortering');
+        self::assertSame(0, $cost['trainCost'], 'the transfer does not count');
+        self::assertSame(13400, $cost['total'], 'total is only the ticket price');
+        self::assertTrue($cost['trainCostKnown'], 'the option continues to participate in sorting');
         self::assertFalse($cost['trainCostIncluded'],
-            'de frontend moet kunnen melden dat de transfer HEL→TKU ontbreekt — anders is dit een onzichtbare nul');
+            'the frontend must be able to report that the transfer HEL→TKU is missing — otherwise this is an invisible zero');
     }
 
     public function test_with_the_train_switched_off_the_train_source_is_never_called(): void
     {
-        // Geld, niet alleen snelheid: ApifyTrainPriceSource start een synchrone
-        // actor-run, en het tegoed is ~20-50 runs per maand. Een uitkomst ophalen
-        // die de calculator daarna weggooit, is er één te veel.
+        // Money, not just speed: ApifyTrainPriceSource starts a synchronous
+        // actor run, and credits are ~20-50 runs per month. Fetching a result
+        // that the calculator then discards is one too many.
         $client = static::createClient();
 
         $flights = new InMemoryFlightPriceSource();
@@ -228,13 +228,13 @@ final class SearchControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame(0, $trains->callCount,
-            'de treinbron mag niet worden aangeroepen als de transfer uitstaat');
+            'the train source must not be called when the transfer is off');
     }
 
     public function test_with_the_train_switched_on_the_train_source_is_called(): void
     {
-        // De andere kant van dezelfde naad: de bewaking mag het ophalen niet
-        // permanent uitzetten voor als de schakelaar weer aangaat.
+        // The other side of the same seam: the guard must not
+        // permanently disable fetching if the switch comes back on.
         self::enableTrainCost();
         $client = static::createClient();
 
@@ -249,7 +249,7 @@ final class SearchControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame(1, $trains->callCount,
-            'met de transfer aan hoort de treinprijs één keer te worden opgehaald');
+            'with the transfer on, the train price should be fetched once');
     }
 
     public function test_unknown_train_price_sets_trainCostKnown_false_and_indicative_true(): void
@@ -276,17 +276,17 @@ final class SearchControllerTest extends WebTestCase
 
     public function test_option_with_unknown_train_price_ranks_last_without_estimate(): void
     {
-        // Bevinding 1: geen schatting, geen aanname.
-        // Opties met onbekende treinprijs worden achteraan gezet (trainCostKnown=false),
-        // ook als hun getoonde totaal lager is dan een gerangschikte optie.
-        // SAS doorgaand €150 (trainCostKnown=true) staat vóór Finnair via HEL €140
-        // (trainCostKnown=false), ook al is €140 numeriek lager dan €150.
-        // Deze test gaat door de echte Symfony-bedrading; de vorige twee Criticals
-        // (factor-100 en sorteerfout) waren in unit-tests onzichtbaar.
+        // Finding 1: no estimate, no assumption.
+        // Options with unknown train price are ranked at the end (trainCostKnown=false),
+        // even if their displayed total is lower than a ranked option.
+        // SAS through-ticket €150 (trainCostKnown=true) comes before Finnair via HEL €140
+        // (trainCostKnown=false), even though €140 is numerically lower than €150.
+        // This test goes through the real Symfony wiring; the two previous Criticals
+        // (factor-100 and sort error) were invisible in unit tests.
         self::enableTrainCost();
         $client = static::createClient();
 
-        // Finnair via HEL: basisprijs €140, onbekende treinprijs → achteraan
+        // Finnair via HEL: base price €140, unknown train price → at the end
         $helFlight = new Itinerary(
             Carrier::Finnair,
             [new Segment(
@@ -300,7 +300,7 @@ final class SearchControllerTest extends WebTestCase
             RoutePattern::ViaHelsinkiWithTrain,
         );
 
-        // SAS doorgaand naar TKU: basisprijs €150, geen trein → wél gerangschikt
+        // SAS through-ticket to TKU: base price €150, no train → ranked
         $tkuFlight = new Itinerary(
             Carrier::Sas,
             [
@@ -328,7 +328,7 @@ final class SearchControllerTest extends WebTestCase
         $flights->give(Airport::Ams, Airport::Tku, [$tkuFlight]);
         static::getContainer()->set(FlightPriceSource::class, $flights);
 
-        // Onbekende treinprijs: Finnair-optie heeft trainCostKnown=false
+        // Unknown train price: Finnair option has trainCostKnown=false
         static::getContainer()->set(
             TrainPriceSource::class,
             FixedTrainPriceSource::withUnknownPrice(),
@@ -341,14 +341,14 @@ final class SearchControllerTest extends WebTestCase
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
         self::assertCount(2, $body['options']);
-        // SAS staat eerste: trainCostKnown=true, gerangschikt op €150
+        // SAS comes first: trainCostKnown=true, ranked on €150
         self::assertSame('SK', $body['options'][0]['carrier'],
-            'SAS doorgaand (trainCostKnown=true, €150) staat eerst — gerangschikt op totaalprijs.');
-        // Finnair staat tweede: trainCostKnown=false → achteraan, geen schatting
+            'SAS through-ticket (trainCostKnown=true, €150) comes first — ranked on total price.');
+        // Finnair comes second: trainCostKnown=false → at the end, no estimate
         self::assertSame('AY', $body['options'][1]['carrier'],
-            'Finnair via HEL (trainCostKnown=false, €140) staat achteraan — niet gerangschikt.');
+            'Finnair via HEL (trainCostKnown=false, €140) comes last — not ranked.');
         self::assertFalse($body['options'][1]['cost']['trainCostKnown'],
-            'Finnair-optie heeft trainCostKnown=false in de JSON-respons.');
+            'Finnair option has trainCostKnown=false in the JSON response.');
     }
 
     public function test_each_option_exposes_its_booking_ref(): void
@@ -364,7 +364,7 @@ final class SearchControllerTest extends WebTestCase
                 new \DateTimeImmutable('2026-10-29 16:45'),
                 'AY842',
             )],
-            Money::fromEuros(120), // goedkoper, dus gegarandeerd options[0]
+            Money::fromEuros(120), // cheaper, so guaranteed options[0]
             RoutePattern::ViaHelsinkiWithTrain,
             '0ea5aa41342f00000056346ef96d746d',
         );
@@ -378,7 +378,7 @@ final class SearchControllerTest extends WebTestCase
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
         self::assertSame('0ea5aa41342f00000056346ef96d746d', $body['options'][0]['bookingRef']);
-        // Zonder ref staat de sleutel er wél, als null: de frontend toont dan geen knop.
+        // Without a ref the key is present anyway, as null: the frontend then shows no button.
         self::assertArrayHasKey('bookingRef', $body['options'][1]);
         self::assertNull($body['options'][1]['bookingRef']);
     }

@@ -8,7 +8,7 @@ use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\RoutePattern;
 
 /**
- * Vereenvoudiging: HEL<>AMS alleen direct, TKU<>AMS alleen met 1 overstap.
+ * Simplification: HEL<>AMS direct only, TKU<>AMS only with 1 connection.
  */
 final readonly class RequiredStopCount implements ItineraryRule
 {
@@ -26,7 +26,7 @@ final readonly class RequiredStopCount implements ItineraryRule
     public function reasonFor(Itinerary $itinerary): string
     {
         return sprintf(
-            '%s vereist %d overstap(pen), deze optie heeft er %d.',
+            '%s requires %d connection(s), this option has %d.',
             $itinerary->pattern->value,
             self::REQUIRED[$itinerary->pattern->value],
             $itinerary->stopCount(),

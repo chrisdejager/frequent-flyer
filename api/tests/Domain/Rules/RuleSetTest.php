@@ -28,7 +28,7 @@ final class RuleSetTest extends TestCase
         $it = self::viaHel('2026-10-29 18:30', '2026-10-29 22:15', Carrier::Finnair);
 
         self::assertSame(
-            'Aankomst in Helsinki na 21:00 — trein naar Turku niet meer haalbaar.',
+            'Arrival in Helsinki after 21:00 — train to Turku no longer reachable.',
             RuleSet::standard(Direction::NlToFi)->rejectionReason($it),
         );
     }
@@ -50,7 +50,7 @@ final class RuleSetTest extends TestCase
         );
 
         self::assertSame(
-            'Vertrek uit Helsinki vóór 12:00.',
+            'Departure from Helsinki before 12:00.',
             RuleSet::standard(Direction::FiToNl)->rejectionReason($it),
         );
     }
@@ -95,7 +95,7 @@ final class RuleSetTest extends TestCase
         );
 
         self::assertSame(
-            'Overstaptijd langer dan 120 minuten.',
+            'Connection time longer than 120 minutes.',
             RuleSet::standard(Direction::NlToFi)->rejectionReason($it),
         );
     }
@@ -113,14 +113,14 @@ final class RuleSetTest extends TestCase
         );
 
         self::assertSame(
-            'Overstap via HEL wordt bij een doorgaand ticket niet overwogen.',
+            'Connection via HEL is not considered for a through ticket.',
             RuleSet::standard(Direction::NlToFi)->rejectionReason($it),
         );
     }
 
     public function test_a_via_helsinki_option_with_a_stop_is_rejected(): void
     {
-        // Alleen directe vluchten voor HEL<>AMS.
+        // Only direct flights for HEL<>AMS.
         $it = new Itinerary(
             Carrier::Finnair,
             [
@@ -136,7 +136,7 @@ final class RuleSetTest extends TestCase
 
     public function test_a_through_ticket_without_a_stop_is_rejected(): void
     {
-        // Alleen 1-overstap-vluchten voor TKU<>AMS.
+        // Only 1-connection flights for TKU<>AMS.
         $it = new Itinerary(
             Carrier::Klm,
             [self::segment(Airport::Ams, Airport::Tku, '2026-10-29 09:00', '2026-10-29 12:00', 'KL1')],

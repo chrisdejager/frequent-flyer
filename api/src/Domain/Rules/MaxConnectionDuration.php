@@ -21,6 +21,6 @@ final readonly class MaxConnectionDuration implements ItineraryRule
 
     public function reasonFor(Itinerary $itinerary): string
     {
-        return sprintf('Overstaptijd langer dan %d minuten.', $this->maxMinutes);
+        return sprintf('Connection time longer than %d minutes.', $this->maxMinutes);
     }
 }

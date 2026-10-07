@@ -55,7 +55,7 @@ final class MoneyTest extends TestCase
     public function test_inf_is_rejected(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('niet-eindige waarde');
+        $this->expectExceptionMessage('non-finite value');
 
         Money::fromEuros(INF);
     }
@@ -63,7 +63,7 @@ final class MoneyTest extends TestCase
     public function test_negative_inf_is_rejected(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('niet-eindige waarde');
+        $this->expectExceptionMessage('non-finite value');
 
         Money::fromEuros(-INF);
     }
@@ -71,7 +71,7 @@ final class MoneyTest extends TestCase
     public function test_nan_is_rejected(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('niet-eindige waarde');
+        $this->expectExceptionMessage('non-finite value');
 
         Money::fromEuros(NAN);
     }
@@ -79,14 +79,14 @@ final class MoneyTest extends TestCase
     public function test_overflow_gives_honest_error_message(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/te groot is om in centen/');
+        $this->expectExceptionMessageMatches('/too large to express in cents/');
 
         Money::fromEuros(1e17);
     }
 
     public function test_max_euros_boundary_succeeds(): void
     {
-        // 9×10^15 is de grenswaarde zelf — dit moet slagen.
+        // 9×10^15 is the limit itself — this must succeed.
         $money = Money::fromEuros(9e15);
 
         self::assertSame((int) round(9e15 * 100), $money->cents);
@@ -94,10 +94,10 @@ final class MoneyTest extends TestCase
 
     public function test_just_above_max_euros_throws(): void
     {
-        // Eén stap boven de grens (9×10^15 + 1) moet een overflow-exception geven,
-        // zodat een slordig aanpassen van MAX_EUROS niet onopgemerkt blijft.
+        // One step above the limit (9×10^15 + 1) must give an overflow exception,
+        // so a careless adjustment of MAX_EUROS does not go unnoticed.
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('/te groot is om in centen/');
+        $this->expectExceptionMessageMatches('/too large to express in cents/');
 
         Money::fromEuros(9e15 + 1);
     }

@@ -26,6 +26,6 @@ final readonly class AllowedCarriers implements ItineraryRule
 
     public function reasonFor(Itinerary $itinerary): string
     {
-        return sprintf('Maatschappij %s valt buiten Finnair, SAS en KLM.', $itinerary->carrier->value);
+        return sprintf('Airline %s is outside Finnair, SAS and KLM.', $itinerary->carrier->value);
     }
 }

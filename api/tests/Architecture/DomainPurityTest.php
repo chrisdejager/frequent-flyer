@@ -19,7 +19,7 @@ final class DomainPurityTest extends TestCase
 
             foreach (self::FORBIDDEN as $prefix) {
                 if (str_contains($source, $prefix)) {
-                    $offenders[] = sprintf('%s bevat verwijzing naar %s', basename($file), $prefix);
+                    $offenders[] = sprintf('%s contains reference to %s', basename($file), $prefix);
                 }
             }
         }
@@ -37,12 +37,12 @@ final class DomainPurityTest extends TestCase
             }
         }
 
-        self::assertSame([], $offenders, 'ontbrekende strict_types: '.implode(', ', $offenders));
+        self::assertSame([], $offenders, 'missing strict_types: '.implode(', ', $offenders));
     }
 
     public function test_the_domain_directory_is_not_empty(): void
     {
-        self::assertNotEmpty($this->domainFiles(), 'de test zou anders altijd slagen');
+        self::assertNotEmpty($this->domainFiles(), 'otherwise the test would always pass');
     }
 
     /**

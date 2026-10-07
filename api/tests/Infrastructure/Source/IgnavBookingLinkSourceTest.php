@@ -34,8 +34,8 @@ final class IgnavBookingLinkSourceTest extends TestCase
     }
 
     /**
-     * De échte respons van ignav booking-links, gemeten op 3 okt 2026 voor AY1302
-     * AMS→HEL: één Finnair-link (airline, € 143) en één lastminute.com-link
+     * The real response from ignav booking-links, measured on 3 Oct 2026 for AY1302
+     * AMS→HEL: one Finnair link (airline, € 143) and one lastminute.com link
      * (third_party, € 199).
      *
      * @return array<string, mixed>
@@ -87,7 +87,7 @@ final class IgnavBookingLinkSourceTest extends TestCase
         );
         self::assertContains('X-Api-Key: test-key', $flatHeaders);
 
-        // Gemeten: met een 'market' erbij geeft ignav 400 conflicting_booking_lookup_mode.
+        // Measured: with a 'market' ignav returns 400 conflicting_booking_lookup_mode.
         $body = json_decode((string) $seen['options']['body'], true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(['ignav_id' => self::REF], $body);
     }
@@ -104,7 +104,7 @@ final class IgnavBookingLinkSourceTest extends TestCase
 
     public function test_an_ota_listed_first_does_not_win_over_the_airline(): void
     {
-        // Volgorde omgedraaid t.o.v. de meting: "neem de eerste link" moet hier falen.
+        // Order reversed against the measurement: "take the first link" must fail here.
         $payload = $this->realPayload();
         $payload['booking_options'][0]['links'] = array_reverse($payload['booking_options'][0]['links']);
 
@@ -129,11 +129,11 @@ final class IgnavBookingLinkSourceTest extends TestCase
 
         self::assertSame('https://www.klm.nl/goedkoop', $link->url);
     }
-    // ------------------------------------------------------ geen directe link
+    // ------------------------------------------------------ no direct link
 
     /**
-     * Gemeten 3 okt 2026 voor SK556+SK2728 op 26 nov: SAS levert alleen
-     * http://www.flysas.com/nl/nl/ zonder prijs, KLM een codeshare-deeplink mét prijs.
+     * Measured 3 Oct 2026 for SK556+SK2728 on 26 Nov: SAS delivers only
+     * http://www.flysas.com/nl/nl/ without price, KLM a codeshare-deeplink with price.
      *
      * @return array<string, mixed>
      */
@@ -199,7 +199,7 @@ final class IgnavBookingLinkSourceTest extends TestCase
 
         self::assertFalse($link->isDirect());
     }
-    // ---------------------------------------------------------------- storingen
+    // ---------------------------------------------------------------- errors
 
     /**
      * @return iterable<string, array{MockResponse}>
@@ -207,20 +207,20 @@ final class IgnavBookingLinkSourceTest extends TestCase
     public static function unusableResponses(): iterable
     {
         yield 'HTTP 500' => [new MockResponse('{"error":"boom"}', ['http_code' => 500])];
-        yield 'HTTP 404 (mogelijk verlopen id)' => [new MockResponse('{"error":"not_found"}', ['http_code' => 404])];
+        yield 'HTTP 404 (possibly expired id)' => [new MockResponse('{"error":"not_found"}', ['http_code' => 404])];
         yield 'HTTP 429' => [new MockResponse('', ['http_code' => 429])];
-        yield 'transportfout' => [new MockResponse('', ['error' => 'Connection refused'])];
-        yield 'HTML in plaats van JSON' => [new MockResponse('<html>Bad gateway</html>')];
-        yield 'JSON zonder booking_options' => [new MockResponse('{"itinerary":{}}')];
-        yield 'booking_options geen lijst' => [new MockResponse('{"booking_options":"oops"}')];
+        yield 'transport error' => [new MockResponse('', ['error' => 'Connection refused'])];
+        yield 'HTML instead of JSON' => [new MockResponse('<html>Bad gateway</html>')];
+        yield 'JSON without booking_options' => [new MockResponse('{"itinerary":{}}')];
+        yield 'booking_options not a list' => [new MockResponse('{"booking_options":"oops"}')];
         yield 'JSON null' => [new MockResponse('null')];
     }
 
     #[DataProvider('unusableResponses')]
     public function test_an_unusable_answer_is_unavailable_not_no_direct_link(MockResponse $response): void
     {
-        // "Kon niet vragen" mag nooit als "er is geen link" eindigen: dat laatste
-        // wordt straks een halfuur gecachet.
+        // "Could not ask" must never end as "there is no link": the latter
+        // will be cached for half an hour.
         $source = new IgnavBookingLinkSource(new MockHttpClient($response), new ArrayAdapter(), 'test-key');
 
         $this->expectException(BookingLinkUnavailable::class);
@@ -237,7 +237,7 @@ final class IgnavBookingLinkSourceTest extends TestCase
         return new MockHttpClient(function () use (&$responses, &$calls): MockResponse {
             ++$calls;
 
-            return array_shift($responses) ?? throw new \LogicException('Meer HTTP-calls dan verwacht.');
+            return array_shift($responses) ?? throw new \LogicException('More HTTP calls than expected.');
         });
     }
 
@@ -304,7 +304,7 @@ final class IgnavBookingLinkSourceTest extends TestCase
 
         try {
             $source->linkFor(self::REF);
-            self::fail('De eerste aanvraag had moeten mislukken.');
+            self::fail('The first request should have failed.');
         } catch (BookingLinkUnavailable) {
         }
 

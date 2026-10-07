@@ -10,7 +10,7 @@ use App\Domain\Flight\Itinerary;
 interface FlightPriceSource
 {
     /**
-     * @return Itinerary[] ongefilterd; de regels worden later toegepast
+     * @return Itinerary[] unfiltered; rules are applied later
      */
     public function search(Airport $from, Airport $to, \DateTimeImmutable $date): array;
 }

@@ -9,11 +9,11 @@ use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\RoutePattern;
 
 /**
- * Heen: je moet de trein naar Turku nog halen, dus aankomst uiterlijk 21:00.
- * Terug: geen nachtelijk vertrek uit Turku, dus vertrek niet vóór 12:00.
+ * Outbound: you must catch the train to Turku, so arrival no later than 21:00.
+ * Return: no night departure from Turku, so departure no earlier than 12:00.
  *
- * Geldt alleen voor het patroon met trein. Een doorgaand ticket naar TKU
- * heeft geen aansluitende trein en wordt hier niet op getoetst.
+ * Only applies to the train pattern. A through ticket to TKU has no
+ * connecting train and is not checked here.
  */
 final readonly class HelsinkiTimeWindow implements ItineraryRule
 {
@@ -31,7 +31,7 @@ final readonly class HelsinkiTimeWindow implements ItineraryRule
         }
 
         if ($this->direction->isOutbound()) {
-            // "uiterlijk 21:00" is inclusief: precies 21:00 mag nog.
+            // "no later than 21:00" is inclusive: exactly 21:00 is still allowed.
             return self::minutesOfDay($itinerary->arriveAt()) <= $this->latestArrivalMinutes;
         }
 
@@ -41,8 +41,8 @@ final readonly class HelsinkiTimeWindow implements ItineraryRule
     public function reasonFor(Itinerary $itinerary): string
     {
         return $this->direction->isOutbound()
-            ? 'Aankomst in Helsinki na 21:00 — trein naar Turku niet meer haalbaar.'
-            : 'Vertrek uit Helsinki vóór 12:00.';
+            ? 'Arrival in Helsinki after 21:00 — train to Turku no longer reachable.'
+            : 'Departure from Helsinki before 12:00.';
     }
 
     private static function minutesOfDay(\DateTimeImmutable $moment): int

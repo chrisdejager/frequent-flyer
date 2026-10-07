@@ -9,9 +9,9 @@ use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\RoutePattern;
 
 /**
- * Bij een doorgaand ticket zijn alleen Stockholm en Kopenhagen zinvolle
- * overstappunten. Helsinki valt hier bewust buiten: dat is patroon
- * via-Helsinki-met-trein, dat apart geprijsd wordt.
+ * For a through ticket, only Stockholm and Copenhagen are meaningful
+ * connection points. Helsinki is intentionally excluded here: that is the
+ * via-Helsinki-with-train pattern, which is priced separately.
  */
 final readonly class AllowedConnectionAirports implements ItineraryRule
 {
@@ -31,7 +31,7 @@ final readonly class AllowedConnectionAirports implements ItineraryRule
     public function reasonFor(Itinerary $itinerary): string
     {
         return sprintf(
-            'Overstap via %s wordt bij een doorgaand ticket niet overwogen.',
+            'Connection via %s is not considered for a through ticket.',
             $itinerary->connectsVia()?->value ?? '?',
         );
     }

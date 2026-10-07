@@ -9,11 +9,11 @@ use App\Infrastructure\Source\IgnavFlightSource;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
- * Meet door de échte container, niet langs de configuratie heen.
+ * Measure through the real container, not bypassing the configuration.
  *
- * Een eerdere fout van factor 100 in een parameter bleef onzichtbaar omdat zowel
- * de tests als een handmatige controle de waarde zelf meegaven. Deze test vraagt
- * de container wat hij werkelijk bedraadt.
+ * An earlier error of factor 100 in a parameter remained invisible because both
+ * the tests and a manual check provided the value themselves. This test asks
+ * the container what it actually wires.
  */
 final class FlightSourceWiringTest extends KernelTestCase
 {

@@ -14,15 +14,15 @@ final readonly class TotalCost
         public bool $indicative,
         public bool $trainCostKnown,
         /**
-         * Of de transfer Helsinki–Turku in dit totaal zit.
+         * Whether the Helsinki–Turku transfer is in this total.
          *
-         * Los van $trainCostKnown, want de twee betekenen echt iets anders:
-         * $trainCostKnown = false betekent "we weten de prijs niet" en haalt de
-         * optie uit de sortering. $trainCostIncluded = false betekent "de prijs is
-         * bewust niet meegeteld" — de optie blijft gewoon meedoen, maar het totaal
-         * is aantoonbaar onvolledig en de UI moet dat melden. Zonder dit veld zou
-         * een treinprijs van € 0,00 niet te onderscheiden zijn van "echt gratis",
-         * en dat is precies de onzichtbare nul die spec §5 verbiedt.
+         * Separate from $trainCostKnown, because the two mean really different things:
+         * $trainCostKnown = false means "we don't know the price" and removes the
+         * option from sorting. $trainCostIncluded = false means "the price is
+         * deliberately not counted" — the option continues to participate, but the total
+         * is demonstrably incomplete and the UI must report it. Without this field,
+         * a train price of € 0.00 could not be distinguished from "really free",
+         * and that's exactly the invisible zero that spec §5 forbids.
          */
         public bool $trainCostIncluded,
     ) {

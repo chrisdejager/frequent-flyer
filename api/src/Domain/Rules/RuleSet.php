@@ -19,8 +19,8 @@ final readonly class RuleSet
 
     public static function standard(Direction $direction): self
     {
-        // Volgorde bepaalt welke afwijzingsreden je te zien krijgt als een
-        // optie meerdere regels breekt. Van grofst naar fijnst.
+        // Order determines which rejection reason you see if an
+        // option breaks multiple rules. From coarsest to finest.
         return new self(
             new AllowedCarriers(),
             new AllowedConnectionAirports(),
@@ -33,7 +33,7 @@ final readonly class RuleSet
     /**
      * @param Itinerary[] $itineraries
      *
-     * @return Itinerary[] hernummerd vanaf 0
+     * @return Itinerary[] renumbered starting from 0
      */
     public function filter(array $itineraries): array
     {

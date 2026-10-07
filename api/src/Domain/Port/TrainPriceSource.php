@@ -9,14 +9,14 @@ use App\Domain\Flight\Money;
 interface TrainPriceSource
 {
     /**
-     * Goedkoopste VR-prijs Helsinki ⇄ Turku op deze datum.
+     * Cheapest VR price Helsinki ⇄ Turku on this date.
      *
-     * Geeft null als de prijs onbekend is. Dat omvat alle gevallen waarbij de
-     * implementatie geen bruikbare prijs kan vaststellen: een lege scrapopbrengst,
-     * onleesbare of ontbrekende prijsvelden, een non-2xx-antwoord (inclusief
-     * quota-uitputting), een transportfout (time-out, verbindingsweigering) en
-     * onleesbare JSON. De aanroeper hoeft dus geen exception op te vangen;
-     * null is de volledige signalering van "prijs onbekend".
+     * Returns null if the price is unknown. That covers all cases where the
+     * implementation cannot determine a usable price: an empty scrape yield,
+     * unreadable or missing price fields, a non-2xx response (including
+     * quota exhaustion), a transport error (timeout, connection refused) and
+     * unreadable JSON. The caller thus needs to catch no exception;
+     * null is the complete signal for "price unknown".
      */
     public function priceFor(\DateTimeImmutable $date): ?Money;
 }

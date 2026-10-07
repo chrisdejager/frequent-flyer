@@ -15,19 +15,19 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
 {
     private const ACTOR = 'studio-amba~vr-scraper';
     private const TTL_SECONDS = 86400;
-    private const TTL_NULL_SECONDS = 900; // 15 minuten: mislukken cachen om Apify-tegoed te sparen
+    private const TTL_NULL_SECONDS = 900; // 15 minutes: cache failures to save Apify credits
 
     /**
-     * Bovengrens voor een treinkaartje HEL–TKU in euro.
-     * Een VR-kaartje kost enkele tientjes; alles daarboven is een scraperartefact.
-     * Zonder deze grens loopt (int) round($euros * 100) over naar een negatief
-     * getal, waarop Money een InvalidArgumentException gooit — HTTP 500.
+     * Upper limit for a train ticket HEL–TKU in euros.
+     * A VR ticket costs tens of euros; anything above is a scraper artifact.
+     * Without this limit, (int) round($euros * 100) overflows to a negative
+     * number, upon which Money throws InvalidArgumentException — HTTP 500.
      */
     private const MAX_TRAIN_PRICE_EUROS = 10_000.0;
 
     /**
-     * Schildwacht-waarde die in de cache staat als de scraper niets bruikbaars leverde.
-     * Onderscheidt "null gecacht" van "prijs is 0 cent" en van "cache miss".
+     * Sentinel value in the cache when the scraper returned nothing usable.
+     * Distinguishes "cached null" from "price is 0 cents" and from "cache miss".
      */
     private const CACHE_NULL_SENTINEL = 'null';
 
@@ -85,14 +85,14 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
 
             $rows = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
         } catch (ExceptionInterface $e) {
-            $this->logger?->warning('Apify HTTP-fout bij ophalen treinprijs ({date}): {reason}', [
+            $this->logger?->warning('Apify HTTP error fetching train price ({date}): {reason}', [
                 'date'   => $date->format('Y-m-d'),
                 'reason' => $e->getMessage(),
             ]);
 
             return null;
         } catch (\JsonException $e) {
-            $this->logger?->warning('Apify gaf onleesbare JSON voor treinprijs ({date}): {reason}', [
+            $this->logger?->warning('Apify returned unreadable JSON for train price ({date}): {reason}', [
                 'date'   => $date->format('Y-m-d'),
                 'reason' => $e->getMessage(),
             ]);
@@ -108,19 +108,19 @@ final readonly class ApifyTrainPriceSource implements TrainPriceSource
 
                 $raw = $row['priceEur'] ?? null;
 
-                // Filter onbruikbare prijzen vóór de float-cast:
-                // - niet-numeriek (N/A, lege string, gewone strings) → null
-                // - absurd hoog (incl. INF, want INF > MAX_TRAIN_PRICE_EUROS is waar) → null
-                // - negatief → null (een negatieve treinprijs is geen bruikbare prijs; -INF valt hier ook onder)
-                // Prijs 0.0 is geldig: een gratis rit is mogelijk.
+                // Filter unusable prices before the float cast:
+                // - non-numeric (N/A, empty string, regular strings) → null
+                // - absurdly high (incl. INF, because INF > MAX_TRAIN_PRICE_EUROS is true) → null
+                // - negative → null (a negative train price is not usable; -INF falls here too)
+                // Price 0.0 is valid: a free ride is possible.
                 if (!is_numeric($raw)) {
                     return null;
                 }
 
                 $price = (float) $raw;
 
-                // De bovengrens vangt tevens INF af (INF > MAX_TRAIN_PRICE_EUROS is waar),
-                // waardoor een aparte is_finite()-toets overbodig is. -INF valt onder < 0.0.
+                // The upper limit also catches INF (INF > MAX_TRAIN_PRICE_EUROS is true),
+                // making a separate is_finite() check unnecessary. -INF falls under < 0.0.
                 if ($price < 0.0 || $price > self::MAX_TRAIN_PRICE_EUROS) {
                     return null;
                 }

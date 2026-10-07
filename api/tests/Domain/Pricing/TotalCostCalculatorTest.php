@@ -29,12 +29,12 @@ final class TotalCostCalculatorTest extends TestCase
             Money::fromEuros(22.50),
         );
 
-        self::assertTrue($cost->trainCost->isZero(), 'trein staat uit → geen treinkosten in het totaal');
-        self::assertSame(13400, $cost->total()->cents, 'alleen de ticketprijs');
+        self::assertTrue($cost->trainCost->isZero(), 'train is off → no train costs in the total');
+        self::assertSame(13400, $cost->total()->cents, 'ticket price only');
         self::assertTrue($cost->trainCostKnown,
-            'trainCostKnown moet true blijven, anders belandt élke Helsinki-optie in de ongerangschikte bak');
+            'trainCostKnown must stay true, or every Helsinki option lands in the unranked bin');
         self::assertFalse($cost->trainCostIncluded,
-            'de UI moet kunnen zien dat de transfer HEL→TKU niet in dit totaal zit');
+            'the UI must be able to see that the transfer HEL→TKU is not in this total');
     }
 
     public function test_with_the_train_disabled_a_through_ticket_is_not_marked_as_incomplete(): void
@@ -45,7 +45,7 @@ final class TotalCostCalculatorTest extends TestCase
         );
 
         self::assertTrue($cost->trainCostIncluded,
-            'een doorgaand ticket heeft geen treinbeen, dus er ontbreekt niets');
+            'a through ticket has no train leg, so nothing is missing');
     }
 
     public function test_with_the_train_enabled_the_price_is_still_added(): void
@@ -89,7 +89,7 @@ final class TotalCostCalculatorTest extends TestCase
             Money::fromEuros(22.50),
         );
 
-        self::assertFalse($cost->indicative, 'bekende treinprijs, geen bagageschatting meer → niet indicatief');
+        self::assertFalse($cost->indicative, 'known train price, no luggage estimate → not indicative');
     }
 
     public function test_sas_through_ticket_is_not_indicative(): void
@@ -99,7 +99,7 @@ final class TotalCostCalculatorTest extends TestCase
             null,
         );
 
-        self::assertFalse($cost->indicative, 'doorgaand ticket heeft geen trein, dus niets onbekends');
+        self::assertFalse($cost->indicative, 'through ticket has no train, so nothing unknown');
     }
 
     public function test_null_train_price_for_helsinki_pattern_marks_cost_unknown_and_indicative(): void
@@ -109,9 +109,9 @@ final class TotalCostCalculatorTest extends TestCase
             null,
         );
 
-        self::assertFalse($cost->trainCostKnown, 'treinprijs null → trainCostKnown moet false zijn');
-        self::assertTrue($cost->indicative, 'onbekende treinprijs → optie is indicatief');
-        self::assertTrue($cost->trainCost->isZero(), 'rekent intern met nul zodat totaal klopt');
+        self::assertFalse($cost->trainCostKnown, 'train price null → trainCostKnown must be false');
+        self::assertTrue($cost->indicative, 'unknown train price → option is indicative');
+        self::assertTrue($cost->trainCost->isZero(), 'calculates internally with zero so total is correct');
     }
 
     public function test_null_train_price_for_through_ticket_leaves_trainCostKnown_true(): void
@@ -121,7 +121,7 @@ final class TotalCostCalculatorTest extends TestCase
             null,
         );
 
-        self::assertTrue($cost->trainCostKnown, 'doorgaand ticket heeft geen trein, dus niets onbekends');
+        self::assertTrue($cost->trainCostKnown, 'through ticket has no train, so nothing unknown');
     }
 
     public function test_known_train_price_sets_trainCostKnown_true(): void

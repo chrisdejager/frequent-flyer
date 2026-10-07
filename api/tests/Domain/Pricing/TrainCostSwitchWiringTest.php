@@ -14,12 +14,12 @@ use App\Domain\Pricing\TotalCostCalculator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
- * Toetst de schakelaar door de échte container.
+ * Tests the toggle through the real container.
  *
- * TotalCostCalculatorTest geeft trainCostEnabled zelf mee en kan daarom nooit
- * bewijzen dat TRAIN_COST_ENABLED werkelijk bedraad is. Precies zo bleef een
- * eerdere factor-100-fout in een parameter onzichtbaar: de tests vulden de waarde
- * zelf in. Deze test vraagt de container wat hij werkelijk doet.
+ * TotalCostCalculatorTest passes trainCostEnabled itself and thus can never
+ * prove that TRAIN_COST_ENABLED is truly wired. Exactly as this happened before:
+ * a factor-100 error in a parameter remained invisible because the tests filled the value
+ * themselves. This test asks the container what it truly does.
  */
 final class TrainCostSwitchWiringTest extends KernelTestCase
 {
@@ -38,16 +38,16 @@ final class TrainCostSwitchWiringTest extends KernelTestCase
         $enabled = filter_var($_ENV['TRAIN_COST_ENABLED'] ?? '0', FILTER_VALIDATE_BOOL);
 
         if ($enabled) {
-            self::assertSame(2250, $cost->trainCost->cents, 'schakelaar aan → treinprijs telt mee');
+            self::assertSame(2250, $cost->trainCost->cents, 'toggle on → train price counts');
             self::assertTrue($cost->trainCostIncluded);
 
             return;
         }
 
-        self::assertTrue($cost->trainCost->isZero(), 'schakelaar uit → geen treinkosten in het totaal');
-        self::assertSame(13400, $cost->total()->cents, 'alleen de ticketprijs');
-        self::assertTrue($cost->trainCostKnown, 'de optie moet blijven meedoen aan de sortering');
-        self::assertFalse($cost->trainCostIncluded, 'de UI moet de ontbrekende transfer kunnen melden');
+        self::assertTrue($cost->trainCost->isZero(), 'toggle off → no train costs in the total');
+        self::assertSame(13400, $cost->total()->cents, 'ticket price only');
+        self::assertTrue($cost->trainCostKnown, 'the option must continue to participate in ranking');
+        self::assertFalse($cost->trainCostIncluded, 'the UI must be able to report the missing transfer');
     }
 
     private static function viaHel(): Itinerary

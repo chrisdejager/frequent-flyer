@@ -10,6 +10,6 @@ interface ItineraryRule
 {
     public function isSatisfiedBy(Itinerary $itinerary): bool;
 
-    /** Uitleg die aan de gebruiker getoond kan worden als de regel afwijst. */
+    /** Explanation that can be shown to the user if the rule rejects. */
     public function reasonFor(Itinerary $itinerary): string;
 }

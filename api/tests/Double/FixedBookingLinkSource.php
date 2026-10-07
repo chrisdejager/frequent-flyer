@@ -13,7 +13,7 @@ final class FixedBookingLinkSource implements BookingLinkSource
     /** @var list<string> */
     public array $calls = [];
 
-    /** @param BookingLink|null $link null = de bron is onbereikbaar */
+    /** @param BookingLink|null $link null = the source is unreachable */
     public function __construct(private readonly ?BookingLink $link)
     {
     }
@@ -27,6 +27,6 @@ final class FixedBookingLinkSource implements BookingLinkSource
     {
         $this->calls[] = $bookingRef;
 
-        return $this->link ?? throw new BookingLinkUnavailable('Testdubbel: bron onbereikbaar.');
+        return $this->link ?? throw new BookingLinkUnavailable('Test double: source unreachable.');
     }
 }

@@ -15,10 +15,10 @@ final class BookingLinkTest extends TestCase
      */
     public static function unsafeUrls(): iterable
     {
-        yield 'http (gemeten bij SAS)' => ['http://www.flysas.com/nl/nl/'];
+        yield 'http (measured with SAS)' => ['http://www.flysas.com/nl/nl/'];
         yield 'javascript' => ['javascript:alert(1)'];
         yield 'data' => ['data:text/html,<script>alert(1)</script>'];
-        yield 'protocol-relatief' => ['//evil.example/'];
+        yield 'protocol-relative' => ['//evil.example/'];
     }
 
     #[DataProvider('unsafeUrls')]

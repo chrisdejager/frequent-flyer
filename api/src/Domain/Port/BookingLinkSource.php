@@ -10,10 +10,10 @@ use App\Domain\Booking\BookingLinkUnavailable;
 interface BookingLinkSource
 {
     /**
-     * Boekingslink voor een eerder gevonden vlucht, aangewezen met de verwijzing
-     * die de vluchtbron als Itinerary::$bookingRef meegaf.
+     * Booking link for a previously found flight, designated with the reference
+     * that the flight source provided as Itinerary::$bookingRef.
      *
-     * @throws BookingLinkUnavailable bij storing, onleesbaar of onverwacht antwoord
+     * @throws BookingLinkUnavailable on failure, unreadable or unexpected response
      */
     public function linkFor(string $bookingRef): BookingLink;
 }

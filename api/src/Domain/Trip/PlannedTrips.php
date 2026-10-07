@@ -7,15 +7,15 @@ namespace App\Domain\Trip;
 use App\Domain\Flight\Direction;
 
 /**
- * Fase 1 houdt de planning hier vast. Fase 4 vervangt dit door Google Calendar;
- * alleen deze klasse hoeft dan te wijzigen.
+ * Phase 1 keeps the planning here. Phase 4 replaces this with Google Calendar;
+ * only this class needs to change then.
  */
 final readonly class PlannedTrips
 {
     /**
-     * Bewust niet op datum gezet: zo moet `all()` echt sorteren en heeft de
-     * sorteertest iets om te bewaken. Uit de agenda komt de volgorde straks
-     * ook niet gegarandeerd goed.
+     * Deliberately not sorted by date: this way `all()` must really sort, and the
+     * sort test has something to guard. From the calendar the order will later
+     * also not be guaranteed correct.
      */
     private const TRIPS = [
         ['2026-10-29', 'nl-fi', 'partner'],
@@ -23,7 +23,7 @@ final readonly class PlannedTrips
     ];
 
     /**
-     * @return PlannedTrip[] op datum gesorteerd
+     * @return PlannedTrip[] sorted by date
      */
     public function all(): array
     {

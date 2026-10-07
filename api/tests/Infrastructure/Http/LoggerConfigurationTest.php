@@ -8,18 +8,18 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpKernel\Log\Logger;
 
 /**
- * Bevinding 4: de services.yaml-logger-override zet de drempelwaarde op 'warning'.
- * Zonder dat blok slokt de standaardlogger elke warning() stil in — alle
- * waarschuwingen die deze branch heeft toegevoegd worden dan onzichtbaar.
+ * Finding 4: the services.yaml logger override sets the threshold to 'warning'.
+ * Without that block the default logger silently swallows every warning() — all
+ * warnings added to this branch become invisible.
  *
- * Twee asserts:
- * 1. De logger-service is een Logger-instantie (class check).
- * 2. De geconfigureerde drempelwaarde is 'warning' (minLevelIndex=3 via reflectie).
- *    De standaard Logger zonder override heeft minLevelIndex=4 (error),
- *    waardoor $logger->warning() stil niets doet.
+ * Two assertions:
+ * 1. The logger service is a Logger instance (class check).
+ * 2. The configured threshold is 'warning' (minLevelIndex=3 via reflection).
+ *    The default Logger without override has minLevelIndex=4 (error),
+ *    causing $logger->warning() to silently do nothing.
  *
- * Deze test pinnt de bedrading: hij faalt als het logger-blok in services.yaml
- * verdwijnt of de drempelwaarde naar 'error' teruggaat.
+ * This test pins the wiring: it fails if the logger block in services.yaml
+ * disappears or the threshold moves back to 'error'.
  */
 final class LoggerConfigurationTest extends WebTestCase
 {
@@ -32,24 +32,24 @@ final class LoggerConfigurationTest extends WebTestCase
         self::assertInstanceOf(
             Logger::class,
             $logger,
-            'De logger-service moet een Symfony\Component\HttpKernel\Log\Logger zijn. '
-            . 'Als dit faalt, is het logger:-blok in services.yaml verdwenen of vervangen, '
-            . 'waardoor alle warning()-aanroepen stilletjes worden genegeerd.',
+            'The logger service must be a Symfony\Component\HttpKernel\Log\Logger. '
+            . 'If this fails, the logger: block in services.yaml has disappeared or been replaced, '
+            . 'causing all warning() calls to be silently ignored.',
         );
 
-        // De drempelwaarde 'warning' geeft minLevelIndex=3; de standaard zonder override
-        // is 'error' (minLevelIndex=4). We toetsen via reflectie zodat de test faalt
-        // als het logger-blok in services.yaml verdwijnt of de drempelwaarde verandert.
+        // The threshold 'warning' gives minLevelIndex=3; the default without override
+        // is 'error' (minLevelIndex=4). We test via reflection so the test fails
+        // if the logger block in services.yaml disappears or the threshold changes.
         $reflection = new \ReflectionClass($logger);
         $prop = $reflection->getProperty('minLevelIndex');
         $prop->setAccessible(true);
         $minLevelIndex = $prop->getValue($logger);
 
         self::assertSame(3, $minLevelIndex,
-            'De logger-drempelwaarde moet "warning" (minLevelIndex=3) zijn. '
-            . 'De standaard Logger zonder override heeft minLevelIndex=4 (error), '
-            . 'waardoor warning()-aanroepen stil worden genegeerd. '
-            . 'Controleer het logger:-blok in config/services.yaml.',
+            'The logger threshold must be "warning" (minLevelIndex=3). '
+            . 'The default Logger without override has minLevelIndex=4 (error), '
+            . 'causing warning() calls to be silently ignored. '
+            . 'Check the logger: block in config/services.yaml.',
         );
     }
 }

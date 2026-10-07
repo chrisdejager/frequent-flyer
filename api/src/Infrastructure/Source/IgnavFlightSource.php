@@ -18,24 +18,24 @@ final readonly class IgnavFlightSource implements FlightPriceSource
 {
     private const ENDPOINT = 'https://ignav.com/api/fares/one-way';
 
-    /** Landcode waarmee ignav de markt en daarmee de valuta kiest. */
+    /** Country code by which ignav chooses the market and thus the currency. */
     private const MARKET = 'NL';
 
-    /** De enige valuta die we accepteren; het domein rekent in eurocenten. */
+    /** The only currency we accept; the domain calculates in euro cents. */
     private const CURRENCY = 'EUR';
 
     /**
-     * Bovengrens voor een vliegticketprijs in euro.
-     * Geen ticket op onze routes (AMS–HEL/TKU) komt in de buurt van dit bedrag;
-     * een hogere waarde duidt op een bronartefact, niet op een dure vlucht.
-     * Vangt tevens INF af: json_decode maakt van 1e999 een INF-float.
+     * Upper limit for a flight ticket price in euros.
+     * No ticket on our routes (AMS–HEL/TKU) comes close to this amount;
+     * a higher value indicates a source artifact, not an expensive flight.
+     * Also catches INF: json_decode converts 1e999 to an INF float.
      */
     private const MAX_TICKET_PRICE_EUROS = 1_000_000.0;
 
     /**
-     * Volgorde van maatschappijen van duurste naar goedkoopste bagagetoeslag.
-     * Bij gemengde legs kiezen we de maatschappij die de hoogste kosten impliceert
-     * (conservatief), zodat het getoonde totaal nooit te laag uitvalt.
+     * Order of airlines from most to least expensive baggage surcharge.
+     * With mixed legs, we choose the airline that implies the highest cost
+     * (conservative), so the displayed total never falls too low.
      */
     private const CARRIER_PRIORITY = [
         Carrier::Klm,
@@ -68,7 +68,7 @@ final readonly class IgnavFlightSource implements FlightPriceSource
 
             $payload = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
         } catch (\Symfony\Contracts\HttpClient\Exception\ExceptionInterface $e) {
-            $this->logger?->warning('ignav HTTP-fout bij ophalen vluchten ({from}→{to}, {date}): {reason}', [
+            $this->logger?->warning('ignav HTTP error fetching flights ({from}→{to}, {date}): {reason}', [
                 'from'   => $from->value,
                 'to'     => $to->value,
                 'date'   => $date->format('Y-m-d'),
@@ -77,7 +77,7 @@ final readonly class IgnavFlightSource implements FlightPriceSource
 
             return [];
         } catch (\JsonException $e) {
-            $this->logger?->warning('ignav gaf onleesbare JSON voor vluchten ({from}→{to}, {date}): {reason}', [
+            $this->logger?->warning('ignav returned unreadable JSON for flights ({from}→{to}, {date}): {reason}', [
                 'from'   => $from->value,
                 'to'     => $to->value,
                 'date'   => $date->format('Y-m-d'),
@@ -87,11 +87,11 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             return [];
         }
 
-        // Onderscheid "geen vluchten gevonden" (een legitiem lege lijst) van "de bron
-        // heeft zijn antwoordvorm gewijzigd" (sleutel ontbreekt of is geen array).
-        // De oude adapter gooide die twee op één hoop en gaf dan stil 0 resultaten.
+        // Distinguish "no flights found" (a legitimate empty list) from "the source
+        // changed its response format" (key missing or not an array).
+        // The old adapter mixed the two and silently returned 0 results.
         if (!is_array($payload) || !is_array($payload['itineraries'] ?? null)) {
-            $this->logger?->warning('Geen itineraries-collectie in payload voor route {from}→{to} ({date}).', [
+            $this->logger?->warning('No itineraries collection in payload for route {from}→{to} ({date}).', [
                 'from' => $from->value,
                 'to'   => $to->value,
                 'date' => $date->format('Y-m-d'),
@@ -119,7 +119,7 @@ final readonly class IgnavFlightSource implements FlightPriceSource
         }
 
         if ($skipped > 0) {
-            $this->logger?->warning('{count} aanbod(en) overgeslagen voor route {from}→{to} ({date}).', [
+            $this->logger?->warning('{count} offer(s) skipped for route {from}→{to} ({date}).', [
                 'count' => $skipped,
                 'from'  => $from->value,
                 'to'    => $to->value,
@@ -135,9 +135,9 @@ final readonly class IgnavFlightSource implements FlightPriceSource
      */
     private function toItinerary(array $offer, Airport $from, Airport $to): ?Itinerary
     {
-        // Een self-transfer is geen doorgaand ticket: bagage wordt niet doorgecheckt
-        // en bij een gemiste aansluiting is er geen recht. De bagageberekening verderop
-        // gaat uit van één ticket en zou hier stil een verkeerd totaal opleveren.
+        // A self-transfer is not a through ticket: baggage is not checked through
+        // and there is no compensation for a missed connection. The baggage calculation below
+        // assumes one ticket and would silently produce a wrong total here.
         if (true === ($offer['requires_self_transfer'] ?? false)) {
             return null;
         }
@@ -148,8 +148,8 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             return null;
         }
 
-        // Verzamel de maatschappijen van álle legs. Carrier::tryFrom kent alleen
-        // AY/SK/KL; BT (Air Baltic) en TK (Turkish) uit de echte respons vallen hier af.
+        // Collect airlines from all legs. Carrier::tryFrom only knows
+        // AY/SK/KL; BT (Air Baltic) and TK (Turkish) from the real response fall away here.
         $carriers = [];
         foreach ($legs as $leg) {
             if (!is_array($leg)) {
@@ -160,14 +160,14 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             $legCarrier = is_string($code) ? Carrier::tryFrom($code) : null;
 
             if (null === $legCarrier) {
-                // Eén maatschappij buiten Finnair/SAS/KLM mag de hele zoekopdracht niet slopen.
+                // One airline outside Finnair/SAS/KLM must not break the entire search.
                 return null;
             }
 
             $carriers[] = $legCarrier;
         }
 
-        // Bij gemengde legs kiezen we de maatschappij met de hoogste bagagetoeslag.
+        // With mixed legs, we choose the airline with the highest baggage surcharge.
         $carrier = null;
         foreach (self::CARRIER_PRIORITY as $priority) {
             if (in_array($priority, $carriers, true)) {
@@ -176,8 +176,8 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             }
         }
 
-        // $carrier kan hier niet null zijn: alle carriers zijn toegestaan en
-        // CARRIER_PRIORITY bevat alle toegestane carriers. Maar voor type-safety:
+        // $carrier cannot be null here: all carriers are allowed and
+        // CARRIER_PRIORITY contains all allowed carriers. But for type safety:
         if (null === $carrier) {
             return null;
         }
@@ -191,8 +191,8 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             $legFrom = is_string($rawFrom) ? Airport::tryFrom($rawFrom) : null;
             $legTo = is_string($rawTo) ? Airport::tryFrom($rawTo) : null;
 
-            // Overstappen buiten AMS/HEL/TKU/ARN/CPH vallen hier af — de echte
-            // respons bevatte RIX en IST.
+            // Connections outside AMS/HEL/TKU/ARN/CPH fall away here — the real
+            // response contained RIX and IST.
             if (null === $legFrom || null === $legTo) {
                 return null;
             }
@@ -200,8 +200,8 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             $departureTime = $leg['departure_time_utc'] ?? null;
             $arrivalTime = $leg['arrival_time_utc'] ?? null;
 
-            // new \DateTimeImmutable('') gooit géén exception maar levert "nu" terug;
-            // een lege string moet daarom expliciet vóór de constructor worden afgevangen.
+            // new \DateTimeImmutable('') throws no exception but returns "now";
+            // an empty string must therefore be explicitly caught before the constructor.
             if (!is_string($departureTime) || '' === $departureTime
                 || !is_string($arrivalTime) || '' === $arrivalTime) {
                 return null;
@@ -214,17 +214,17 @@ final readonly class IgnavFlightSource implements FlightPriceSource
                 return null;
             }
 
-            // ignav levert het vluchtnummer zónder maatschappijcode ("1302"), het
-            // domein verwacht "AY1302". Een niet-scalaire waarde zou bij een cast
-            // stil "Array" opleveren.
+            // ignav provides the flight number without airline code ("1302"), the
+            // domain expects "AY1302". A non-scalar value would silently
+            // produce "Array" when cast.
             $rawFlightNumber = $leg['flight_number'] ?? null;
 
             if (!is_string($rawFlightNumber) && !is_int($rawFlightNumber)) {
                 return null;
             }
 
-            // Segment gooit een InvalidArgumentException als aankomst niet ná vertrek ligt;
-            // ook dat hoort één aanbieding te laten vervallen, niet de hele zoekopdracht.
+            // Segment throws InvalidArgumentException if arrival is not after departure;
+            // that too should cause one offer to be dropped, not the entire search.
             try {
                 $segments[] = new Segment(
                     $legFrom,
@@ -245,16 +245,16 @@ final readonly class IgnavFlightSource implements FlightPriceSource
         $origin = $segments[0]->from;
         $destination = $segments[count($segments) - 1]->to;
 
-        // Routecontrole: het aanbod moet exact de gevraagde route bedienen.
-        // Een vlucht AMS→ARN bij een AMS→TKU-zoekopdracht wordt hier overgeslagen.
+        // Route validation: the offer must exactly serve the requested route.
+        // A flight AMS→ARN on an AMS→TKU search is skipped here.
         if ($origin !== $from || $destination !== $to) {
             return null;
         }
 
-        // Helsinki is een eindpunt van de vlucht (vertrek of aankomst): de VR-trein
-        // HEL–TKU hoort erbij. Let op: dit gaat over het eindpunt van dit ticket, niet
-        // over een tussenlandse overstap — een ticket dat via Helsinki overstapt maar
-        // ergens anders eindigt krijgt terecht ThroughTicket.
+        // Helsinki is an endpoint of the flight (departure or arrival): the VR train
+        // HEL–TKU belongs with it. Note: this is about the endpoint of this ticket, not
+        // about an intermediate connection — a ticket that connects via Helsinki but
+        // ends elsewhere correctly gets ThroughTicket.
         $trainNeeded = Airport::Hel === $destination || Airport::Hel === $origin;
 
         $price = $offer['price'] ?? null;
@@ -263,15 +263,15 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             return null;
         }
 
-        // Het domein rekent in eurocenten; een andere valuta zou hier stil een
-        // verkeerd bedrag opleveren.
+        // The domain calculates in euro cents; a different currency would silently
+        // produce a wrong amount here.
         if (self::CURRENCY !== ($price['currency'] ?? null)) {
             return null;
         }
 
-        // price.amount is uitgedrukt in hele euro's (gemeten: 248, 266, 273), niet in
-        // centen. is_numeric() keurt strings met komma als decimaalscheider af, wat
-        // precies de Nederlandse locale-notatie uitsluit.
+        // price.amount is expressed in whole euros (measured: 248, 266, 273), not in
+        // cents. is_numeric() rejects strings with comma as decimal separator, which
+        // exactly excludes Dutch locale notation.
         $rawAmount = $price['amount'] ?? null;
 
         if (!is_numeric($rawAmount)) {
@@ -286,9 +286,9 @@ final readonly class IgnavFlightSource implements FlightPriceSource
 
         $cents = (int) round($euros * 100);
 
-        // Een prijs van nul cent of minder is geen bruikbare prijs. De toets staat op
-        // centniveau omdat de spookvlucht daar ontstaat: zowel 0, 0.004 als -0.004
-        // worden (int) round(...*100) = 0 cent.
+        // A price of zero cents or less is not a usable price. The check is at the
+        // cent level because the ghost flight arises there: both 0, 0.004 and -0.004
+        // become (int) round(...*100) = 0 cents.
         if ($cents <= 0) {
             return null;
         }
@@ -304,7 +304,7 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             $segments,
             $priceMoney,
             $trainNeeded ? RoutePattern::ViaHelsinkiWithTrain : RoutePattern::ThroughTicket,
-            // Zonder bruikbaar id blijft de optie gewoon staan, alleen zonder Boeken-knop.
+            // Without a usable id the option remains as is, just without a Book button.
             is_string($offer['ignav_id'] ?? null) && '' !== $offer['ignav_id'] ? $offer['ignav_id'] : null,
         );
     }

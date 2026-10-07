@@ -12,21 +12,21 @@ final readonly class TotalCostCalculator
 {
     public function __construct(
         /**
-         * Staat de transfer Helsinki–Turku aan?
+         * Is the Helsinki–Turku transfer enabled?
          *
-         * Bewust zonder standaardwaarde: elke aanroeper moet expliciet kiezen, zodat
-         * een nieuwe bedrading niet stil de verkeerde kant op valt.
+         * Deliberately without a default value: every caller must choose explicitly, so
+         * new wiring does not silently go the wrong way.
          */
         private bool $trainCostEnabled,
     ) {
     }
 
     /**
-     * Heeft het zin een treinprijs op te halen?
+     * Does it make sense to fetch a train price?
      *
-     * De aanroeper betaalt voor het ophalen (een Apify-run), dus die moet kunnen
-     * weten of de uitkomst wordt gebruikt. Hier, niet in de aanroeper, zodat er
-     * één plek is die de schakelaar kent.
+     * The caller pays for fetching (an Apify run), so they must be able to
+     * know whether the result is used. Here, not in the caller, so there is
+     * one place that knows the switch.
      */
     public function usesTrainCost(): bool
     {
@@ -38,14 +38,14 @@ final readonly class TotalCostCalculator
         $isHelRoute = RoutePattern::ViaHelsinkiWithTrain === $itinerary->pattern;
 
         if (!$isHelRoute) {
-            // Doorgaand ticket: geen treinbeen, dus er ontbreekt niets.
+            // Through ticket: no train leg, so nothing is missing.
             $train = Money::zero();
             $trainCostKnown = true;
             $trainCostIncluded = true;
         } elseif (!$this->trainCostEnabled) {
-            // Transfer tijdelijk uitgezet. De optie blijft meedoen aan de sortering
-            // (trainCostKnown blijft true), maar het totaal is aantoonbaar onvolledig —
-            // daarom moet de UI het via $trainCostIncluded kunnen melden.
+            // Transfer temporarily disabled. The option continues to participate in sorting
+            // (trainCostKnown remains true), but the total is demonstrably incomplete —
+            // therefore the UI must be able to report it via $trainCostIncluded.
             $train = Money::zero();
             $trainCostKnown = true;
             $trainCostIncluded = false;

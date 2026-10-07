@@ -23,7 +23,7 @@ final readonly class ConnectsRequestedRoute implements ItineraryRule
     public function reasonFor(Itinerary $itinerary): string
     {
         return sprintf(
-            'Vlucht %s→%s past niet bij gevraagde route %s→%s.',
+            'Flight %s→%s does not match requested route %s→%s.',
             $itinerary->origin()->value,
             $itinerary->destination()->value,
             $this->from->value,

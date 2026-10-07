@@ -12,7 +12,7 @@ final class TotalCostTest extends TestCase
 {
     public function test_total_is_unchanged_when_train_cost_unknown(): void
     {
-        // Bewijst dat total() zelf niet verandert — het getoonde bedrag blijft €140
+        // Proves that total() itself doesn't change — the displayed amount stays €140
         $cost = new TotalCost(
             basePrice:         Money::fromEuros(140.00),
             trainCost:         Money::zero(),
@@ -22,6 +22,6 @@ final class TotalCostTest extends TestCase
         );
 
         self::assertSame(14000, $cost->total()->cents,
-            'total() toont €140 — de schatting mag hier niet zichtbaar zijn');
+            'total() shows €140 — the estimate should not be visible here');
     }
 }

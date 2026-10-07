@@ -11,7 +11,7 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
 /**
- * Meet door de échte container, niet langs de configuratie heen — zie
+ * Measure through the real container, not bypassing the configuration — see
  * FlightSourceWiringTest.
  */
 final class BookingLinkSourceWiringTest extends KernelTestCase
@@ -36,15 +36,15 @@ final class BookingLinkSourceWiringTest extends KernelTestCase
             return new MockResponse($body);
         }));
 
-        // cache.app staat in test op het bestandssysteem en overleeft dus een run:
-        // een vaste ref zou de tweede keer al bij de eerste aanvraag een hit zijn.
+        // cache.app is on the file system in tests and thus survives a run:
+        // a fixed ref would hit on the second attempt already at the first request.
         $ref = bin2hex(random_bytes(16));
         $source = self::getContainer()->get(BookingLinkSource::class);
 
         $source->linkFor($ref);
         $second = $source->linkFor($ref);
 
-        self::assertSame(1, $calls, 'De tweede aanvraag moet uit de cache komen.');
+        self::assertSame(1, $calls, 'The second request must come from cache.');
         self::assertSame('Finnair', $second->provider);
     }
 }

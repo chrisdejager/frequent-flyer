@@ -33,8 +33,8 @@ final class IgnavFlightSourceTest extends TestCase
     }
 
     /**
-     * De échte respons van ignav, zoals gemeten op 17 sep 2026 voor AMS→HEL.
-     * Dit is het ankerpunt van deze testsuite: geen verzonnen vorm.
+     * The real response from ignav, as measured on 17 Sep 2026 for AMS→HEL.
+     * This is the anchor point of this test suite: not invented form.
      *
      * @return array<string, mixed>
      */
@@ -49,7 +49,7 @@ final class IgnavFlightSourceTest extends TestCase
     }
 
     /**
-     * Eén geldig aanbod (Finnair AMS→HEL), met gerichte overschrijvingen.
+     * One valid offer (Finnair AMS→HEL), with targeted overrides.
      *
      * @param array<string, mixed> $overrides
      *
@@ -85,7 +85,7 @@ final class IgnavFlightSourceTest extends TestCase
     }
 
     /**
-     * Eén aanbod met twee legs, zodat de maatschappijkeuze over gemengde legs toetsbaar is.
+     * One offer with two legs, so carrier choice over mixed legs is testable.
      *
      * @return array<string, mixed>
      */
@@ -137,14 +137,14 @@ final class IgnavFlightSourceTest extends TestCase
             ->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17'));
     }
 
-    // ------------------------------------------------- de echte respons mappen
+    // ------------------------------------------------- map the real response
 
     public function test_maps_the_real_response_to_allowed_carriers_only(): void
     {
         $itineraries = $this->searchRealPayload();
 
-        // Acht itineraries in, twee eruit: Air Baltic (BT) en Turkish (TK) vallen af
-        // op maatschappij — en dat zijn precies de twee met een overstap via RIX/IST.
+        // Eight itineraries in, two out: Air Baltic (BT) and Turkish (TK) fall away
+        // on carrier — and those are exactly the two with a connection via RIX/IST.
         self::assertCount(6, $itineraries);
 
         self::assertSame(
@@ -157,8 +157,8 @@ final class IgnavFlightSourceTest extends TestCase
     {
         $itineraries = $this->searchRealPayload();
 
-        // Finnair staat in de fixture op amount 266 met currency EUR.
-        // 266 euro is 26600 cent. Een factor-100-fout maakt hier 266 of 2660000 van.
+        // Finnair in the fixture is at amount 266 with currency EUR.
+        // 266 euros is 26600 cents. A factor-100 error makes this 266 or 2660000.
         self::assertSame(26600, $itineraries[0]->basePrice->cents);
     }
 
@@ -166,7 +166,7 @@ final class IgnavFlightSourceTest extends TestCase
     {
         $itineraries = $this->searchRealPayload();
 
-        // ignav levert flight_number "1302" zónder maatschappijcode.
+        // ignav delivers flight_number "1302" without airline code.
         self::assertSame('AY1302', $itineraries[0]->segments[0]->flightNumber);
     }
 
@@ -175,7 +175,7 @@ final class IgnavFlightSourceTest extends TestCase
         $itineraries = $this->searchRealPayload();
 
         // departure_time_local is 11:55 Amsterdam, departure_time_utc is 09:55Z.
-        // Lezen we per ongeluk het lokale veld, dan staat hier 11:55.
+        // If we accidentally read the local field, 11:55 shows here.
         self::assertSame('2026-10-17T09:55:00+00:00', $itineraries[0]->segments[0]->departAt->format('c'));
         self::assertSame('2026-10-17T12:15:00+00:00', $itineraries[0]->segments[0]->arriveAt->format('c'));
     }
@@ -184,8 +184,8 @@ final class IgnavFlightSourceTest extends TestCase
     {
         $itineraries = $this->searchRealPayload();
 
-        // De eerste toegestane optie in de fixture is Finnair (BT ervoor valt af);
-        // een verschoven index geeft hier het id van Air Baltic of de tweede Finnair.
+        // The first allowed option in the fixture is Finnair (BT before it falls away);
+        // a shifted index gives the id of Air Baltic or the second Finnair here.
         self::assertSame('0ea5aa41342f00000056346ef96d746d', $itineraries[0]->bookingRef);
         self::assertSame('f60792e7dede000000cac361c3234ba8', $itineraries[2]->bookingRef);
     }
@@ -213,7 +213,7 @@ final class IgnavFlightSourceTest extends TestCase
     {
         $itineraries = $this->searchRealPayload();
 
-        // Helsinki is eindpunt van dit ticket, dus de VR-trein hoort erbij.
+        // Helsinki is the endpoint of this ticket, so the VR train belongs.
         self::assertSame(RoutePattern::ViaHelsinkiWithTrain, $itineraries[0]->pattern);
     }
 
@@ -232,7 +232,7 @@ final class IgnavFlightSourceTest extends TestCase
         self::assertSame('POST', $seen['method']);
         self::assertSame('https://ignav.com/api/fares/one-way', $seen['url']);
 
-        // Symfony normaliseert headers; platslaan zodat de vorm niet uitmaakt.
+        // Symfony normalizes headers; flatten so form doesn't matter.
         $flatHeaders = [];
         array_walk_recursive(
             $seen['options']['headers'],
@@ -247,7 +247,7 @@ final class IgnavFlightSourceTest extends TestCase
         );
     }
 
-    // ------------------------------------------------------------ afwijsregels
+    // ------------------------------------------------------------ rejection rules
 
     public function test_self_transfer_offer_is_rejected(): void
     {
@@ -271,7 +271,7 @@ final class IgnavFlightSourceTest extends TestCase
 
     public function test_non_numeric_price_is_rejected(): void
     {
-        // Nederlandse locale-notatie mag niet stil als getal worden gelezen.
+        // Dutch locale notation must not silently be read as a number.
         self::assertCount(0, $this->searchWith($this->offer(['price' => ['amount' => '1.234,00']])));
     }
 
@@ -290,7 +290,7 @@ final class IgnavFlightSourceTest extends TestCase
 
     public function test_unknown_carrier_is_rejected(): void
     {
-        // Air Baltic zat in de eerste echte respons.
+        // Air Baltic was in the first real response.
         $offer = $this->offer();
         $offer['outbound']['segments'][0]['marketing_carrier_code'] = 'BT';
 
@@ -299,7 +299,7 @@ final class IgnavFlightSourceTest extends TestCase
 
     public function test_unknown_airport_is_rejected(): void
     {
-        // RIX zat in de eerste echte respons als overstap.
+        // RIX was in the first real response as a connection.
         $offer = $this->offer();
         $offer['outbound']['segments'][0]['arrival_airport'] = 'RIX';
 
@@ -308,8 +308,8 @@ final class IgnavFlightSourceTest extends TestCase
 
     public function test_offer_that_does_not_serve_the_requested_route_is_rejected(): void
     {
-        // Gevraagd AMS→HEL, geleverd AMS→ARN. Dit was Critical C1: een vlucht naar
-        // Stockholm werd gepresenteerd als de goedkoopste reis naar Turku.
+        // Requested AMS→HEL, delivered AMS→ARN. This was Critical C1: a flight to
+        // Stockholm was presented as the cheapest trip to Turku.
         $offer = $this->offer();
         $offer['outbound']['segments'][0]['arrival_airport'] = 'ARN';
 
@@ -351,7 +351,7 @@ final class IgnavFlightSourceTest extends TestCase
 
     public function test_empty_departure_time_is_rejected(): void
     {
-        // new \DateTimeImmutable('') levert "nu" op in plaats van te gooien.
+        // new \DateTimeImmutable('') returns "now" instead of throwing.
         $offer = $this->offer();
         $offer['outbound']['segments'][0]['departure_time_utc'] = '';
 
@@ -376,19 +376,19 @@ final class IgnavFlightSourceTest extends TestCase
 
     public function test_array_flight_number_is_rejected_instead_of_becoming_the_string_Array(): void
     {
-        // Minor M2 uit de oude adapter: een cast maakte hier stil "Array" van.
+        // Minor M2 from the old adapter: a cast made "Array" silently here.
         $offer = $this->offer();
         $offer['outbound']['segments'][0]['flight_number'] = ['1302'];
 
         self::assertCount(0, $this->searchWith($offer));
     }
 
-    // ------------------------------------------- maatschappij bij gemengde legs
+    // ------------------------------------------- airline with mixed legs
 
     public function test_mixed_legs_pick_klm_when_it_is_on_the_first_leg(): void
     {
-        // De spiegeling die eerder ontbrak: zonder deze test blijft de mutatie
-        // "neem het laatste been" groen.
+        // The mirror that was missing before: without this test, the mutation
+        // "take the last leg" remains green.
         $itineraries = $this->searchWith($this->twoLegOffer('KL', 'SK'));
 
         self::assertCount(1, $itineraries);
@@ -417,7 +417,7 @@ final class IgnavFlightSourceTest extends TestCase
         self::assertCount(0, $this->searchWith($this->twoLegOffer('AY', 'BT')));
     }
 
-    // ---------------------------------------------- transport en vormwijziging
+    // ---------------------------------------------- transport and reshaping
 
     public function test_http_error_yields_no_results_and_does_not_throw(): void
     {
@@ -443,12 +443,12 @@ final class IgnavFlightSourceTest extends TestCase
 
         self::assertSame([], $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17')));
         self::assertCount(1, $logger->warnings);
-        self::assertStringContainsString('itineraries-collectie', $logger->warnings[0]);
+        self::assertStringContainsString('itineraries', $logger->warnings[0]);
     }
 
     public function test_empty_itineraries_list_is_not_logged_as_an_error(): void
     {
-        // Geen vluchten op deze datum is een legitiem antwoord, geen vormwijziging.
+        // No flights on this date is a legitimate answer, not a shape change.
         $logger = new CollectingLogger();
         $client = new MockHttpClient(new MockResponse('{"itineraries":[]}'));
         $source = new IgnavFlightSource($client, 'test-key', $logger);
@@ -470,7 +470,7 @@ final class IgnavFlightSourceTest extends TestCase
 
         self::assertSame([], $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17')));
         self::assertCount(1, $logger->warnings);
-        self::assertStringContainsString('overgeslagen', $logger->warnings[0]);
+        self::assertStringContainsString('skipped', $logger->warnings[0]);
     }
 }
 

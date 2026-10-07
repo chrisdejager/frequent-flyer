@@ -33,7 +33,7 @@ final class BookingLinkControllerTest extends WebTestCase
             ['status' => 'found', 'url' => 'https://www.klm.nl/boeken?flight=KL1167', 'provider' => 'KLM'],
             $body,
         );
-        // De ref uit de querystring komt ongewijzigd bij de bron aan.
+        // The ref from the querystring reaches the source unchanged.
         self::assertSame([self::REF], $source->calls);
     }
 
@@ -59,13 +59,13 @@ final class BookingLinkControllerTest extends WebTestCase
      */
     public static function invalidRefs(): iterable
     {
-        yield 'ontbreekt' => [''];
-        yield 'te kort' => ['?ref=0ea5aa41342f'];
-        yield 'te lang' => ['?ref='.self::REF.'0'];
-        yield 'hoofdletters' => ['?ref='.strtoupper(self::REF)];
-        yield 'geen hex' => ['?ref=0ea5aa41342f00000056346ef96d746z'];
-        yield 'met afsluitende newline' => ['?ref='.self::REF.'%0A'];
-        yield 'als array' => ['?ref[]='.self::REF];
+        yield 'missing' => [''];
+        yield 'too short' => ['?ref=0ea5aa41342f'];
+        yield 'too long' => ['?ref='.self::REF.'0'];
+        yield 'uppercase letters' => ['?ref='.strtoupper(self::REF)];
+        yield 'not hex' => ['?ref=0ea5aa41342f00000056346ef96d746z'];
+        yield 'with trailing newline' => ['?ref='.self::REF.'%0A'];
+        yield 'as array' => ['?ref[]='.self::REF];
     }
 
     #[DataProvider('invalidRefs')]
@@ -83,7 +83,7 @@ final class BookingLinkControllerTest extends WebTestCase
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
         self::assertIsString($body['error'] ?? null);
 
-        // Elke call naar ignav kost tegoed: een kapotte ref mag er nooit één opleveren.
+        // Every call to ignav costs credits: a broken ref must never produce one.
         self::assertSame([], $source->calls);
     }
     public function test_an_unavailable_source_is_502_with_a_message(): void
@@ -97,6 +97,6 @@ final class BookingLinkControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(502);
 
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame('De boekingslink kon niet worden opgehaald.', $body['error'] ?? null);
+        self::assertSame('The booking link could not be retrieved.', $body['error'] ?? null);
     }
 }

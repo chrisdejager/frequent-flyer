@@ -29,13 +29,13 @@ final readonly class SearchController
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $rawDate);
 
         if (false === $date) {
-            return new JsonResponse(['error' => 'Geef een geldige datum als YYYY-MM-DD.'], 400);
+            return new JsonResponse(['error' => 'Provide a valid date as YYYY-MM-DD.'], 400);
         }
 
         $direction = Direction::tryFrom((string) $request->query->get('direction', ''));
 
         if (null === $direction) {
-            return new JsonResponse(['error' => 'Richting moet "nl-fi" of "fi-nl" zijn.'], 400);
+            return new JsonResponse(['error' => 'Direction must be "nl-fi" or "fi-nl".'], 400);
         }
 
         try {

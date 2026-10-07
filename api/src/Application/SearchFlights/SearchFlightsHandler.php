@@ -37,9 +37,9 @@ final readonly class SearchFlightsHandler
 
         $valid = $rules->filter($candidates);
 
-        // Alleen betalen voor een treinprijs als de calculator hem gebruikt én er
-        // een HEL-optie overblijft. Het ophalen kost een Apify-run; met de transfer
-        // uit zou dat een run zijn voor een bedrag dat direct wordt weggegooid.
+        // Only pay for a train price if the calculator uses it AND there is
+        // a HEL option left. Fetching it costs an Apify run; with the transfer
+        // off, that would be a run for an amount that gets discarded immediately.
         $trainCost = $this->calculator->usesTrainCost() && $this->needsTrainPrice($valid)
             ? $this->trains->priceFor($query->date)
             : null;
@@ -55,9 +55,9 @@ final readonly class SearchFlightsHandler
                 $this->calculator->calculate($itinerary, $trainCost),
             );
 
-            // Opties met een bekende treinprijs worden gerangschikt op totaalprijs.
-            // Opties met een onbekende treinprijs (trein HEL–TKU niet opgehaald) staan
-            // achteraan in de volgorde van binnenkomst — er wordt geen bedrag verzonnen.
+            // Options with a known train price are ranked by total price.
+            // Options with an unknown train price (train HEL–TKU not fetched) come
+            // at the end in order of arrival — no amount is invented.
             if ($priced->cost->trainCostKnown) {
                 $ranked[] = $priced;
             } else {

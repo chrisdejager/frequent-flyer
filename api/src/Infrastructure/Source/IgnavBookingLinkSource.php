@@ -15,13 +15,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final readonly class IgnavBookingLinkSource implements BookingLinkSource
 {
     private const ENDPOINT = 'https://ignav.com/api/fares/booking-links';
-    /** Gemeten 2026-10-03: maatschappij zelf = "airline", reisbureau = "third_party". */
+    /** Measured 2026-10-03: carrier itself = "airline", travel agency = "third_party". */
     private const DIRECT_PROVIDER_TYPE = 'airline';
 
-    /** Een halfuur: een tweede klik op dezelfde vlucht kost dan geen ignav-call. */
+    /** Half an hour: a second click on the same flight then costs no ignav call. */
     private const TTL_SECONDS = 1800;
 
-    /** Staat in de cache voor "geen directe link", ook die spaart een call. */
+    /** Stands in the cache for "no direct link", that also saves a call. */
     private const NO_DIRECT_SENTINEL = '__no_direct_link__';
 
     public function __construct(
@@ -46,13 +46,13 @@ final readonly class IgnavBookingLinkSource implements BookingLinkSource
             if (self::NO_DIRECT_SENTINEL === $cached) {
                 return BookingLink::noDirectLink();
             }
-            // Onherkenbare waarde: gewoon opnieuw vragen.
+            // Unrecognized value: just ask again.
         }
 
         $link = $this->fetch($bookingRef);
 
-        // Alleen een echt antwoord komt hier; een storing heeft al gegooid en wordt
-        // dus nooit gecachet.
+        // Only a real response comes here; a failure has already thrown and will
+        // thus never be cached.
         $item->set($link->isDirect() ? ['url' => $link->url, 'provider' => $link->provider] : self::NO_DIRECT_SENTINEL);
         $item->expiresAfter(self::TTL_SECONDS);
         $this->cache->save($item);
@@ -73,22 +73,22 @@ final readonly class IgnavBookingLinkSource implements BookingLinkSource
         try {
             $payload = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
         } catch (ExceptionInterface|\JsonException $e) {
-            // getContent() gooit bij elke niet-2xx en bij transportfouten; een verlopen
-            // ignav_id valt hier dus ook onder (hoe ignav dat meldt is niet gemeten).
-            $this->logger?->warning('ignav booking-links mislukt voor {ref}: {reason}', [
+            // getContent() throws on every non-2xx and on transport errors; an expired
+            // ignav_id falls here too (how ignav reports it is not measured).
+            $this->logger?->warning('ignav booking-links failed for {ref}: {reason}', [
                 'ref' => $bookingRef,
                 'reason' => $e->getMessage(),
             ]);
 
-            throw new BookingLinkUnavailable('Boekingslink kon niet worden opgehaald.', 0, $e);
+            throw new BookingLinkUnavailable('Booking link could not be retrieved.', 0, $e);
         }
 
-        // Een lege lijst is "geen links"; een ontbrekende of andere vorm is een
-        // gewijzigde of kapotte respons — dat mag niet als "geen directe link" gecachet worden.
+        // An empty list is "no links"; a missing or other form is a
+        // changed or broken response — that must not be cached as "no direct link".
         if (!is_array($payload) || !is_array($payload['booking_options'] ?? null)) {
-            $this->logger?->warning('ignav booking-links zonder booking_options voor {ref}.', ['ref' => $bookingRef]);
+            $this->logger?->warning('ignav booking-links missing booking_options for {ref}.', ['ref' => $bookingRef]);
 
-            throw new BookingLinkUnavailable('Onverwacht antwoord van de boekingsbron.');
+            throw new BookingLinkUnavailable('Unexpected response from the booking source.');
         }
 
         return $this->pickDirect($payload);
@@ -129,7 +129,7 @@ final readonly class IgnavBookingLinkSource implements BookingLinkSource
                     continue;
                 }
 
-                // Zonder bruikbare prijs telt een link als duurste, maar blijft kandidaat.
+                // Without a usable price, a link counts as most expensive, but remains a candidate.
                 $amount = is_array($link['price'] ?? null) && is_numeric($link['price']['amount'] ?? null)
                     ? (float) $link['price']['amount']
                     : \INF;

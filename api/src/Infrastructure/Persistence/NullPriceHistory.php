@@ -8,8 +8,8 @@ use App\Domain\Flight\Itinerary;
 use App\Domain\Port\PriceHistory;
 
 /**
- * Fase 1 bewaart nog geen prijsgeschiedenis. Fase 2 vervangt deze klasse
- * door een SQLite-implementatie zonder dat de use case wijzigt.
+ * Phase 1 does not yet preserve price history. Phase 2 replaces this class
+ * with an SQLite implementation without changing the use case.
  */
 final class NullPriceHistory implements PriceHistory
 {
