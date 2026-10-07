@@ -1,47 +1,45 @@
-# Product: Boeken-knop per vlucht
+# Product: Book button per flight
 
 ## Problem
-"Als ik in de lijst een vlucht heb gevonden, moet ik nu zelf naar de site van
-Finnair, KLM of SAS, dezelfde route en datum opnieuw intikken en tussen alle
-vluchten de juiste terugzoeken. Ik wil gewoon op 'Boeken' klikken en meteen bij
-die vlucht op de site van de maatschappij uitkomen. Maar het opvragen van zo'n
-link kost een stukje van mijn gratis tegoed, dus alleen voor de vlucht waar ik
-echt op klik — niet voor alles wat in de lijst staat."
+"When I've found a flight in the list, I now have to go myself to the Finnair, KLM or SAS
+website, type the same route and date again, and search through all the flights to find
+the right one. I want to just click 'Book' and go straight to that flight on the airline's
+website. But fetching such a link costs part of my free credits, so only for the flight I
+really click on — not for everything in the list."
 
 ## Success metric
-**Van "Boeken" naar het boekingsscherm van de juiste vlucht in één klik, zonder
-dat het zoeken duurder wordt.** Gemeten aan:
-- een zoekactie verbruikt precies evenveel tegoed als nu (nul extra per vlucht
-  in de lijst);
-- elke klik op "Boeken" kost hoogstens één opvraging, en een tweede klik op
-  dezelfde vlucht kost niets extra;
-- na de klik staat binnen ~3 seconden in een nieuw tabblad het boekingsscherm
-  van die maatschappij met die vlucht.
+**From "Book" to the booking screen for the right flight in one click, without
+the search getting more expensive.** Measured by:
+- one search action uses exactly the same credits as now (zero extra per flight
+  in the list);
+- every click on "Book" costs at most one fetch, and a second click on
+  the same flight costs nothing extra;
+- within ~3 seconds after the click the airline's booking screen opens in a new tab
+  with that flight and date already filled in.
 
 ## Announcement — the blog post before the feature
-Elke vlucht in de lijst heeft nu een knop "Boeken". Klik erop en er opent een
-nieuw tabblad met het boekingsscherm van de maatschappij zelf — Finnair, KLM of
-SAS — met jouw vlucht en datum al ingevuld. De link wordt pas opgehaald op het
-moment dat je klikt, dus zoeken blijft net zo zuinig als altijd. Klik je later
-nog eens op dezelfde vlucht, dan gaat het direct. Kan de maatschappij zelf geen
-link geven, dan zie je dat meteen en kun je verder zoeken op hun site.
+Every flight in the list now has a "Book" button. Click it and a new tab opens
+with the airline's own booking screen — Finnair, KLM or SAS — with your flight
+and date already filled in. The link is only fetched when you click, so searching
+stays as economical as always. Click the same flight again later, it goes straight
+there. If the airline can't provide a link, you see that right away and can
+search on their site instead.
 
-## Keuzes in dit scherm (ter goedkeuring)
-1. **Knop "Boeken" rechts op elke vluchtregel**, onder het totaalbedrag. Klikken
-   op de knop selecteert de regel níet (dat blijft de rest van de regel doen).
-2. **Nieuw tabblad opent direct** met "Boekingslink ophalen…" en springt door
-   naar de maatschappij zodra de link er is. (Zo houdt de browser het tabblad
-   niet tegen als pop-up.)
-3. **Alleen de maatschappij zelf.** Biedt alleen een reisbureau (OTA) een link,
-   dan sturen we je daar níet heen; het tabblad zegt "Geen directe link bij
-   Finnair gevonden" met een gewone link naar de homepage van de maatschappij.
-4. **Tweede klik op dezelfde vlucht** gebruikt de al opgehaalde link (zolang de
-   pagina openstaat); geen nieuwe opvraging.
-5. **Mislukt het ophalen** (storing, tegoed op), dan zegt het tabblad dat in
-   gewone taal; de lijst blijft gewoon staan.
-6. **Retour:** heen en terug blijven twee losse boekingen — elke kolom heeft zijn
-   eigen knoppen (past bij "ik boek graag losse reizen").
+## Choices in this screen (for approval)
+1. **"Book" button on the right of each flight row**, below the total amount. Clicking
+   the button does not select the row (the rest of the row does).
+2. **New tab opens directly** with "Fetching booking link…" and navigates to
+   the airline as soon as the link arrives. (So the browser doesn't block it as a pop-up.)
+3. **Only the airline itself.** If only a travel agency (OTA) provides a link,
+   we don't send you there; the tab says "No direct link found with
+   Finnair" with an ordinary link to the airline's homepage.
+4. **Second click on the same flight** uses the already fetched link (while the
+   page is open); no new fetch.
+5. **If fetching fails** (outage, credits gone), the tab says so in plain
+   language; the list stays in place.
+6. **Return:** outbound and return stay two separate bookings — each column has its
+   own buttons (fits with "I like to book separate trips").
 
 ## Screens
-- `mockups/book-button.html` — vluchtlijst met "Boeken"-knoppen, het nieuwe
-  tabblad in drie toestanden (ophalen, geen directe link, fout).
+- `mockups/book.html` — flight list with "Book" buttons, the new
+  tab in three states (fetching, no direct link, error).

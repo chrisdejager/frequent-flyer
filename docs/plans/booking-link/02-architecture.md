@@ -1,88 +1,88 @@
-# Architecture: Boeken-knop per vlucht
+# Architecture: Book button per flight
 
 ## Fit
-- **`IgnavFlightSource`** gooit `ignav_id` nu weg. Die moet mee naar buiten:
-  `Itinerary` krijgt een optionele bronverwijzing (`?string`, framework-vrij),
-  `SearchResultPresenter` zet hem als `bookingRef` in elke optie. Geen andere
-  domeinlogica verandert; zoeken kost precies evenveel ignav-calls als nu.
-- **Nieuwe poort** `BookingLinkSource` in `Domain/Port`, met een ignav-adapter
-  `IgnavBookingLinkSource` in `Infrastructure/Source` naast de vluchtbron.
-  Gescheiden van `FlightPriceSource`, zodat de zoek-poort niet van vorm verandert.
-- **Nieuwe controller** `BookingLinkController` in `Infrastructure/Http`, naast
+- **`IgnavFlightSource`** now throws away `ignav_id`. It needs to come through:
+  `Itinerary` gets an optional source reference (`?string`, framework-free),
+  `SearchResultPresenter` sets it as `bookingRef` in each option. No other
+  domain logic changes; searching costs exactly the same ignav calls as now.
+- **New port** `BookingLinkSource` in `Domain/Port`, with an ignav adapter
+  `IgnavBookingLinkSource` in `Infrastructure/Source` alongside the flight source.
+  Separate from `FlightPriceSource`, so the search port doesn't change shape.
+- **New controller** `BookingLinkController` in `Infrastructure/Http`, alongside
   `SearchController`.
-- **Frontend:** `OptionCard` krijgt een knop (`@click.stop`, zodat de regel niet
-  geselecteerd wordt). Nieuw: een tweede kleine pagina `boeken.html` (eigen Vite-
-  entry, kale TS, geen Vue nodig) die in het nieuwe tabblad draait.
+- **Frontend:** `OptionCard` gets a button (`@click.stop`, so the row isn't
+  selected). New: a second small page `book.html` (own Vite
+  entry, plain TS, no Vue needed) that runs in the new tab.
 
-### Waarom een eigen pagina in het nieuwe tabblad
-De knop doet `window.open('/boeken.html?…', '_blank', 'noopener')` **synchroon**
-in de klik — dan houdt geen browser het tegen. Die pagina toont "Boekingslink
-ophalen…", vraagt de link op en doet `location.replace(url)`. Alternatief
-(leeg tabblad openen en vanuit de lijst vullen) vereist `document.write` en een
-`window.opener`-koppeling die de maatschappijsite dan ook krijgt; afgewezen.
+### Why a separate page in the new tab
+The button does `window.open('/book.html?…', '_blank', 'noopener')` **synchronously**
+on click — then no browser blocks it. That page shows "Fetching booking
+link…", fetches the link, and does `location.replace(url)`. Alternative
+(open blank tab and fill from the list) requires `document.write` and a
+`window.opener` connection that the airline's site also gets; rejected.
 
-### "Tweede klik kost niets": cache op de server
-Omdat elk tabblad een verse pagina is, kan de lijstpagina de link niet aan het
-nieuwe tabblad doorgeven. Daarom cachet de **backend** het antwoord per
-`ignav_id` in `cache.app` (zelfde aanpak als `ApifyTrainPriceSource`). Dit is
-sterker dan Gate 1 vroeg ("zolang de pagina openstaat"): het geldt ook na herladen.
-- TTL succes: 30 min. "Geen directe link" ook 30 min. Fouten **niet** cachen
-  (een storing moet je opnieuw kunnen proberen).
+### "Second click costs nothing": cache on the server
+Because each tab is a fresh page, the list page can't pass the link to the
+new tab. Therefore the **backend** caches the response per
+`ignav_id` in `cache.app` (same approach as `ApifyTrainPriceSource`). This is
+stronger than Gate 1 asked ("while the page is open"): it also applies after reload.
+- TTL success: 30 min. "No direct link" also 30 min. Failures **not** cached
+  (an outage you should be able to retry).
 
 ## Endpoints
-- `GET /api/booking-link?ref=<ignav_id>` — vraagt (of leest
-  uit cache) de boekingslinks op en geeft precies één uitkomst:
+- `GET /api/booking-link?ref=<ignav_id>` — fetches (or reads
+  from cache) the booking links and returns exactly one outcome:
   - `200 {"status":"found","url":"https://…","provider":"KLM"}`
-  - `200 {"status":"no_direct_link"}` — alleen OTA's of niets
-  - `400` bij ongeldige `ref` (moet 32 hex-tekens zijn)
-  - `502 {"error":"…"}` bij storing/onleesbaar antwoord van ignav
-  Geen `carrier`-parameter (herzien 2026-10-03): `provider_type: "airline"` volstaat.
+  - `200 {"status":"no_direct_link"}` — only OTAs or nothing
+  - `400` on invalid `ref` (must be 32 hex characters)
+  - `502 {"error":"…"}` on outage/unreadable response from ignav
+  No `carrier` parameter (revised 2026-10-03): `provider_type: "airline"` suffices.
 
 ## Data
-Geen tabellen. Alleen cache-items `ignav.booking.<ref>` in `cache.app`
-(filesystem-pool, al geconfigureerd). Lezen: `getItem` → hit = geen ignav-call.
+No tables. Only cache items `ignav.booking.<ref>` in `cache.app`
+(filesystem pool, already configured). Read: `getItem` → hit = no ignav call.
 
 ## Flow
-1. `/api/search` → `IgnavFlightSource` leest nu ook `ignav_id` → `Itinerary`
-   → presenter → `option.bookingRef` in de JSON.
-2. Klik "Boeken" in `OptionCard` → `window.open('/boeken.html?ref=…&carrier=KL&flight=KL1251&date=2026-10-29')`.
-   Zonder `bookingRef` (mag niet voorkomen, maar defensief): knop niet tonen.
-3. `boeken.html` → `fetch /api/booking-link?ref=…`
+1. `/api/search` → `IgnavFlightSource` now also reads `ignav_id` → `Itinerary`
+   → presenter → `option.bookingRef` in the JSON.
+2. Click "Book" in `OptionCard` → `window.open('/book.html?ref=…&carrier=KL&flight=KL1251&date=2026-10-29')`.
+   Without `bookingRef` (shouldn't happen, but defensive): button not shown.
+3. `book.html` → `fetch /api/booking-link?ref=…`
    → `BookingLinkController` → `BookingLinkSource::linkFor(ref)`
-   → `IgnavBookingLinkSource`: cache-hit? → anders `POST https://ignav.com/api/fares/booking-links`
-   `{ignav_id}` (**zonder** `market`: ignav geeft dan 400 `conflicting_booking_lookup_mode`, gemeten 2026-10-03) → kies de link van de maatschappij zelf → cache → terug.
-4. `boeken.html`: `found` → `location.replace(url)`; `no_direct_link` → tekst +
-   link naar homepage van de maatschappij (vaste lijst in de frontend:
-   AY finnair.com, KL klm.nl, SK flysas.com); fout → foutmelding.
+   → `IgnavBookingLinkSource`: cache hit? → else `POST https://ignav.com/api/fares/booking-links`
+   `{ignav_id}` (**without** `market`: ignav returns 400 `conflicting_booking_lookup_mode`, measured 2026-10-03) → pick the airline's own link → cache → return.
+4. `book.html`: `found` → `location.replace(url)`; `no_direct_link` → text +
+   link to airline homepage (fixed list in frontend:
+   AY finnair.com, KL klm.nl, SK flysas.com); error → error message.
 
-### "De maatschappij zelf" herkennen
-**Herzien na meting 2026-10-03 (voorstel eigenaar):** een link telt als direct als
-`provider_type === "airline"`. Reisbureaus zijn `third_party`. Geen naam-matching
-op `provider_name`; de server hoeft de maatschappij dus niet te kennen. De
-`carrier` in de URL van `boeken.html` blijft alleen voor de tekst en de homepage.
-Meerdere directe links (bijv. verschillende `fare_name`s)? Neem de goedkoopste
-(de prijs gebruiken we alleen om te kiezen, we tonen hem niet).
+### "The airline itself" recognized
+**Revised after measurement 2026-10-03 (owner's proposal):** a link counts as direct if
+`provider_type === "airline"`. Travel agencies are `third_party`. No name matching
+on `provider_name`; the server doesn't need to know the airline. The
+`carrier` in the `book.html` URL stays only for text and homepage.
+Multiple direct links (e.g. different `fare_name`s)? Take the cheapest
+(we use the price only to choose, we don't show it).
 
 ## External
 - ignav `POST https://ignav.com/api/fares/booking-links`, header `X-Api-Key`,
-  env **`IGNAV_API_KEY`** (bestaat al). Geen nieuwe env-vars.
-- **Eerst meten (ADR-0003):** vóór de adapter één echte respons vastleggen als
-  fixture `fixtures/ignav-booking-links.json`. Kost 1 zoek-call + 1 link-call
-  van het tegoed. Daarmee leggen we vast: de waarden van `provider_type`, hoe
-  `provider_name` voor AY/KL/SK heet, of de `url` direct bruikbaar is, en of
-  `market: "NL"` werkt. → **Gemeten: werkt níet** (zie onderaan).
-- Onbekend: of booking-links-calls van het quotum afgaan, en hoe lang een
-  `ignav_id` geldig blijft. Bij een verlopen id → de foutmelding uit Gate 1.
-- Bestaand risico (I7): de API heeft geen auth; `/api/booking-link` is net als
-  `/api/search` vrij aan te roepen en kost dan tegoed. De `ref`-validatie en de
-  cache beperken dat, lossen het niet op.
+  env **`IGNAV_API_KEY`** (exists already). No new env vars.
+- **Measure first (ADR-0003):** before the adapter capture one real response as
+  fixture `fixtures/ignav-booking-links.json`. Costs 1 search call + 1 link call
+  of the credits. With it we document: the values of `provider_type`, how
+  `provider_name` for AY/KL/SK is called, whether the `url` is directly usable, and whether
+  `market: "NL"` works. → **Measured: it doesn't** (see below).
+- Unknown: whether booking-links calls count against quota, and how long an
+  `ignav_id` stays valid. On an expired id → the error message from Gate 1.
+- Existing risk (I7): the API has no auth; `/api/booking-link` like
+  `/api/search` is freely callable and costs credits. The `ref` validation and the
+  cache limit that, don't solve it.
 
-## Meting 2026-10-03 (na goedkeuring, correctie)
-Ruwe respons: `measurements/2026-10-03-booking-links-ay1302.json` (Finnair AY1302, AMS→HEL, 29 okt).
-- **`market` mag niet** bij een `ignav_id`-lookup → 400. De request is alleen `{ignav_id}`.
-- Antwoord in **3,0 s**; 1 `booking_option` met 2 links:
-  - `provider_type: "airline"`, `provider_name: "Finnair"`, € 143 — een **deeplink**
+## Measurement 2026-10-03 (after approval, correction)
+Raw response: `measurements/2026-10-03-booking-links-ay1302.json` (Finnair AY1302, AMS→HEL, 29 Oct).
+- **`market` must not be** included with an `ignav_id`-lookup → 400. The request is only `{ignav_id}`.
+- Response in **3.0 s**; 1 `booking_option` with 2 links:
+  - `provider_type: "airline"`, `provider_name: "Finnair"`, €143 — a **deep link**
     `https://www.finnair.com/nl-en/booking/flight-selection?…&departureDate=2026-10-29&departureFlightNumbers=AY1302&…`
-  - `provider_type: "third_party"`, `provider_name: "lastminute.com"`, € 199.
-- Geen `fare_name`. De respons bevat ook het `itinerary` met `marketing_carrier_code`.
-- KLM en SAS nog niet gemeten; niet meer nodig vooraf, want we matchen alleen op `provider_type`.
+  - `provider_type: "third_party"`, `provider_name: "lastminute.com"`, €199.
+- No `fare_name`. The response also contains the `itinerary` with `marketing_carrier_code`.
+- KLM and SAS not yet measured; not needed up front, since we only match `provider_type`.

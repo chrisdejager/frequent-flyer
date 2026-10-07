@@ -1,73 +1,69 @@
-# ADR-0001: Retour = twee enkele reizen, samengesteld in de frontend
+# ADR-0001: Round trip = two one-way trips, composed in the frontend
 
 **Status:** Accepted
 **Date:** 2026-10-02
-**Deciders:** eigenaar
+**Deciders:** owner
 
 ## Context
-De eigenaar wil heen- en terugreis met twee datums op één scherm zien. Hij boekt
-altijd twee losse enkele reizen ("het hoeft niet in 1 boeking"), dus retourtarieven
-zijn niet nodig.
+The owner wants to see outbound and return trips with two dates on one screen. He always
+books two separate one-way trips ("doesn't need to be in 1 booking"), so round-trip fares
+are not needed.
 
-`GET /api/search?date=&direction=&traveller=` doet al precies één enkele reis,
-inclusief regels, prijsberekening en rangschikking. De ignav-calls in de backend
-lopen na elkaar; het parallelliseren van de `FlightPriceSource`-port is bewust
-geparkeerd, omdat het de vorm van die port verandert.
+`GET /api/search?date=&direction=&traveller=` already does exactly one one-way trip,
+including rules, price calculation, and ranking. The ignav calls in the backend
+run sequentially; parallelizing the `FlightPriceSource` port is intentionally
+deferred because it changes the port's shape.
 
-Randvoorwaarden: ignav heeft 1000 gratis calls per maand, en geldbedragen zijn
-altijd hele centen als int.
+Constraints: ignav has 1000 free calls per month, and money amounts are
+always whole cents as int.
 
 ## Decision
-Een retour is **twee onafhankelijke aanroepen van het bestaande `/api/search`**,
-één per richting, die de browser parallel start (`Promise.allSettled`). De
-frontend zet de uitkomsten in twee kolommen en telt `cost.total` (in centen) van
-de gekozen optie per kant op. De backend krijgt geen retourbegrip.
+A round trip is **two independent calls to the existing `/api/search`**,
+one per direction, which the browser starts in parallel (`Promise.allSettled`). The
+frontend displays the results in two columns and sums `cost.total` (in cents) of
+the chosen option per side. The backend has no round-trip concept.
 
-De pure logica (richtingen, standaardkeuze, optellen, datumcontrole, koppelen van
-geplande reizen) staat in `web/src/roundTrip.ts`, zonder Vue, zodat die los te
-testen is.
+The pure logic (directions, default choice, summing, date validation, pairing of
+booked trips) lives in `web/src/roundTrip.ts`, without Vue, so it can be tested
+separately.
 
 ## Options Considered
 
-### Option A: Frontend roept `/api/search` twee keer aan (gekozen)
+### Option A: Frontend calls `/api/search` twice (chosen)
 | Dimension | Assessment |
 |-----------|------------|
-| Complexity | Laag: geen backendwijziging |
-| Cost | Gelijk aan twee losse zoekacties (2 ignav-calls per kant) |
-| Latency | Twee kanten parallel; php-fpm `pm.max_children` = 5 is genoeg |
-| Testbaarheid | Vitest met gemockte `api`; geen netwerk |
+| Complexity | Low: no backend change |
+| Cost | Same as two separate searches (2 ignav calls per side) |
+| Latency | Two sides in parallel; php-fpm `pm.max_children` = 5 is enough |
+| Testability | Vitest with mocked `api`; no network |
 
-**Pros:** geen nieuwe API-oppervlakte; elke kant faalt los van de andere; een
-andere optie kiezen kost geen call.
-**Cons:** het totaal wordt in de browser berekend, buiten de domeinlaag.
+**Pros:** no new API surface; each side fails independently; choosing a different option costs no call.
+**Cons:** the total is calculated in the browser, outside the domain layer.
 
-### Option B: Nieuw endpoint `/api/round-trip`
+### Option B: New endpoint `/api/round-trip`
 | Dimension | Assessment |
 |-----------|------------|
-| Complexity | Middel: nieuwe query, handler, presenter en controller-tests |
-| Cost | Gelijk |
-| Latency | Slechter: 4 ignav-calls achter elkaar, zolang de port niet parallel is |
-| Testbaarheid | WebTestCase door de echte container |
+| Complexity | Medium: new query, handler, presenter, and controller tests |
+| Cost | Same |
+| Latency | Worse: 4 ignav calls in sequence, as long as the port is not parallel |
+| Testability | WebTestCase through the real container |
 
-**Pros:** het totaal leeft in PHP, dicht bij de rest van de prijslogica.
-**Cons:** trager; het dwingt het geparkeerde parallelliseren naar voren; het voegt
-niets toe dat een optelling van twee ints niet al doet.
+**Pros:** the total lives in PHP, close to the rest of the pricing logic.
+**Cons:** slower; it forces the deferred parallelization forward; it adds nothing that a sum of two ints doesn't already do.
 
 ## Trade-off Analysis
-Het enige argument voor B is dat de optelling dan in het domein zit. Maar een
-retour is hier per definitie geen eigen product: er is geen retourtarief en geen
-gezamenlijke boeking. De som van twee al-berekende totalen in centen is dan
-presentatie, geen prijsregel. A is sneller en kleiner, en raakt geen code waar
-eerdere Criticals zaten.
+The only argument for B is that the sum would then live in the domain. But a
+round trip is by definition not its own product here: there is no round-trip fare and no
+joint booking. The sum of two already-calculated totals in cents is then
+presentation, not a pricing rule. A is faster and smaller, and doesn't touch code where
+earlier Criticals were found.
 
 ## Consequences
-- Makkelijker: per kant los falen, los kiezen, en enkele reis (lege terugdatum = één call).
-- Moeilijker: komt er ooit een prijsregel die **beide** kanten samen raakt (een
-  retourkorting, een gedeelde treinprijs), dan hoort die in de backend en is dit
-  ADR achterhaald.
-- Herzien als de `FlightPriceSource`-port parallel wordt: dan wordt B qua snelheid
-  gelijkwaardig.
+- Easier: each side can fail independently, choose independently, and single trip (empty return date = one call).
+- Harder: if a pricing rule ever **affects both** sides together (a round-trip discount, a shared train price), that belongs in the backend and this
+  ADR is superseded.
+- Reconsider if the `FlightPriceSource` port becomes parallel: then B becomes equivalent in speed.
 
 ## Action Items
-1. [x] Gebouwd in zes slices; zie `docs/plans/round-trip/`.
-2. [ ] Bij een retourspecifieke prijsregel: een nieuw ADR dat dit vervangt.
+1. [x] Built in six slices; see `docs/plans/round-trip/`.
+2. [ ] For a round-trip-specific pricing rule: a new ADR that replaces this one.

@@ -1,308 +1,297 @@
-# Overdracht — vluchtzoeker
+# Handoff — flight finder
 
-**Bijgewerkt:** 3 okt 2026 · **branch:** `main` · alles groen: **PHP 176/176
-(ook `--network none`), frontend 77/77, build groen.**
+**Updated:** 3 Oct 2026 · **branch:** `main` · all green: **PHP 176/176
+(also `--network none`), frontend 77/77, build green.**
 
-## 00. Stand 3 okt 2026 — boekingslink af, SAS-prijs geparkeerd
+## 00. Status 3 Oct 2026 — booking link done, SAS price deferred
 
-**Boeken-knop per vlucht is af** (6 slices, `docs/plans/booking-link/`, besluit in
-`docs/adr/0006-booking-link-on-demand.md`). Klik → `boeken.html` → `GET
-/api/booking-link?ref=<ignav_id>` → `IgnavBookingLinkSource` (alleen
-`provider_type: airline` + https, goedkoopste wint, 30 min in `cache.app`) →
-deeplink van de maatschappij. Storing → 502 + melding; geen directe link →
-homepage. **SAS gaat buiten ignav om**: de frontend bouwt zelf een flysas.com-link.
-Volledig verloop en metingen: `docs/plans/booking-link/00-status.md`.
+**Book button per flight is complete** (6 slices, `docs/plans/booking-link/`, decision in
+`docs/adr/0006-booking-link-on-demand.md`). Click → `book.html` → `GET
+/api/booking-link?ref=<ignav_id>` → `IgnavBookingLinkSource` (only
+`provider_type: airline` + https, cheapest wins, 30 min in `cache.app`) →
+airline's deep link. Error → 502 + message; no direct link →
+homepage. **SAS bypasses ignav**: the frontend builds its own flysas.com link.
+Full flow and measurements: `docs/plans/booking-link/00-status.md`.
 
-**SAS-prijs: geparkeerd (besluit eigenaar).** ignav geeft bij SAS-vluchten de
-KLM-codeshareprijs als zoekprijs (± dubbel: € 374 in de app, € 193 op flysas.com,
-26-11-2026). Eigenaar acht het tijdelijk; de SAS-knop opent een zelfgebouwde
-flysas.com-link om handmatig te checken. Plan + overwegingen:
-`docs/plans/sas-price-unknown/00-status.md`. Af en toe nameten; blijft het, dan
-misschien een andere prijsbron. (ADR-0006 noemt "prijs onbekend" nog als open
-actiepunt — dat is hiermee geparkeerd.)
+**SAS price: deferred (owner decision).** ignav gives SAS flights the KLM
+codeshare price as the search price (roughly double: €374 in the app, €193 on flysas.com,
+26 Nov 2026). Owner considers it temporary; the SAS button opens a custom-built
+flysas.com link to check manually. Plan + considerations:
+`docs/plans/sas-price-unknown/00-status.md`. Check periodically; if it persists,
+maybe a different price source. (ADR-0006 still lists "price unknown" as open
+action item — that's now deferred.)
 
-**Kleine waarnemingen, niet uitgezocht:**
-- Finnair-deeplink kwam in het geautomatiseerde Chrome tot `passenger-details`
-  en gaf daar een systeemfout; KLM-deeplink viel na de cookiebanner terug naar
-  `/search/advanced`. Beide aan hun kant, niet aan de link.
-- AY1306+AY229 (€ 270, overstap in HEL) ontbrak terecht: `AllowedConnectionAirports`
-  staat alleen ARN/CPH toe. Eigenaar: nooit overstappen in Helsinki — van/naar HEL
-  liever met de trein.
+**Minor observations, not investigated:**
+- Finnair deep link got to `passenger-details` in automated Chrome
+  and failed there; KLM deep link fell back to `/search/advanced` after the cookie banner.
+  Both on their side, not the link's.
+- AY1306+AY229 (€270, connection in HEL) was correctly omitted: `AllowedConnectionAirports`
+  only allows ARN/CPH. Owner: never connect in Helsinki — for/from HEL prefer the train.
 
-**Werkwijze die hier werkte:** tests vooraf door de hoofdsessie, eenvoudige
-adapter door een haiku-agent; elke slice een mutatieronde (één bleef groen en
-liet een echt gat zien: `return` na `navigate`). Twee bugs gevonden doordat
-ik de grens zelf bestookte: `$` in een regex laat een newline door (→ `\z`);
-`CARRIER_HOMEPAGES['constructor']` gaf `href="undefined"` (→ `Object.hasOwn`).
-
----
-
-*Hieronder: de stand van 17 sep 2026 (fase 1), als geschiedenis bewaard.*
-
-## 0a. De app draait echt (17 sep 2026, handmatig getoetst door de eigenaar)
-
-Met een echte `IGNAV_API_KEY` geeft `/api/search` een zinnige lijst: herkenbare
-maatschappijen, plausibele bedragen. **Dit is het eerste bewijs buiten de tests
-om dat de keten ignav → adapter → domein → UI klopt.**
-
-Twee dingen die daarbij bovenkwamen:
-
-- **KLM toont "indicatief" — dat hoort zo.** `FareUpgradeRates::ESTIMATED` bevat
-  alleen KL, omdat KLM ruimbagage dynamisch beprijst. Geen bug; niet "wegpoetsen".
-- **De treinprijs werd opgehaald terwijl de transfer uitstond.** `TRAIN_COST_ENABLED`
-  zat alleen in `TotalCostCalculator`, maar `SearchFlightsHandler` deed het ophalen.
-  Elke zoekopdracht met een HEL-optie startte dus een Apify-actor-run waarvan de
-  uitkomst direct werd weggegooid — seconden wachttijd en één van de ~20–50 runs
-  per maand. **Achtste naad, zelfde vorm: de schakelaar in de ene component, de
-  kosten in de andere.** Opgelost in `44453cc` met
-  `TotalCostCalculator::usesTrainCost()`; de handler vraagt het daar op, zodat de
-  schakelaar op één plek blijft wonen.
-
-  De tests toetsen **het aantal aanroepen van de treinbron** (`FixedTrainPriceSource::$callCount`),
-  in beide standen, door de echte container. Op het eindbedrag toetsen kan hier
-  niet: een weggegooide uitkomst is aan het resultaat niet te zien.
-
-**Geheimen: de key hoort in `api/.env.local`, niet in `api/.env`.** `api/.env` is
-door git gevolgd (Symfony-standaard: alleen lege sleutels en veilige defaults).
-`.env.local` staat in beide `.gitignore`-bestanden en wordt door Symfony over
-`.env` heen gelezen — bewezen: `bootEnv()` in de container laadt de key in
-`APP_ENV=dev`. In `APP_ENV=test` wordt `.env.local` **niet** geladen; dat is
-precies goed, want geen enkele test mag het netwerk op.
-
-**Nog open:** de twee ignav-calls (AMS→HEL en AMS→TKU) gaan na elkaar, elk een
-seconde of wat. De eigenaar heeft parallelliseren bewust **later** geparkeerd —
-het verandert de vorm van de `FlightPriceSource`-port.
-
-## 0. Sessie 2: Bright Data is eruit, ignav erin
-
-**Bright Data had geen Google Flights-product.** De adapter haalde via Web
-Unlocker de HTML-pagina van Google Flights op maar parste `best_flights` /
-`other_flights` — het JSON-schema van **SerpApi**. Die sleutels komen daar nooit
-uit; die adapter heeft dus nooit tegen de echte API gewerkt. Zijn 33 tests
-voerden het verzonnen schema in en zagen het gat daarom niet. **Zevende Critical,
-weer in een naad: adapter versus de API waar hij tegenaan praat.**
-
-Vervangen door **ignav** (`POST https://ignav.com/api/fares/one-way`, header
-`X-Api-Key`, env `IGNAV_API_KEY`). 1000 gratis requests/maand, alleen geslaagde
-calls tellen. Het plan staat in
-`docs/plans/ignav-flightsource/plan.md`; alle zes taken zijn af.
-
-De fixture `api/tests/Infrastructure/Source/fixtures/ignav-ams-hel.json` is een
-**écht gemeten respons**, geen aanname. Daaruit bleek: `price.amount` is in hele
-euro's (niet centen), en er komen maatschappijen (BT, TK) en overstapluchthavens
-(RIX, IST) binnen buiten de toegestane set.
-
-**De transfer HEL–TKU staat uit** via `TRAIN_COST_ENABLED=0` (eigenaarsbesluit —
-hij wil er misschien een andere bron voor). Gevolg: treinkosten €0, opties blijven
-gewoon gerangschikt, en elke via-Helsinki-kaart meldt "niet meegerekend" plus
-"Totaal is exclusief transfer HEL→TKU". Daarvoor is een nieuw veld
-`trainCostIncluded` toegevoegd, **los van `trainCostKnown`**: dat laatste false
-zetten zou elke Helsinki-optie de ongerangschikte bak in duwen. Terugzetten is
-één env-regel; beide standen zijn getoetst door de échte container.
-
-**Wat hierdoor is opgelost:** M2 (`flight_number` als array). **Wat is
-weggevallen:** M3 hoort nu bij `IgnavFlightSource` in plaats van de oude adapter.
-**Wat minder dringend is:** I7 — met 1000 gratis calls is de credit-drain veel
-kleiner dan bij Bright Data, maar auth ontbreekt nog steeds.
-
-**Valkuil die me een half uur kostte:** in `SearchControllerTest` de env-variabele
-in `tearDown` *wissen* in plaats van herstellen laat `%env(bool:...)%` gooien,
-waarna élke volgende test stil een 500 geeft in plaats van zijn eigen resultaat.
-
-Lees dit samen met [`flight-finder-phase-1/progress.md`](flight-finder-phase-1/progress.md); dat bevat de volledige
-taakgeschiedenis en de doorgeschoven Minor-bevindingen. Dit bestand vult aan wat
-alleen in de gespreksgeschiedenis stond.
+**Method that worked here:** tests upfront by the main session, simple
+adapter by a haiku agent; each slice a mutation round (one stayed green and
+revealed a real gap: `return` after `navigate`). Two bugs found by stress-testing
+the boundary myself: `$` in a regex lets a newline through (→ `\z`);
+`CARRIER_HOMEPAGES['constructor']` gave `href="undefined"` (→ `Object.hasOwn`).
 
 ---
 
-## 1. WAAR JE MOET BEGINNEN
+*Below: status from 17 Sep 2026 (phase 1), kept as history.*
 
-**Er ligt geen onafgemaakt werk meer.** Het afgebroken fixwerk is gecommit als
-`a9b1066`; de rode frontendtest is gedicht in `d577668`.
+## 0a. The app really runs (17 Sep 2026, manually tested by the owner)
 
-**Stand van zaken, zelf nagemeten (sessie 2):**
+With a real `IGNAV_API_KEY`, `/api/search` gives a sensible list: recognizable
+airlines, plausible amounts. **This is the first proof outside the tests
+that the chain ignav → adapter → domain → UI works.**
+
+Two things came up:
+
+- **KLM shows "indicative" — as it should.** `FareUpgradeRates::ESTIMATED` contains
+  only KL because KLM prices checked baggage dynamically. Not a bug; don't hide it.
+- **The train price was fetched while the transfer was off.** `TRAIN_COST_ENABLED`
+  was only in `TotalCostCalculator`, but `SearchFlightsHandler` did the fetching.
+  Every search with a HEL option thus started an Apify actor run whose result was
+  immediately discarded — seconds of wait time and one of the ~20–50 runs
+  per month. **Eighth seam, same pattern: the toggle in one component, the
+  costs in another.** Fixed in `44453cc` with `TotalCostCalculator::usesTrainCost()`;
+  the handler checks it there, so the toggle lives in one place.
+
+  Tests check **the number of calls to the train source** (`FixedTrainPriceSource::$callCount`),
+  in both states, through the real container. Can't test the final amount here:
+  a discarded result is invisible in the result.
+
+**Secrets: the key belongs in `api/.env.local`, not `api/.env`.** `api/.env` is
+tracked by git (Symfony standard: only empty keys and safe defaults).
+`.env.local` is in both `.gitignore` files and read by Symfony over `.env` — proven:
+`bootEnv()` in the container loads the key in `APP_ENV=dev`. In `APP_ENV=test`,
+`.env.local` is **not** loaded; exactly right, because no test must touch the network.
+
+**Still open:** the two ignav calls (AMS→HEL and AMS→TKU) run sequentially, each
+a second or so. The owner deliberately **deferred** parallelization later — it changes
+the shape of the `FlightPriceSource` port.
+
+## 0. Session 2: Bright Data out, ignav in
+
+**Bright Data had no Google Flights product.** The adapter fetched Google Flights HTML
+via Web Unlocker but parsed `best_flights` / `other_flights` — the JSON schema of
+**SerpApi**. Those keys never come from there; so that adapter never worked against
+the real API. Its 33 tests fed the invented schema and missed the gap as a result.
+**Seventh Critical, again in a seam: adapter versus the API it talks to.**
+
+Replaced by **ignav** (`POST https://ignav.com/api/fares/one-way`, header
+`X-Api-Key`, env `IGNAV_API_KEY`). 1000 free requests/month, only successful
+calls count. The plan is in `docs/plans/ignav-flightsource/plan.md`; all six tasks done.
+
+The fixture `api/tests/Infrastructure/Source/fixtures/ignav-ams-hel.json` is a
+**real measured response**, not an assumption. From it: `price.amount` is in whole
+euros (not cents), and airlines (BT, TK) and connection airports (RIX, IST) appear
+outside the allowed set.
+
+**The HEL–TKU transfer is off** via `TRAIN_COST_ENABLED=0` (owner decision —
+he may want a different source). Result: train costs €0, options stay ranked normally,
+and every Helsinki card shows "not included" plus "Total excludes HEL→TKU transfer".
+A new field `trainCostIncluded` was added for this, **separate from `trainCostKnown`**:
+setting that to false would put every Helsinki option in the unranked bucket. Turning
+back on is one env line; both states have been tested through the real container.
+
+**What this fixed:** M2 (`flight_number` as array). **What's gone:** M3 now belongs
+to `IgnavFlightSource` instead of the old adapter. **What's less urgent:** I7 —
+with 1000 free calls credit drain is much smaller than with Bright Data, but auth
+still missing.
+
+**Pitfall that cost me half an hour:** in `SearchControllerTest` *clearing* the env
+variable in `tearDown` instead of restoring it makes `%env(bool:...)%` throw, after
+which every next test silently returns a 500 instead of its own result.
+
+Read this together with [`flight-finder-phase-1/progress.md`](flight-finder-phase-1/progress.md);
+it has the full task history and passed-through Minor findings. This file adds what
+only lived in conversation history.
+
+---
+
+## 1. WHERE TO START
+
+**No unfinished work remains.** The broken fix work was committed as
+`a9b1066`; the failing frontend test was closed in `d577668`.
+
+**Status, self-measured (session 2):**
 
 | | Status |
 |---|---|
-| PHP-suite | **140 groen** |
-| Frontend-suite | **12 groen** |
-| C1 route-validatie | werkt — AMS→ARN wordt overgeslagen bij een zoekopdracht AMS→TKU |
-| I3 `is_array` op `flights` | werkt — `'flights' => 'oops'` geeft 0 resultaten zonder crash |
-| I1 multi-leg maatschappij | **mutatiebewijs geleverd**: "neem het laatste been" laat `BrightDataFlightSourceTest.php:792` falen |
-| I2 sorteersemantiek frontend | gedekt en groen |
-| I4 naam van de reiziger | gedekt door `App.spec.ts` (`.traveller-label`) |
+| PHP suite | **140 green** |
+| Frontend suite | **12 green** |
+| C1 route validation | works — AMS→ARN is skipped on a search for AMS→TKU |
+| I3 `is_array` on `flights` | works — `'flights' => 'oops'` gives 0 results without crash |
+| I1 multi-leg airline | **mutation proof delivered**: "take the last leg" fails `BrightDataFlightSourceTest.php:792` |
+| I2 sort semantics frontend | covered and green |
+| I4 traveler name | covered by `App.spec.ts` (`.traveller-label`) |
 
-De rode test had gelijk, de component was fout: de melding *"Niet gerangschikt —
-treinprijs onbekend"* stond in `App.vue` **boven** de gerangschikte kaarten en
-suggereerde daarmee dat die óók ongerangschikt waren. Hij staat nu tussen de
-twee groepen.
+The failing test was right, the component was wrong: the message *"Unranked — train
+price unknown"* was in `App.vue` **above** the ranked cards and thus suggested
+they were also unranked. Now it's between the two groups.
 
-**Wat nog open staat:** I6 en I7 hieronder, plus de tien Minors. I7 (publieke
-`/api/search`, twee Bright Data-credits per aanroep) blokkeert de eerste deploy.
-De app is nog **nooit als geheel met de hand gedraaid** — dat is de logische
-volgende stap als de eigenaar "een werkend simpel ding" wil zien.
+**Still open:** I6 and I7 below, plus ten Minors. I7 (public `/api/search`,
+two Bright Data credits per call) blocks the first deploy. The app has **never
+been run as a whole by hand** — that's the logical next step if the owner wants
+to see "a working simple thing".
 
-`toevoeging.txt` in de projectroot is **van de gebruiker**, niet van een agent.
-Bevat notities over gratis databronnen (ignav.com). Niet weggooien.
+`toevoeging.txt` in the project root is **from the user**, not an agent.
+Contains notes on free data sources (ignav.com). Don't delete it.
 
 ---
 
-## 2. De derde eindreview — het enige exemplaar van deze uitkomst
+## 2. The third final review — the only copy of this finding
 
-De review (opus, over 72 commits) staat nergens anders vastgelegd. Besluit was
-**"nee, nog niet naar master"**. Het diffpakket staat in
+The review (opus, over 72 commits) is not documented elsewhere. Decision was
+**"no, not to master yet"**. The diff bundle is in
 `review-eindreview-ronde3.diff`.
 
-### Blokkeerde de merge (dit is wat de afgebroken agent aan het repareren was)
+### Blocked the merge (this is what the broken agent was fixing)
 
-1. **C1 (Critical) — niets controleerde of een optie de gevráágde reis verbindt.**
-   Zelf gemeten vóór de fix:
+1. **C1 (Critical) — nothing checked if an option connected the requested route.**
+   Self-measured before the fix:
    ```
-   gevraagd AMS->TKU, geleverd AMS->ARN   € 59,00  geaccepteerd, bovenaan
-   gevraagd AMS->HEL, geleverd HEL->AMS            geaccepteerd als heenreis
+   asked AMS->TKU, delivered AMS->ARN   €59.00  accepted, on top
+   asked AMS->HEL, delivered HEL->AMS           accepted as outbound
    ```
-   Een vlucht naar Stockholm werd gepresenteerd als goedkoopste reis naar Turku.
-   **Nu gefixt** via `ConnectsRequestedRoute` + een controle in `toItinerary()`.
-2. **I3 — `$offer['flights']` werd niet op array getoetst.** Zelfde gat een laag
-   dieper dan een eerdere fix. **Nu gefixt.**
-3. **I1 — de maatschappij-per-been-fix was niet volledig gedekt.** Mutatie "neem
-   het láátste been" liet 136/136 groen; beide multi-leg tests hadden KLM
-   toevallig op het laatste been. Een gespiegelde test (KLM op been 0) ontbrak.
-   **Waarschijnlijk toegevoegd** — de testfile is gewijzigd, niet geverifieerd.
-4. **I2 — de nieuwe sorteersemantiek had nul frontenddekking.** Er was geen
-   `App.spec.ts`, terwijl `data-testid="unranked-notice"` speciaal was
-   aangebracht voor een test die niet bestond. **Dit is de test die nu rood staat.**
-5. **I4 — de UI toonde nooit vóór wie de prijzen golden.** Spec §2 zegt
-   letterlijk dat één prijs nooit als geldend voor beiden getoond mag worden.
-   `traveller.name` werd wél meegestuurd maar nergens gerenderd. Wissel je na een
-   zoekopdracht van reiziger zonder opnieuw te zoeken, dan staan Chris' prijzen
-   onder een keuzelijst die "Partner" zegt — €16 verschil op Finnair.
-   **App.vue is gewijzigd**, niet geverifieerd.
-6. **I5 — ±1-dagsuggestie was nooit expliciet uitgesteld.** **Gedaan**: staat nu
-   als blokcitaat in de spec (§3, Datumflexibiliteit).
+   A flight to Stockholm was presented as the cheapest trip to Turku.
+   **Now fixed** via `ConnectsRequestedRoute` + a check in `toItinerary()`.
+2. **I3 — `$offer['flights']` was not checked for array.** Same gap one level
+   deeper than an earlier fix. **Now fixed.**
+3. **I1 — the airline-per-leg fix was not fully covered.** Mutation "take the
+   last leg" left 136/136 green; both multi-leg tests happened to have KLM on
+   the last leg. A mirrored test (KLM on leg 0) was missing. **Probably added** —
+   the test file was changed, not verified.
+4. **I2 — the new sort semantics had zero frontend coverage.** There was no
+   `App.spec.ts`, while `data-testid="unranked-notice"` was specially added for
+   a test that didn't exist. **This is the test that now fails.**
+5. **I4 — the UI never showed who the prices were for.** Spec §2 says
+   literally that one price must never be shown as valid for both. `traveller.name`
+   was sent but never rendered. Switch travelers after a search without searching
+   again, and Chris' prices appear under a dropdown that says "Partner" — €16
+   difference on Finnair. **App.vue was changed**, not verified.
+6. **I5 — ±1-day suggestion was never explicitly deferred.** **Done**: now
+   appears as a block quote in the spec (§3, Date flexibility).
 
-### Mocht ná de merge
+### Allowed after the merge
 
-- **I6 — `FareUpgradeRates::for()` geeft stil € 0,00 voor een niet-geconfigureerde
-  maatschappij.** `BaggagePolicy::costFor(Sas, None)` → `Money::zero()`, terwijl
-  SAS Light zonder status wél bagage kost. Latent: beide reizigers hebben SAS
-  Silver. Maar het is exact de onzichtbare nul die spec §5 verbiedt. Voorstel:
-  SAS expliciet als nultarief registreren en `for()` laten gooien bij een
-  onbekende sleutel.
+- **I6 — `FareUpgradeRates::for()` silently returns €0.00 for an unconfigured
+  airline.** `BaggagePolicy::costFor(Sas, None)` → `Money::zero()`, while
+  SAS Light without status does have baggage costs. Latent: both travelers have
+  SAS Silver. But it's exactly the invisible zero that spec §5 forbids. Proposal:
+  register SAS explicitly as a zero rate and make `for()` throw on an unknown key.
 
-### Blokkeert niet de merge, wél de eerste deploy
+### Doesn't block the merge, but does block the first deploy
 
-- **I7 — `/api/search` is publiek en kost twee Bright Data-credits per aanroep.**
-  Geen auth, geen rate limiting, geen datumbegrenzing. Staat sinds eindreview 1
-  open en is nergens vastgelegd, ook niet in de README. Basic auth op `/api` in
-  nginx is de goedkoopste afdoende maatregel.
+- **I7 — `/api/search` is public and costs two Bright Data credits per call.**
+  No auth, no rate limiting, no date bounds. Open since final review 1 and
+  undocumented, even in README. Basic auth on `/api` in nginx is the cheapest
+  sufficient measure.
 
-### Minors uit ronde 3 (nog nergens anders genoteerd)
+### Minors from round 3 (not documented elsewhere)
 
-| # | Plek | Bevinding |
+| # | Location | Finding |
 |---|---|---|
-| M1 | `api/src/Kernel.php` | mist `declare(strict_types=1)`. `DomainPurityTest` toetst alleen `src/Domain`, dus Application/ en Infrastructure/ zijn ongedekt. Overweeg de test over heel `src/` te laten lopen. |
-| M2 | `BrightDataFlightSource` ~216 | `flight_number` als array → `Array to string conversion`, vluchtnummer wordt letterlijk `"Array"`. Verzonnen data, cosmetisch. |
-| M3 | `BrightDataFlightSource` ~44 | `CARRIER_PRIORITY` codeert "KLM is de duurste bagagetoeslag" hard in infrastructuur, terwijl die tarieven uit configuratie komen. Zet iemand `FARE_UPGRADE_KL=10`, dan is de "conservatieve" keuze stil niet meer conservatief. |
-| M4 | `MaxConnectionDuration` / `Itinerary` | negatieve overstaptijd wordt doorgelaten (gemeten −270 min, `rejectionReason` = null). Praktisch onbereikbaar. Schuift sinds taak 4 door. |
-| M5 | `SearchResult.php:12` | docblock zegt nog "goedkoopste eerst"; met twee groepen klopt dat niet meer. |
-| M6 | `OptionCard.vue` | bij onbekende treinprijs staat een stellig totaal groot in beeld met "Trein: onbekend" eronder. Overweeg "vanaf € 150,00". **Bewuste eigenaarskeuze.** |
-| M7 | `SearchController.php:29` | `createFromFormat('!Y-m-d')` geeft geen `false` bij een onmogelijke datum: `2026-02-31` → 3 maart, `2026-13-01` → 1 jan 2027. Rolt stil door en kost een credit. |
-| M8 | `api/composer.json` | `"php": ">=8.2"` terwijl de randvoorwaarde 8.4 is. Schuift sinds taak 1 door. |
-| M9 | `LoggerConfigurationTest` | leest via reflectie de private `minLevelIndex` van een Symfony-interne klasse. Werkt, maar breekt stil bij een Symfony-upgrade. |
-| M10 | `web/src/api.ts` | `return response.json()` zonder validatie: impliciet `any`, dus "strict, geen any" geldt niet voor het backendcontract. |
+| M1 | `api/src/Kernel.php` | missing `declare(strict_types=1)`. `DomainPurityTest` only checks `src/Domain`, so Application/ and Infrastructure/ are uncovered. Consider running the test over all of `src/`. |
+| M2 | `BrightDataFlightSource` ~216 | `flight_number` as array → `Array to string conversion`, flight number becomes literally `"Array"`. Invented data, cosmetic. |
+| M3 | `BrightDataFlightSource` ~44 | `CARRIER_PRIORITY` encodes "KLM has the highest baggage fee" hard in infrastructure, while those rates come from config. If someone sets `FARE_UPGRADE_KL=10`, the "conservative" choice is silently no longer conservative. |
+| M4 | `MaxConnectionDuration` / `Itinerary` | negative connection time passes through (measured −270 min, `rejectionReason` = null). Practically unreachable. Deferred since task 4. |
+| M5 | `SearchResult.php:12` | docblock still says "cheapest first"; with two groups that no longer fits. |
+| M6 | `OptionCard.vue` | with unknown train price a definite total is displayed large with "Train: unknown" below. Consider "from €150.00". **Deliberate owner choice.** |
+| M7 | `SearchController.php:29` | `createFromFormat('!Y-m-d')` doesn't return `false` for an impossible date: `2026-02-31` → 3 March, `2026-13-01` → 1 Jan 2027. Rolls through silently and costs a credit. |
+| M8 | `api/composer.json` | `"php": ">=8.2"` while the requirement is 8.4. Deferred since task 1. |
+| M9 | `LoggerConfigurationTest` | reads via reflection the private `minLevelIndex` of a Symfony-internal class. Works, but silently breaks on Symfony upgrade. |
+| M10 | `web/src/api.ts` | `return response.json()` without validation: implicitly `any`, so "strict, no any" doesn't apply to the backend contract. |
 
-### Wat de review expliciet heeft nagerekend en goed bevonden
+### What the review explicitly calculated and found correct
 
-- **Alle 28 prijscombinaties** door de echte calculator met de echte config
-  (AY €16, KL €25): beide richtingen, beide patronen, beide reizigers, trein
-  bekend en onbekend. Klopt met spec §4.
-- **Sorteersemantiek** in alle vier de gevallen: gemengd, alles ongerangschikt,
-  geen opties, alles gerangschikt. Doorgaande tickets hebben altijd
-  `trainCostKnown = true` en kunnen dus nooit in de ongerangschikte bak vallen.
-- Apify-cache onderscheidt aantoonbaar "null gecacht", "€0" en "cache miss".
-- Domeinzuiverheid, geen netwerk in tests, geen `any` in `web/src`.
-
----
-
-## 3. Beslissingen van de eigenaar die je moet respecteren
-
-1. **Treinprijs onbekend → optie blijft zichtbaar, gemarkeerd als "onbekend".**
-   Niet verbergen, niet laten falen. Hij weegt liever zelf.
-2. **Geen schatting in de sortering.** Een eerdere ronde introduceerde
-   `TRAIN_PRICE_ESTIMATE` om de rangschikking te corrigeren; die bleek factor 100
-   mis en is op zijn verzoek **volledig verwijderd**. Een optie met onbekende
-   treinprijs doet niet mee aan de sortering en komt achteraan. Er wordt nergens
-   een bedrag verzonnen, ook niet verstopt in een optelsom — het getoonde totaal
-   blijft onveranderd.
-3. **Drie spec-eisen bewust naar fase 2** (vastgelegd in de spec, commit `b3da6de`
-   en de ongecommitte spec-wijziging): Plus-prijs naast Light tonen; KLM alleen
-   tonen als het echt goedkoper is; ±1-dagsuggestie.
-   Let op het gevolg bij de KLM-filter: spec §5 verdedigt de summiere
-   `indicative`-markering met het argument dát KLM al weggefilterd zou zijn bij
-   een marginaal verschil. Die redenering gaat in fase 1 niet op.
-4. **PHP + Vue, geen Python.** Harde randvoorwaarde.
+- **All 28 price combinations** through the real calculator with real config
+  (AY €16, KL €25): both directions, both patterns, both travelers, train known
+  and unknown. Matches spec §4.
+- **Sort semantics** in all four cases: mixed, all unranked, no options, all ranked.
+  Through tickets always have `trainCostKnown = true` and thus can never end up
+  in the unranked bucket.
+- Apify cache provably distinguishes "null cached", "€0", and "cache miss".
+- Domain purity, no network in tests, no `any` in `web/src`.
 
 ---
 
-## 4. Het patroon dat deze branch bepaalde — lees dit vóór je verder werkt
+## 3. Owner decisions you must respect
 
-Drie eindreviews vonden samen **zes Critical-bevindingen. Geen enkele daarvan zat
-in een losse component.** Alle zes zaten in een naad:
-
-- adapter versus regel (patroon op de terugreis)
-- domein versus bedrading (de schatting die factor 100 mis was)
-- aanroeper versus mapper (niemand controleerde de route)
-
-Elke afzonderlijke taakreview was terecht positief. Het geheel klopte niet.
-
-**Wat daaruit volgt voor jou:**
-
-- **Meet door de échte container, niet langs de bedrading.** Ik heb de
-  sorteerfix zelf nagemeten en toch gemist dat hij factor 100 mis was — omdat ik
-  in mijn probe de waarde met de hand meegaf, precies zoals de tests deden. Ik
-  reproduceerde de blinde vlek in plaats van hem te vinden. Alles wat uit
-  configuratie komt: toetsen via `WebTestCase` met de echte container.
-- **Wantrouw een test die om een probleem heen werkt.** De integratietest voor
-  de terugreis bevatte commentaar dat de HEL→AMS-vlucht anders "dubbel" zou
-  binnenkomen, en loste dat op door het tweede antwoord leeg te maken. Die
-  workaround hield de suite groen en bewaakte de fout in plaats van hem te melden.
-- **Een fix zonder falende test is geen fix.** Meerdere "reparaties" bleken
-  mutatie-bestendig: de logger-bedrading weghalen liet 131/131 groen, en "neem
-  het laatste vluchtbeen" liet 136/136 groen.
-- **Verifieer reviewbevindingen empirisch voor je ze aanneemt of afwijst.**
-  Zeven bevindingen uit losse taakreviews bleken bij meting onjuist (o.a.
-  "`usort` is onstabiel" — PHP sorteert stabiel sinds 8.0; "`Money::fromEuros`
-  kapt af" — het rondt af). Alle zeven weerleggingen zijn in de drie eindreviews
-  overeind gebleven. Maar: bij één ervan had ik de zoekruimte te smal genomen —
-  de niet-numerieke cast ernaast bleef staan en werd later een Critical.
+1. **Train price unknown → option stays visible, marked as "unknown".**
+   Don't hide it, don't fail. He prefers to weigh it himself.
+2. **No estimates in sorting.** An earlier round introduced `TRAIN_PRICE_ESTIMATE`
+   to fix the ranking; it turned out to be off by factor 100 and was **completely
+   removed** at his request. An option with unknown train price doesn't participate
+   in sorting and comes last. No amount is invented anywhere, not hidden in a sum — the
+   displayed total stays unchanged.
+3. **Three spec requirements deliberately deferred to phase 2** (documented in spec,
+   commit `b3da6de` and uncommitted spec change): show Plus price next to Light;
+   show KLM only if it's really cheaper; ±1-day suggestion.
+   Note the consequence for the KLM filter: spec §5 defends the bare `indicative`
+   marking with the argument that KLM would already be filtered out on a marginal
+   difference. That reasoning doesn't apply in phase 1.
+4. **PHP + Vue, no Python.** Hard requirement.
 
 ---
 
-## 5. Praktische zaken
+## 4. The pattern that governed this branch — read this before continuing
+
+Three final reviews found **six Critical findings together. None of them sat
+in a single component.** All six were in a seam:
+
+- adapter versus rule (pattern on return)
+- domain versus wiring (the estimate off by factor 100)
+- caller versus mapper (no one checked the route)
+
+Each individual task review was rightly positive. The whole didn't work.
+
+**What that means for you:**
+
+- **Measure through the real container, not around the wiring.** I measured the
+  sort fix myself and still missed that it was off by factor 100 — because in my
+  probe I passed the value by hand, exactly like the tests did. I reproduced the
+  blind spot instead of finding it. Everything from config: test via `WebTestCase`
+  with the real container.
+- **Distrust a test that works around a problem.** The integration test for round
+  trips had a comment that the HEL→AMS flight would otherwise arrive "twice", and
+  worked around it by clearing the second response. That workaround kept the suite
+  green and guarded the bug instead of reporting it.
+- **A fix without a failing test is not a fix.** Multiple "repairs" turned out
+  mutation-proof: removing the logger wiring left 131/131 green, and "take the
+  last leg" left 136/136 green.
+- **Verify review findings empirically before you accept or reject them.**
+  Seven findings from individual task reviews turned out wrong when measured
+  (e.g., "`usort` is unstable" — PHP has sorted stably since 8.0; "`Money::fromEuros`
+  truncates" — it rounds). All seven refutations held up in the three final reviews.
+  But: on one I had narrowed the search space too much — the non-numeric cast
+  next to it stayed and became a Critical later.
+
+---
+
+## 5. Practical matters
 
 ```bash
-# PHP-suite
+# PHP suite
 docker compose exec -T php php bin/phpunit
-# Bewijs dat geen test het netwerk raakt:
+# Proof that no test touches the network:
 docker run --rm --network none -v "$PWD/api:/app" -w /app flights-php:latest php bin/phpunit
 # Frontend
 docker compose run --rm node npm run test
 docker compose run --rm node npm run build
 ```
 
-- Config heet `phpunit.dist.xml`, werkpad in de container is `/app` (= `api/`).
-- `api/config/reference.php` wordt door Symfony geregenereerd bij een cache-clear
-  en duikt dan op als wijziging. `git checkout --` is dan de juiste reactie.
+- Config is `phpunit.dist.xml`, working directory in the container is `/app` (= `api/`).
+- `api/config/reference.php` is regenerated by Symfony on cache-clear and then
+  shows up as a change. `git checkout --` is the right response.
 
-### Opgeruimde werkbestanden
+### Cleaned-up working files
 
-De werkmap van fase 1 bevatte 1,9 MB aan reviewdiffs, taakbriefs en
-agentrapporten. Op `flight-finder-phase-1/progress.md` en dit bestand na is dat
-weggegooid. Een reviewdiff maak je opnieuw met
-`git diff -U10 <base>..<head>`; alle commits staan nog in git.
+Phase 1 working directory contained 1.9 MB of review diffs, task briefs, and
+agent reports. Except for `flight-finder-phase-1/progress.md` and this file, that's
+deleted. Regenerate a review diff with `git diff -U10 <base>..<head>`; all commits
+are still in git.
 
-De agentrapporten zijn niet regenereerbaar, maar hun inhoud is tijdens de rit
-samengevat in `flight-finder-phase-1/progress.md` en in de commitberichten — die zijn met opzet
-uitgebreid geschreven en leggen per reparatie uit wát er mis was en waaróm dat
-erg was.
+The agent reports can't be regenerated, but their content was summarized during
+the work in `flight-finder-phase-1/progress.md` and in commit messages — those were
+deliberately detailed and explain per repair what was wrong and why it mattered.

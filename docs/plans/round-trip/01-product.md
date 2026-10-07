@@ -1,41 +1,29 @@
-# Product: Heen en terug op één scherm
+# Product: Outbound and return on one screen
 
 ## Problem
-"Ik wil een heen- én terugreis plannen, maar nu moet ik twee keer zoeken, de
-richting omzetten en zelf onthouden wat de goedkoopste heenvlucht kostte om het
-bij de terugvlucht op te tellen. Ik boek toch altijd twee losse enkele reizen,
-dus ik wil gewoon beide datums invullen en alles in één keer zien."
+"I want to plan an outbound and return trip, but now I have to search twice, reverse the direction and remember myself what the cheapest outbound flight cost to add it up with the return flight. I book two separate one-way trips anyway, so I just want to fill in both dates and see everything at once."
 
 ## Success metric
-**Eén zoekactie voor een volledige retour, in plaats van twee.** Gemeten aan het
-scherm zelf: na één klik op "Zoek" staan de opties voor de heenreis, de opties
-voor de terugreis en het goedkoopste totaal van beide tegelijk in beeld.
-Randvoorwaarde: het verbruik van de gratis vluchtdata blijft gelijk aan twee
-losse zoekacties (dus geen extra kosten per retour).
+**One search for a complete round trip, instead of two.** Measured on screen itself: after one click on "Search" the options for the outbound trip, the options for the return trip and the cheapest total of both appear on screen at the same time.
+Constraint: the consumption of free flight data remains the same as two separate searches (so no extra cost per round trip).
 
 ## Announcement — the blog post before the feature
-Je kunt nu een heen- en een terugdatum tegelijk invullen. De vluchtzoeker zoekt
-beide reizen in één keer en zet ze naast elkaar: links de heenreis, rechts de
-terugreis, elk gesorteerd van goedkoop naar duur. Bovenaan staat wat de
-goedkoopste combinatie samen kost. Klik je een andere vlucht aan, dan rekent het
-totaal direct mee. Omdat je heen en terug los boekt, kun je vrij combineren —
-KLM heen en Finnair terug is prima. Wil je toch maar één kant op? Laat de
-terugdatum leeg.
+You can now enter an outbound and a return date at the same time. The flight finder searches both trips at once and puts them side by side: outbound on the left, return on the right, each sorted from cheap to expensive. At the top it shows what the cheapest combination costs together. Click a different flight and the total updates right away. Because you book outbound and return separately, you can mix freely — KLM outbound and Finnair return is fine. Want to go one way only? Leave the return date empty.
 
-## Keuzes in dit scherm (ter goedkeuring)
-1. **Startland kiezen:** "Vertrek vanuit Nederland" of "Vertrek vanuit Finland";
-   de terugreis is automatisch de andere kant op.
-2. **Terugdatum is optioneel.** Leeg = enkele reis, zoals nu.
-3. **Twee kolommen naast elkaar** op een breed scherm; op een smal scherm
-   onder elkaar (eerst heen, dan terug).
-4. **Totaalbalk bovenaan:** standaard de goedkoopste heen + goedkoopste terug.
-   Klik je een andere vlucht aan, dan verandert het totaal mee.
-5. **Terugdatum mag niet vóór de heendatum liggen**; dan een melding en niet zoeken.
-6. **Geplande reizen** (de knopjes bovenaan) vullen de datum van die reis in
-   bij de juiste kant; ze worden niet automatisch aan elkaar gekoppeld.
-7. Elke kant laat zijn eigen meldingen zien (bijv. "geen opties op deze datum")
-   zonder dat de andere kant verdwijnt.
+## Choices on this screen (for approval)
+1. **Choose start country:** "Departing from Netherlands" or "Departing from Finland";
+   the return trip is automatically the other direction.
+2. **Return date is optional.** Empty = one-way, as now.
+3. **Two columns side by side** on a wide screen; on a narrow screen
+   stacked one below the other (outbound first, then return).
+4. **Total bar at the top:** by default the cheapest outbound + cheapest return.
+   Click a different flight and the total changes with it.
+5. **Return date may not be before the outbound date**; then a message and no search.
+6. **Scheduled trips** (the buttons at the top) fill in the date of that trip on the
+   correct side; they are not automatically linked to each other.
+7. Each side shows its own messages (e.g. "no options on this date")
+   without the other side disappearing.
 
 ## Screens
-- `mockups/search-round-trip.html` — zoekformulier met twee datums, resultaten
-  in twee kolommen, totaalbalk met de gekozen combinatie.
+- `mockups/search-round-trip.html` — search form with two dates, results
+  in two columns, total bar with the chosen combination.

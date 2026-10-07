@@ -1,67 +1,63 @@
-# Architecture: Heen en terug op één scherm
+# Architecture: Outbound and return on one screen
 
 ## Fit
-**Alleen de frontend (`web/`) verandert. De backend blijft ongewijzigd.**
+**Only the frontend (`web/`) changes. The backend remains unchanged.**
 
-Een retour bestaat hier uit twee losse enkele reizen (zo heeft de eigenaar het
-besloten in Gate 1), en `GET /api/search` doet al precies één enkele reis:
-datum + richting + reiziger. De frontend roept hem daarom twee keer aan, één
-keer per kant, en zet de uitkomsten naast elkaar.
+A round trip consists here of two separate one-way trips (as the owner decided in Gate 1), and `GET /api/search` already does exactly one one-way trip:
+date + direction + traveller. The frontend therefore calls it twice, once per side, and puts the results side by side.
 
-- `App.vue`: het formulier krijgt een startland en twee datums. De resultaten
-  komen in twee kolommen, met daarboven de totaalbalk.
-- `OptionCard.vue`: wordt kiesbaar (geselecteerd of niet) en blijft verder gelijk.
-- `api.ts`: `search()` blijft zoals hij is.
-- Backend: `SearchController`, `SearchFlightsHandler`, de presenter en de
-  regels/calculator blijven onaangeroerd.
+- `App.vue`: the form gets a start country and two dates. The results
+  come in two columns, with the total bar above them.
+- `OptionCard.vue`: becomes selectable (selected or not) and stays otherwise the same.
+- `api.ts`: `search()` stays as it is.
+- Backend: `SearchController`, `SearchFlightsHandler`, the presenter and the
+  rules/calculator remain unchanged.
 
-**Afgewezen alternatief: een nieuw `/api/round-trip`-endpoint.**
-- In PHP gaan de ignav-calls na elkaar. Een retour zou dan vier calls achter
-  elkaar worden, tegenover twee keer twee parallel vanuit de browser.
-- Het parallelliseren van de `FlightPriceSource`-port is bewust geparkeerd
-  (zie OVERDRACHT).
-- Het levert niets op wat de frontend niet zelf kan: het totaal is gewoon twee
-  bedragen in centen bij elkaar opgeteld.
+**Rejected alternative: a new `/api/round-trip` endpoint.**
+- In PHP the ignav calls happen in sequence. A round trip would then be four calls in sequence, versus two times two in parallel from the browser.
+- Parallelizing the `FlightPriceSource` port is intentionally parked
+  (see HANDOVER).
+- It yields nothing the frontend cannot do itself: the total is just two
+  amounts in cents added together.
 
 ## Endpoints
-Geen nieuwe. Er wordt hergebruikt:
-- `GET /api/search?date=&direction=&traveller=`: eenmaal voor de heenreis, en
-  eenmaal voor de terugreis als er een terugdatum is.
-- `GET /api/trips`: ongewijzigd. Een geplande reis vult de heen- of de
-  terugdatum in, afhankelijk van de richting ten opzichte van het gekozen
-  startland.
+None new. Existing ones are reused:
+- `GET /api/search?date=&direction=&traveller=`: once for the outbound trip, and
+  once for the return trip if there is a return date.
+- `GET /api/trips`: unchanged. A scheduled trip fills the outbound or the
+  return date, depending on the direction relative to the chosen start country.
 
 ## Data
-Geen database, geen nieuwe velden. Er is alleen state in de browser:
-- het startland (`nl` | `fi`), de heendatum en een optionele terugdatum
-- per kant een eigen `SearchResult | null`, `error` en `loading`
-- per kant de index van de gekozen optie (standaard de goedkoopste
-  gerangschikte optie)
+No database, no new fields. Only state in the browser:
+- the start country (`nl` | `fi`), the outbound date and an optional return date
+- per side its own `SearchResult | null`, `error` and `loading`
+- per side the index of the chosen option (by default the cheapest
+  ranked option)
 
 ## Flow
-1. De gebruiker vult in: startland, heendatum, eventueel een terugdatum, en de
-   reiziger. Dan klikt hij op Zoek.
-2. Eerst controleert de frontend dat de terugdatum niet vóór de heendatum ligt.
-   Zo niet, dan volgt een melding en wordt er niets aangeroepen.
-3. De richtingen volgen uit het startland. Bij Nederland is heen `nl-fi` en
-   terug `fi-nl`; bij Finland is het omgekeerd.
-4. Beide `search()`-calls worden **parallel** gestart (`Promise.allSettled`).
-   Elke kant vult zijn eigen resultaat of foutmelding, onafhankelijk van de
-   andere kant.
-5. Per kant wordt standaard de eerste gerangschikte optie gekozen; dat is de
-   goedkoopste, omdat de backend al op totaal sorteert.
-6. De totaalbalk telt `cost.total` (in centen) van de gekozen optie(s) op. Is
-   er een kant zonder keuze (geen opties, fout of geen terugdatum), dan telt
-   alleen de andere kant mee, en dat staat er ook bij.
-7. Klikt de gebruiker een andere optie aan, dan verandert de keuze van die kant
-   en rekent het totaal opnieuw. Er volgt geen nieuwe API-call.
+1. The user enters: start country, outbound date, possibly a return date, and the
+   traveller. Then he clicks Search.
+2. First the frontend checks that the return date is not before the outbound date.
+   If not, a message follows and nothing is called.
+3. The directions follow from the start country. For Netherlands, outbound is `nl-fi` and
+   return is `fi-nl`; for Finland it's the opposite.
+4. Both `search()` calls are started **in parallel** (`Promise.allSettled`).
+   Each side fills its own result or error message, independently of the
+   other side.
+5. Per side, by default the first ranked option is chosen; that is the
+   cheapest, because the backend already sorts by total.
+6. The total bar adds `cost.total` (in cents) of the chosen option(s). If
+   one side has no choice (no options, error or no return date), only the
+   other side counts, and that is noted there.
+7. When the user clicks a different option, the choice for that side changes
+   and the total is recalculated. No new API call follows.
 
 ## External
-- **ignav:** het aantal calls per retour is gelijk aan twee losse zoekacties
-  (2 per kant). De backend blijft dezelfde `IGNAV_API_KEY` gebruiken; daar
-  verandert niets aan.
-- **Apify (trein):** bij `TRAIN_COST_ENABLED=1` kost elke kant met een HEL-optie
-  een run per datum, net als nu bij twee losse zoekacties. Standaard staat de
-  trein uit, dus 0 runs.
-- **php-fpm:** er komen nu twee gelijktijdige requests binnen. De standaard
-  `pm.max_children` (5) is daar ruim genoeg voor.
+- **ignav:** the number of calls per round trip equals two separate searches
+  (2 per side). The backend continues using the same `IGNAV_API_KEY`; that
+  does not change.
+- **Apify (train):** with `TRAIN_COST_ENABLED=1` each side with a HEL option
+  costs one run per date, just as now with two separate searches. By default the
+  train is off, so 0 runs.
+- **php-fpm:** now two concurrent requests come in. The standard
+  `pm.max_children` (5) is plenty for that.

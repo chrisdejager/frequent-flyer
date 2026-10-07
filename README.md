@@ -1,34 +1,34 @@
-# Leiden ↔ Turku vluchtzoeker
+# Leiden ↔ Turku flight finder
 
-Zoekt de goedkoopste reisopties tussen Leiden en Turku, met een totaalprijs
-die de VR-trein meerekent (bagagekosten bewust niet, zie ADR-0005).
+Searches for the cheapest travel options between Leiden and Turku, with a total price
+that includes the VR train (baggage costs intentionally excluded, see ADR-0005).
 
-- [Stand van zaken](docs/plans/README.md)
-- [Ontwerp fase 1](docs/plans/flight-finder-phase-1/spec.md)
-- [Implementatieplan fase 1](docs/plans/flight-finder-phase-1/plan.md)
+- [Status](docs/plans/README.md)
+- [Design phase 1](docs/plans/flight-finder-phase-1/spec.md)
+- [Implementation plan phase 1](docs/plans/flight-finder-phase-1/plan.md)
 
-## Instellen
+## Setup
 
-Kopieer `api/.env` naar `api/.env.local` en vul in:
+Copy `api/.env` to `api/.env.local` and fill in:
 
-| Variabele | Waar vandaan |
+| Variable | Where from |
 |---|---|
-| `BRIGHTDATA_TOKEN` | brightdata.com — 5.000 gratis credits per maand |
-| `BRIGHTDATA_ZONE` | naam van je SERP-zone |
-| `APIFY_TOKEN` | apify.com — $5 gratis tegoed per maand |
-| `FARE_UPGRADE_AY` | Finnair Light→Plus in euro's — **16** (vast tarief) |
-| `FARE_UPGRADE_KL` | KLM Light→Plus in euro's — **25** (schatting; dynamisch geprijsd) |
+| `BRIGHTDATA_TOKEN` | brightdata.com — 5,000 free credits per month |
+| `BRIGHTDATA_ZONE` | name of your SERP zone |
+| `APIFY_TOKEN` | apify.com — $5 free credit per month |
+| `FARE_UPGRADE_AY` | Finnair Light→Plus in euros — **16** (fixed rate) |
+| `FARE_UPGRADE_KL` | KLM Light→Plus in euros — **25** (estimate; dynamically priced) |
 
-Zonder `FARE_UPGRADE_AY` en `FARE_UPGRADE_KL` **weigert de eerste zoekopdracht**
-met een 500 — ontbrekend levert `Environment variable not found`, leeglaten
-levert `Non-numeric env var ... cannot be cast to float`. Dat is opzet:
-doorrekenen met €0 zou Light-tarieven structureel te goedkoop laten lijken.
+Without `FARE_UPGRADE_AY` and `FARE_UPGRADE_KL` **the first search request fails**
+with a 500 — missing variables return `Environment variable not found`, empty values
+return `Non-numeric env var ... cannot be cast to float`. This is intentional:
+calculating with €0 would make Light fares look systematically too cheap.
 
-Let op dat de container zelf wél opstart; je merkt een ontbrekende waarde dus
-pas bij de eerste zoekopdracht, niet bij het deployen. Doe na een deploy één
-zoekopdracht om te controleren dat de configuratie compleet is.
+Note that the container itself does start; you only notice a missing value when
+you run the first search, not during deployment. After a deploy, run one search
+to verify that the configuration is complete.
 
-## Lokaal draaien
+## Running locally
 
 ```bash
 docker compose up
@@ -36,14 +36,14 @@ docker compose up
 
 Open http://localhost:8080
 
-## Testen
+## Testing
 
 ```bash
 docker compose exec -T php php bin/phpunit
 docker compose run --rm node npm run test
 ```
 
-## Naar de VPS
+## To the VPS
 
 ```bash
 docker compose run --rm node npm run build

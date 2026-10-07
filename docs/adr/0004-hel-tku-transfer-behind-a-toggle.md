@@ -1,67 +1,66 @@
-# ADR-0004: Transfer HEL–TKU achter één schakelaar, standaard uit
+# ADR-0004: HEL–TKU transfer behind a single toggle, off by default
 
 **Status:** Accepted
-**Date:** 2026-09-17 (retroactief vastgelegd op 2026-10-02)
-**Deciders:** eigenaar
+**Date:** 2026-09-17 (retroactively documented on 2026-10-02)
+**Deciders:** owner
 
 ## Context
-Een reis via Helsinki kost naast de vlucht ook de VR-trein HEL⇄TKU. Die prijs komt
-uit `ApifyTrainPriceSource`, met ~20–50 Apify-runs per maand. De eigenaar wil
-daar mogelijk een andere bron voor (er ligt een wens voor bus- en treindata met
-prijzen) en zet de transfer daarom tijdelijk uit.
+A trip via Helsinki costs, in addition to the flight, the VR train HEL⇄TKU. That price comes
+from `ApifyTrainPriceSource`, with ~20–50 Apify runs per month. The owner may want
+a different source for this (there's a wish for bus and train data with prices) and
+temporarily turns off the transfer.
 
-De specificatie verbiedt een **onzichtbare nul**: een totaal mag niet compleet
-lijken als er een kostenpost ontbreekt.
+The specification forbids an **invisible zero**: a total must not seem complete
+if a cost line is missing.
 
 ## Decision
-De env-variabele `TRAIN_COST_ENABLED` (standaard `0`) zet de transfer aan of uit.
+The env variable `TRAIN_COST_ENABLED` (default `0`) turns the transfer on or off.
 
-- **Uit:** de treinkosten zijn €0, maar een HEL-optie blijft gewoon **gerangschikt**.
-  Het nieuwe veld `trainCostIncluded=false` laat de UI tonen: "niet meegerekend" en
-  "Totaal is exclusief transfer HEL→TKU".
-- `trainCostIncluded` staat **los van `trainCostKnown`**. Zou je `trainCostKnown`
-  op false zetten, dan komt elke Helsinki-optie in de ongerangschikte bak terecht.
-- De schakelaar staat op **één plek**: `TotalCostCalculator::usesTrainCost()`.
-  `SearchFlightsHandler` vraagt het daar op voordat hij een treinprijs ophaalt
-  (`44453cc`). Zo kost een zoekopdracht met de transfer uit geen Apify-run.
+- **Off:** train costs are €0, but a HEL option still gets **ranked normally**.
+  The new field `trainCostIncluded=false` makes the UI show: "not included" and
+  "Total excludes HEL→TKU transfer".
+- `trainCostIncluded` is **separate from `trainCostKnown`**. If you set `trainCostKnown`
+  to false, every Helsinki option ends up in the unranked bucket.
+- The toggle is at **one place**: `TotalCostCalculator::usesTrainCost()`.
+  `SearchFlightsHandler` checks it there before fetching a train price
+  (`44453cc`). This way, a search with transfer off costs zero Apify runs.
 
 ## Options Considered
 
-### Option A: Schakelaar met een zichtbaar label (gekozen)
+### Option A: Toggle with a visible label (chosen)
 | Dimension | Assessment |
 |-----------|------------|
-| Complexity | Laag: één env-regel en één extra veld |
-| Cost | 0 Apify-runs bij uit |
+| Complexity | Low: one env line and one extra field |
+| Cost | 0 Apify runs when off |
 
-**Pros:** in één regel terug te zetten; het totaal is eerlijk over wat ontbreekt.
-**Cons:** de Helsinki-opties zien er goedkoper uit dan ze zijn (wel met label).
+**Pros:** can be turned back on in one line; the total is honest about what's missing.
+**Cons:** Helsinki options look cheaper than they are (but with a label).
 
-### Option B: De treinlogica verwijderen
-**Pros:** minder code.
-**Cons:** terughalen kost een herbouw, terwijl een nieuwe bron waarschijnlijk is.
+### Option B: Remove the train logic
+**Pros:** less code.
+**Cons:** restoring it requires a rebuild, while a new source is likely.
 
-### Option C: Transfer uit via `trainCostKnown=false`
-**Cons:** alle Helsinki-opties vallen uit de rangschikking, en dat is precies wat
-je niet wilt.
+### Option C: Transfer off via `trainCostKnown=false`
+**Cons:** all Helsinki options fall out of ranking, and that's exactly what you don't want.
 
 ## Trade-off Analysis
-De valkuil zat in de naad, niet in de keuze: de schakelaar stond eerst alleen in
-`TotalCostCalculator`, terwijl `SearchFlightsHandler` het ophalen deed. Elke
-zoekopdracht kostte daardoor een Apify-run waarvan de uitkomst direct werd
-weggegooid. Dat was de achtste Critical. De schakelaar hoort daarom bij de
-component die de kosten bepaalt, en de component die ophaalt vraagt het daar op.
+The pitfall was in the seam, not in the choice: the toggle was initially only in
+`TotalCostCalculator`, while `SearchFlightsHandler` did the fetching. Every search
+thus cost an Apify run whose result was immediately discarded. That was the eighth Critical.
+The toggle therefore belongs with the component that determines costs, and the component
+that fetches checks it there.
 
 ## Consequences
-- Terugzetten: `TRAIN_COST_ENABLED=1`. Beide standen zijn getoetst door de echte
-  container, inclusief het aantal aanroepen van de treinbron
+- To turn back on: `TRAIN_COST_ENABLED=1`. Both states have been tested through the real
+  container, including the number of calls to the train source
   (`FixedTrainPriceSource::$callCount`).
-- Valkuil in tests: in `SearchControllerTest` de env in `tearDown` **herstellen**,
-  niet wissen. Wissen laat `%env(bool:...)%` gooien, waarna elke volgende test stil
-  een 500 geeft.
-- Bij een nieuwe transferbron (bus of trein): de poort `TrainPriceSource` blijft
-  het aanknopingspunt; dit ADR blijft gelden.
-- Bij een retour (ADR-0001) kost elke kant met een HEL-optie een eigen run zodra de
-  schakelaar aan staat.
+- Pitfall in tests: in `SearchControllerTest` **restore** the env in `tearDown`,
+  don't clear it. Clearing makes `%env(bool:...)%` throw, after which every subsequent test
+  silently returns a 500.
+- For a new transfer source (bus or train): the `TrainPriceSource` port remains
+  the integration point; this ADR stays valid.
+- For a round trip (ADR-0001) each side with a HEL option costs its own run once the
+  toggle is on.
 
 ## Action Items
-1. [ ] Bij een nieuwe transferbron: een ADR voor die bron, en de standaard opnieuw overwegen.
+1. [ ] For a new transfer source: an ADR for that source, and reconsider the default.

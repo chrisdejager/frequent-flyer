@@ -1,54 +1,54 @@
-# Status: SAS-prijs onbekend
+# Status: SAS price unknown
 
-**GEPARKEERD (eigenaar, 2026-10-03).** Niet gebouwd. De ignav-zoekrespons zegt niet
-van wie de prijs komt; "prijs alleen van de maatschappij zelf" generiek toetsen kan
-alleen met een booking-links-call per optie (6–8 extra per zoekopdracht). Eigenaar:
-"klinkt bijna alsof we een andere prijs-API moeten hebben" — en gaat ervan uit dat
-het een tijdelijk probleem van SAS is. Tot die tijd: de zelfgebouwde flysas.com-link
-(ADR-0006, `8290829`) om de SAS-prijs met één klik handmatig te checken.
-Ook overwogen en niet gekozen: een generieke lijst `CARRIERS_WITHOUT_OWN_PRICE=SK`.
-Herstart dit plan als het probleem blijft (af en toe nameten: SAS-zoekprijs vs flysas.com).
+**DEFERRED (owner, 2026-10-03).** Not built. The ignav search response doesn't say
+where the price comes from; generically testing "price from airline only" requires
+a booking-links call per option (6–8 extra per search). Owner: "sounds like we need
+a different price API" — and assumes it's a temporary SAS issue. Until then: the
+custom-built flysas.com link (ADR-0006, `8290829`) to manually check the SAS price
+with one click. Also considered but not chosen: a generic list `CARRIERS_WITHOUT_OWN_PRICE=SK`.
+Restart this plan if the problem persists (check periodically: SAS search price vs
+flysas.com).
 
-**Snelle versie** (eigenaar, 2026-10-03): geen vier gates; productkeuzes uit
-`01-product.md` + mockup gelden, ontwerp hieronder, twee slices.
+**Fast version** (owner, 2026-10-03): no four gates; product choices from
+`01-product.md` + mockup apply, design below, two slices.
 
 ## Slices
-- [ ] Slice A — backend: schakelaar + "prijs onbekend" in `/api/search`
-- [ ] Slice B — frontend: kaart, kop "Niet gerangschikt — prijs onbekend", totaalbalk
+- [ ] Slice A — backend: toggle + "price unknown" in `/api/search`
+- [ ] Slice B — frontend: card, header "Unranked — price unknown", total bar
 
-## Ontwerp
-- **Schakelaar** `SAS_PRICES_TRUSTED` (env, bool, in `api/.env` op `0`), net als
-  `TRAIN_COST_ENABLED` (ADR-0004) in `TotalCostCalculator` — één plek.
-- **Domein:** `TotalCost` krijgt `bool $basePriceKnown` en `isRanked()` =
-  `trainCostKnown && basePriceKnown`. `TotalCostCalculator::calculate` zet
-  `basePriceKnown = false` als `itinerary->carrier === Carrier::Sas` en de
-  schakelaar uit staat. `carrier` SK betekent: alle benen SK (adapterprioriteit
-  KL > AY > SK); een gemengd KL+SK-ticket is KLM's eigen prijs en blijft gewoon.
-- **Handler** rangschikt op `isRanked()` (nu: `trainCostKnown`).
-- **Presenter:** `cost.priceKnown`; bij `false` zijn `basePrice`, `total` en
-  `totalFormatted` **`null`** — de codeshare-prijs verlaat de server niet, dus de
-  UI kán hem niet tonen.
-- **Frontend:** `Cost` velden nullable + `priceKnown`; `isRanked(option)` in
-  `roundTrip.ts` vervangt de losse `trainCostKnown`-checks (partition,
-  defaultSelection, combine). Kaart: "prijs onbekend · zie flysas.com", rij
-  "Vlucht: onbekend". Kop: "Niet gerangschikt — prijs onbekend". Totaalbalk:
-  "onbekend" i.p.v. een bedrag als een gekozen kant geen prijs heeft.
+## Design
+- **Toggle** `SAS_PRICES_TRUSTED` (env, bool, in `api/.env` at `0`), like
+  `TRAIN_COST_ENABLED` (ADR-0004) in `TotalCostCalculator` — one place.
+- **Domain:** `TotalCost` gets `bool $basePriceKnown` and `isRanked()` =
+  `trainCostKnown && basePriceKnown`. `TotalCostCalculator::calculate` sets
+  `basePriceKnown = false` if `itinerary->carrier === Carrier::Sas` and the
+  toggle is off. `carrier` SK means: all legs SK (adapter priority
+  KL > AY > SK); a mixed KL+SK ticket is KLM's own price and stays as is.
+- **Handler** sorts on `isRanked()` (now: `trainCostKnown`).
+- **Presenter:** `cost.priceKnown`; when `false` `basePrice`, `total` and
+  `totalFormatted` are **`null`** — the codeshare price doesn't leave the
+  server, so the UI **cannot** show it.
+- **Frontend:** `Cost` fields nullable + `priceKnown`; `isRanked(option)` in
+  `roundTrip.ts` replaces the lone `trainCostKnown` checks (partition,
+  defaultSelection, combine). Card: "price unknown · see flysas.com", row
+  "Flight: unknown". Header: "Unranked — price unknown". Total bar:
+  "unknown" instead of an amount if a chosen side has no price.
 
-## Tests (vooraf)
-- `TotalCostCalculatorTest`: SK + uit → `basePriceKnown false`, niet ranked;
-  SK + aan → known; AY/KL + uit → known.
-- `SasPriceSwitchWiringTest` (echte container, beide standen van de env).
-- `SearchControllerTest`: SAS-optie komt ná goedkopere én duurdere gerangschikte
-  opties, met `priceKnown false` en `null`-bedragen; geen 37400 in de JSON.
-- Frontend: `partition`/`defaultSelection`/`combine` met een SAS-optie; OptionCard
-  toont "prijs onbekend" en geen "€"; LegColumn-kop; TotalBar "onbekend".
+## Tests (beforehand)
+- `TotalCostCalculatorTest`: SK + off → `basePriceKnown false`, not ranked;
+  SK + on → known; AY/KL + off → known.
+- `SasPriceSwitchWiringTest` (real container, both env settings).
+- `SearchControllerTest`: SAS option comes after cheaper and more expensive ranked
+  options, with `priceKnown false` and `null` amounts; no 37400 in the JSON.
+- Frontend: `partition`/`defaultSelection`/`combine` with a SAS option; OptionCard
+  shows "price unknown" and no "€"; LegColumn header; TotalBar "unknown".
 
 ## Notes for a fresh session
-- Aanleiding (2026-10-03, zie `docs/plans/booking-link/00-status.md`): ignav geeft
-  bij SAS-vluchten de prijs van de KLM-codeshare als zoekprijs. Gemeten 26-11-2026:
-  SK556+SK2728 € 374 in de app, € 193 op flysas.com; SK1556+SK2720 € 515 vs € 259.
-  De zoekrespons verraadt het niet (zelfde `status: verified`).
-- Besluit eigenaar: "nooit de codeshare-prijs, altijd bij de officiële maatschappij
-  boeken" → alle SK-opties "prijs onbekend", zonder extra ignav-calls.
-- Eigenaar denkt dat het **tijdelijk** is → schakelaar.
-- De Boeken-knop bij SAS opent al een zelfgebouwde flysas.com-link (ADR-0006).
+- Trigger (2026-10-03, see `docs/plans/booking-link/00-status.md`): ignav gives
+  the KLM codeshare price as search price for SAS flights. Measured 26-11-2026:
+  SK556+SK2728 € 374 in the app, € 193 on flysas.com; SK1556+SK2720 € 515 vs € 259.
+  The search response does not reveal it (same `status: verified`).
+- Owner decision: "never the codeshare price, always book with the official airline"
+  → all SK options "price unknown", without extra ignav calls.
+- Owner thinks it is **temporary** → toggle.
+- The Book button for SAS already opens a self-built flysas.com link (ADR-0006).

@@ -1,25 +1,23 @@
-# Product: SAS-prijs onbekend
+# Product: SAS price unknown
 
 ## Problem
-"Bij SAS zie ik in de vluchtzoeker € 374, maar op flysas.com kost dezelfde vlucht
-€ 193. De app zet SAS daardoor onderaan, terwijl het misschien de goedkoopste reis
-naar Turku is. Ik wil nooit een codeshare-prijs als dé prijs zien — ik boek altijd
-bij de maatschappij zelf."
+"For SAS I see € 374 in the flight finder, but the same flight costs € 193 on flysas.com. The app puts SAS at the bottom because of that, while it might be the cheapest trip to Turku. I never want to see a codeshare price as the real price — I always book with the airline itself."
 
 ## Success metric
-Aantal SAS-opties dat met een niet-SAS-prijs tussen de gerangschikte opties staat:
-nu 2 van 2 (gemeten 29-10 en 26-11), doel **0**. Te meten met één zoekopdracht
-AMS→TKU: geen enkele SAS-kaart boven de scheiding "Niet gerangschikt".
+Number of SAS options that stand with a non-SAS price among the ranked options:
+now 2 of 2 (measured 29-10 and 26-11), target **0**. To be measured with one search
+AMS→TKU: not a single SAS card above the divider "Unranked".
 
 ## Announcement — the blog post before the feature
-SAS deelt op dit moment zijn prijzen niet met zoekmachines; wat je daar ziet is
-het tarief van KLM voor hetzelfde toestel, vaak het dubbele. De vluchtzoeker
-toont SAS-vluchten daarom voortaan met **"prijs onbekend"** en zet ze apart onder
-de gerangschikte opties, met een knop die direct naar die vlucht op flysas.com
-gaat. Zo zie je nooit een prijs die niet van SAS zelf komt, en mis je toch geen
-vlucht. Zodra SAS weer eigen prijzen doorgeeft, gaat het met één schakelaar terug.
+SAS isn't sharing prices with search engines right now; what you see there is
+KLM's rate for the same aircraft, often twice as much. The flight finder now shows
+SAS flights with **"price unknown"** and places them separately below the
+ranked options, with a button that takes you straight to that flight on flysas.com.
+That way you never see a price that doesn't come from SAS themselves, and you
+don't miss any flight. Once SAS is giving their own prices again, it goes back
+with one toggle.
 
 ## Screens
-- `mockups/search-result.html` — heenreis-kolom: gerangschikte opties, daaronder
-  "Niet gerangschikt — prijs onbekend" met de SAS-kaarten; plus de totaalbalk
-  wanneer je een SAS-kaart kiest.
+- `mockups/search-result.html` — outbound column: ranked options, underneath
+  "Unranked — price unknown" with the SAS cards; plus the total bar
+  when you choose a SAS card.

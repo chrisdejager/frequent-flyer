@@ -1,66 +1,64 @@
-# ADR-0003: ignav als vluchtbron, in plaats van Bright Data
+# ADR-0003: ignav as flight source, instead of Bright Data
 
 **Status:** Accepted
-**Date:** 2026-09-17 (retroactief vastgelegd op 2026-10-02)
-**Deciders:** eigenaar
+**Date:** 2026-09-17 (retroactively documented on 2026-10-02)
+**Deciders:** owner
 
 ## Context
-De eerste vluchtbron was `BrightDataFlightSource`. Die haalde via Web Unlocker de
-HTML van Google Flights op, maar parste `best_flights` en `other_flights`. Dat is
-het JSON-schema van **SerpApi**, niet wat Bright Data teruggeeft. Bright Data
-heeft geen Google Flights-product; de adapter heeft dus nooit tegen de echte API
-gewerkt. Zijn 33 tests voerden het verzonnen schema in en zagen het gat daardoor
-niet. Het was de zevende Critical, en weer zat hij in een naad: tussen de adapter
-en de API waar hij tegen praat.
+The first flight source was `BrightDataFlightSource`. It fetched Google Flights HTML via Web Unlocker
+but parsed `best_flights` and `other_flights`. That is the JSON schema of **SerpApi**,
+not what Bright Data returns. Bright Data has no Google Flights product; the adapter thus
+never worked against the real API. Its 33 tests fed the invented schema and missed the gap
+as a result. It was the seventh Critical, and again it was in a seam: between the adapter
+and the API it was supposed to talk to.
 
 ## Decision
-De vluchtbron wordt **`IgnavFlightSource`**: `POST https://ignav.com/api/fares/one-way`
-met de header `X-Api-Key`, uit env `IGNAV_API_KEY`. Bright Data en zijn tests zijn
-verwijderd (`b5c74f5`). De poort `FlightPriceSource` blijft ongewijzigd; de
-domeinmapping verhuisde vrijwel letterlijk mee.
+The flight source becomes **`IgnavFlightSource`**: `POST https://ignav.com/api/fares/one-way`
+with the `X-Api-Key` header, from env `IGNAV_API_KEY`. Bright Data and its tests were
+removed (`b5c74f5`). The `FlightPriceSource` port stays unchanged; the domain mapping
+moved over almost unchanged.
 
-Beslissingen van de eigenaar binnen de adapter:
-- `requires_self_transfer: true` → optie afwijzen (geen doorgaand ticket).
-- `price.status` → negeren; elke prijs accepteren.
-- `price.amount` is in **hele euro's** en wordt omgerekend naar centen
+Owner decisions within the adapter:
+- `requires_self_transfer: true` → reject option (no through ticket).
+- `price.status` → ignore; accept every price.
+- `price.amount` is in **whole euros** and is converted to cents
   (`round($euros * 100)`).
-- Maatschappijen en luchthavens buiten de toegestane set (zoals BT, TK, RIX, IST,
-  die in de eerste echte respons zaten) → overslaan.
+- Airlines and airports outside the allowed set (such as BT, TK, RIX, IST,
+  which appeared in the first real response) → skip.
 
 ## Options Considered
 
-### Option A: ignav (gekozen)
+### Option A: ignav (chosen)
 | Dimension | Assessment |
 |-----------|------------|
-| Complexity | Laag: gestructureerde JSON en tijden in UTC |
-| Cost | 1000 gratis requests/maand, alleen geslaagde calls tellen, geen rate limit |
-| Betrouwbaarheid | Getest tegen een **echt gemeten** respons (`fixtures/ignav-ams-hel.json`) |
+| Complexity | Low: structured JSON and times in UTC |
+| Cost | 1000 free requests/month, only successful calls count, no rate limit |
+| Reliability | Tested against **a real measured** response (`fixtures/ignav-ams-hel.json`) |
 
-**Pros:** een echte API met een echt schema; de adapter werd netto kleiner.
-**Cons:** het tegoed is beperkt; een externe partij zonder SLA.
+**Pros:** a real API with a real schema; the adapter became smaller on balance.
+**Cons:** the credit limit is limited; an external party without SLA.
 
-### Option B: Bright Data repareren (HTML van Google Flights scrapen)
+### Option B: Fix Bright Data (scrape Google Flights HTML)
 | Dimension | Assessment |
 |-----------|------------|
-| Complexity | Hoog: HTML-parsing van een pagina die zonder aankondiging verandert |
-| Cost | 5.000 credits/maand |
+| Complexity | High: HTML parsing of a page that changes without notice |
+| Cost | 5,000 credits/month |
 
-**Pros:** het account bestond al.
-**Cons:** breekbaar, en de bestaande adapter moest toch volledig opnieuw.
+**Pros:** the account already existed.
+**Cons:** fragile, and the existing adapter had to be completely rewritten anyway.
 
 ## Trade-off Analysis
-De eigenlijke les zat niet in de keuze van de leverancier: **een adapter moet
-getest worden tegen een gemeten respons, niet tegen een aangenomen schema.** ignav
-won omdat het een echte API is, en omdat er een echte respons als fixture naast ligt.
+The real lesson wasn't in the choice of vendor: **an adapter must
+be tested against a measured response, not an assumed schema.** ignav
+won because it's a real API, and because there's a real response as a fixture to go with it.
 
 ## Consequences
-- Elke zoekopdracht kost 2 ignav-calls (HEL en TKU), en een retour 4 (zie ADR-0001).
-- `IGNAV_API_KEY` hoort in `api/.env.local`, nooit in `api/.env` (die staat in
-  git). In `APP_ENV=test` wordt `.env.local` niet geladen; geen enkele test raakt
-  het netwerk.
-- Herzien als het gratis tegoed structureel opraakt.
-- Bij een nieuwe bron: eerst een echte respons vastleggen als fixture, dan pas de
-  adapter schrijven.
+- Each search costs 2 ignav calls (HEL and TKU), and a round trip 4 (see ADR-0001).
+- `IGNAV_API_KEY` belongs in `api/.env.local`, never in `api/.env` (which is in
+  git). In `APP_ENV=test`, `.env.local` is not loaded; no test touches the network.
+- Revisit if the free credit runs out structurally.
+- For a new source: first capture a real response as a fixture, only then write the
+  adapter.
 
 ## Action Items
-1. [x] Gebouwd volgens `docs/plans/ignav-flightsource/plan.md`.
+1. [x] Built according to `docs/plans/ignav-flightsource/plan.md`.

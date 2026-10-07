@@ -1,86 +1,82 @@
-# ADR-0006: Boekingslink op aanvraag, alleen bij de maatschappij zelf
+# ADR-0006: Booking link on demand, only from the airline itself
 
 **Status:** Accepted
 **Date:** 2026-10-03
-**Deciders:** eigenaar
+**Deciders:** owner
 
 ## Context
-De eigenaar wilde per vlucht een knop die direct naar het boekingsscherm van de
-maatschappij gaat. ignav levert die links via `POST /api/fares/booking-links`
-met het `ignav_id` uit de zoekrespons, maar elke aanvraag is een call van het
-beperkte tegoed (1000 per maand, zie ADR-0003). Een zoekopdracht toont zes tot
-acht opties; alle links vooraf ophalen zou het verbruik verviervoudigen.
+The owner wanted a button per flight that goes directly to the airline's booking screen.
+ignav provides these links via `POST /api/fares/booking-links` with the `ignav_id` from
+the search response, but each request is a call against the limited credit (1000 per
+month, see ADR-0003). A search shows six to eight options; fetching all links upfront
+would multiply usage four times.
 
-Gemeten op 2026-10-03:
-- Met een `market` erbij geeft booking-links een 400
-  (`conflicting_booking_lookup_mode`). Het request is dus alleen `{ignav_id}`.
-- De respons bevat per optie links met een `provider_type`: `airline` (de
-  maatschappij zelf) of `third_party` (een reisbureau).
-- Finnair en KLM geven een echte deeplink met datum en vluchtnummer.
-- **SAS** geeft als `airline` alleen `http://www.flysas.com/nl/nl/` zonder prijs.
-  Daarnaast staat de **KLM-codeshare** erbij, met hetzelfde toestel en dezelfde
-  vlucht, maar tegen ongeveer het dubbele tarief: € 374 tegen € 193 bij SAS zelf.
-- Een onbekend `ignav_id` geeft een HTTP 400. Een ignav_id uit een zoekopdracht
-  van een paar uur eerder werkte nog.
+Measured on 2026-10-03:
+- With a `market` included, booking-links returns a 400 (`conflicting_booking_lookup_mode`).
+  So the request is just `{ignav_id}`.
+- The response contains per option links with a `provider_type`: `airline` (the airline
+  itself) or `third_party` (a travel agency).
+- Finnair and KLM give a real deep link with date and flight number.
+- **SAS** gives as `airline` only `http://www.flysas.com/nl/nl/` without price.
+  Alongside that is the **KLM codeshare**, with the same aircraft and flight,
+  but at approximately double the rate: €374 vs. €193 at SAS itself.
+- An unknown `ignav_id` returns HTTP 400. An ignav_id from a search a few hours
+  earlier still worked.
 
 ## Decision
-1. **Pas ophalen bij een klik.** De knop "Boeken ↗" opent `boeken.html` in een
-   nieuw tabblad (`noopener`). Die pagina vraagt `GET /api/booking-link?ref=…`,
-   en de server vraagt het op bij ignav.
-2. **Alleen de maatschappij zelf.** Direct betekent `provider_type === "airline"`
-   en https; bij meerdere links wint de goedkoopste. Reisbureaus gebruiken we
-   nooit. Is er geen directe link, dan toont het tabblad dat, met de homepage van
-   de maatschappij.
-3. **SAS bouwen we zelf.** Bij `carrier === 'SK'` opent de knop direct
-   `https://www.flysas.com/nl-en/book-new/revenue/travelers?…` met route,
-   lokale vertrekdatum en vluchtnummers. Dat kost geen ignav-call. Zonder
-   `outFareBasis`, dat we niet kennen, toont SAS de vluchtlijst van die dag.
-4. **Cache op de server, 30 minuten.** Sleutel `ignav.booking.<ref>` in
-   `cache.app`. Ook "geen directe link" wordt gecachet, storingen nooit.
-5. **Storing ≠ geen link.** Elke onbruikbare respons wordt
-   `BookingLinkUnavailable` en dus een 502. Het gaat om niet-2xx,
-   transportfouten, kapotte JSON en ontbrekende `booking_options`. Een ref die
-   niet `^[0-9a-f]{32}\z` is, geeft een 400 en bereikt ignav nooit.
+1. **Fetch only on click.** The "Book ↗" button opens `book.html` in a new tab (`noopener`).
+   That page calls `GET /api/booking-link?ref=…`, and the server fetches it from ignav.
+2. **Airline only.** Direct means `provider_type === "airline"` and https; with multiple links
+   the cheapest wins. We never use travel agencies. If there's no direct link, the tab shows
+   that, with the airline's homepage.
+3. **We build SAS ourselves.** When `carrier === 'SK'` the button opens directly
+   `https://www.flysas.com/nl-en/book-new/revenue/travelers?…` with route, local departure
+   date, and flight numbers. That costs no ignav call. Without `outFareBasis`, which we
+   don't know, SAS shows the day's flight list.
+4. **Server-side cache, 30 minutes.** Key `ignav.booking.<ref>` in `cache.app`. Even
+   "no direct link" is cached, but errors never are.
+5. **Error ≠ no link.** Every unusable response becomes `BookingLinkUnavailable` and thus
+   a 502. This covers non-2xx, transport errors, broken JSON, and missing `booking_options`.
+   A ref that doesn't match `^[0-9a-f]{32}\z` gets a 400 and never reaches ignav.
 
 ## Options Considered
 
-### Option A: op aanvraag, server-side cache (gekozen)
+### Option A: on demand, server-side cache (chosen)
 | Dimension | Assessment |
 |-----------|------------|
-| Kosten | 1 call per eerste klik op een vlucht; herhaalklikken gratis |
-| Snelheid | ± 5 s bij de eerste klik, daarna direct |
-| Complexiteit | Een tweede Vite-entry en één endpoint |
+| Cost | 1 call per first click on a flight; repeated clicks free |
+| Speed | ~5 s on first click, then instant |
+| Complexity | A second Vite entry and one endpoint |
 
-### Option B: alle links meteen bij het zoeken ophalen
-**Pros:** de knop werkt direct, en de prijs per aanbieder is vooraf bekend.
-**Cons:** 6–8 extra calls per zoekopdracht, terwijl je er meestal hooguit één
-gebruikt. Afgewezen door de eigenaar.
+### Option B: fetch all links immediately when searching
+**Pros:** the button works instantly, and per-provider price is known upfront.
+**Cons:** 6–8 extra calls per search while you usually use at most one. Rejected by owner.
 
-### Option C: ook reisbureaus toestaan
-**Pros:** vaker een link, soms goedkoper.
-**Cons:** de eigenaar wil "altijd bij de officiële maatschappij boeken". Afgewezen.
+### Option C: also allow travel agencies
+**Pros:** more often a link, sometimes cheaper.
+**Cons:** the owner wants to "always book with the official airline". Rejected.
 
 ## Trade-off Analysis
-De tabbladpagina is kale TypeScript in plaats van Vue: klein en snel, maar wel
-een tweede stijl in de codebase. De logica zit in `runBookingPage(deps)` met
-geïnjecteerde afhankelijkheden, zodat hij zonder DOM te testen is.
+The tab page is plain TypeScript rather than Vue: small and fast, but adds a second
+style to the codebase. The logic lives in `runBookingPage(deps)` with injected
+dependencies, so it can be tested without DOM.
 
-Het SAS-besluit wijkt af van punt 2. Volgens die regel zou SAS altijd de
-KLM-codeshare krijgen: een officiële link, maar met de prijs van KLM. Omdat de
-eigenaar nooit de codeshare-prijs wil, gaat SAS buiten ignav om.
+The SAS decision deviates from rule 2. By that rule SAS would always get the KLM
+codeshare: an official link, but at KLM's price. Because the owner never wants
+the codeshare price, SAS goes outside ignav.
 
 ## Consequences
-- Eén ignav-call per eerste klik per vlucht per halfuur.
-- `bookingRef` (het `ignav_id`) reist mee in elke optie van `/api/search`. Een
-  optie zonder ref krijgt geen knop, behalve bij SAS.
-- Bij een gemengde vlucht kan de airline-link van de ándere maatschappij zijn.
-  Dat is nog steeds officieel, en dus acceptabel.
-- **Open:** ignav geeft bij SAS-vluchten de KLM-codeshareprijs als zoekprijs.
-  Besluit van de eigenaar: alle SK-opties worden "prijs onbekend". Dat staat
-  los van dit ADR en volgt als eigen feature.
-- Herzien als SAS weer eigen prijzen en deeplinks doorgeeft (af en toe nameten),
-  of als ignav de quotumtelling voor booking-links wijzigt.
+- One ignav call per first click per flight per half-hour.
+- `bookingRef` (the `ignav_id`) travels with every option from `/api/search`. An
+  option without a ref gets no button, except for SAS.
+- With a mixed flight the airline link could be from the other carrier. That's
+  still official, and thus acceptable.
+- **Open:** ignav gives SAS flights the KLM codeshare price as the search price.
+  Owner decision: all SK options get "price unknown". That's separate from this ADR
+  and follows as its own feature.
+- Revisit if SAS sends its own prices and deep links again (check periodically),
+  or if ignav changes the quota counting for booking links.
 
 ## Action Items
-1. [x] Gebouwd in zes slices volgens `docs/plans/booking-link/`.
-2. [ ] SAS-prijs = onbekend (eigen feature).
+1. [x] Built in six slices according to `docs/plans/booking-link/`.
+2. [ ] SAS price = unknown (separate feature).

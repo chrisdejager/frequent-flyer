@@ -1,60 +1,59 @@
-# ADR-0002: De uitgeschakelde zoekknop is de bescherming tegen races
+# ADR-0002: The disabled search button is the protection against races
 
 **Status:** Accepted
 **Date:** 2026-10-02
-**Deciders:** eigenaar
+**Deciders:** owner
 
 ## Context
-Met twee parallelle zoekacties per retour (ADR-0001) kan in theorie een trage
-oude zoekactie later binnenkomen dan een nieuwe en die overschrijven. Het
-programmaontwerp (Gate 3) voorzag daarom een `requestId`-teller.
+With two parallel search actions per round trip (ADR-0001), in theory a slow
+old search action could arrive later than a new one and overwrite it. The
+program design (Gate 3) therefore provided a `requestId` counter.
 
-Bij het bouwen bleek de race via de UI niet te bereiken:
-- de Zoek-knop staat op `:disabled="loading()"` zolang een van de kanten nog laadt;
-- een uitgeschakelde standaard-submitknop blokkeert ook submit via Enter
-  (HTML-spec, impliciete submission).
+During implementation, the race turned out to be unreachable via the UI:
+- the Search button is set to `:disabled="loading()"` as long as either side is still loading;
+- a disabled default submit button also blocks submit via Enter
+  (HTML spec, implicit submission).
 
-De test die de race aantoonde, vuurde `submit` rechtstreeks op het formulier af en
-werkte daarmee om de echte UI heen. AGENTS.md zegt daarover: "Wantrouw een test
-die om een probleem heen werkt in plaats van het te dichten."
+The test that demonstrated the race fired `submit` directly on the form and
+worked around the real UI. AGENTS.md says about this: "Distrust a test
+that works around a problem instead of closing it."
 
 ## Decision
-**Geen `requestId`.** De uitgeschakelde knop is de bescherming. Een test legt
-vast dat de knop dicht blijft zolang een kant laadt en daarna weer opengaat:
-`App.spec.ts`, test "de zoekknop is uitgeschakeld zolang een kant nog laadt".
-Uit de mutatietest blijkt dat die test rood wordt zonder `:disabled`.
+**No `requestId`.** The disabled button is the protection. A test verifies
+that the button stays disabled as long as one side is loading and then opens again:
+`App.spec.ts`, test "the search button is disabled while one side is still loading".
+Mutation testing shows that this test fails without `:disabled`.
 
 ## Options Considered
 
-### Option A: Uitgeschakelde knop, met test (gekozen)
+### Option A: Disabled button, with test (chosen)
 | Dimension | Assessment |
 |-----------|------------|
-| Complexity | Geen extra state |
-| Dekking | Alle huidige manieren om te zoeken |
+| Complexity | No extra state |
+| Coverage | All current ways to search |
 
-**Pros:** geen code voor een pad dat niet bestaat; de test bewaakt het echte mechanisme.
-**Cons:** het vangnet verdwijnt zodra er een tweede manier van zoeken bijkomt.
+**Pros:** no code for a path that doesn't exist; the test guards the real mechanism.
+**Cons:** the safeguard disappears as soon as there's a second way to search.
 
-### Option B: `requestId`-teller
+### Option B: `requestId` counter
 | Dimension | Assessment |
 |-----------|------------|
-| Complexity | Laag, maar wel extra state en twee guards (resultaat en `loading`) |
-| Dekking | Ook toekomstige zoekpaden |
+| Complexity | Low, but adds extra state and two guards (result and `loading`) |
+| Coverage | Also future search paths |
 
-**Pros:** robuust als er later meer manieren komen om te zoeken.
-**Cons:** beschermt nu tegen niets, en de enige test ervoor omzeilt de UI.
+**Pros:** robust if more search methods come later.
+**Cons:** protects nothing now, and the only test for it works around the UI.
 
 ## Trade-off Analysis
-B betaalt nu voor een probleem dat pas bestaat als iemand een nieuw zoekpad
-toevoegt. A houdt de code eerlijk. Het risico is dat iemand later dat nieuwe pad
-toevoegt zonder aan races te denken, en daarvoor is dit ADR er.
+B pays now for a problem that only exists if someone adds a new search path.
+A keeps the code honest. The risk is that someone later adds that new path
+without thinking about races, and that's what this ADR is for.
 
 ## Consequences
-- **Herzien zodra een zoekactie kan starten terwijl een andere loopt**, bijvoorbeeld
-  een geplande reis die direct zoekt, automatisch zoeken bij het wijzigen van een
-  datum, of zoeken via de URL. Voeg dan `requestId` (of een `AbortController`) toe,
-  met een test die via dat nieuwe pad de race aantoont.
-- De knoptest niet versoepelen of verwijderen zonder dit ADR te vervangen.
+- **Revisit as soon as one search action can start while another is running**, for example
+  a booked trip that searches directly, automatic search on date change, or search via URL.
+  Then add `requestId` (or an `AbortController`), with a test that demonstrates the race via that new path.
+- Don't relax or remove the button test without replacing this ADR.
 
 ## Action Items
-1. [x] De knoptest staat in `web/src/components/__tests__/App.spec.ts`.
+1. [x] The button test is in `web/src/components/__tests__/App.spec.ts`.

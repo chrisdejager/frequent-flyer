@@ -1,140 +1,140 @@
-# Leiden ↔ Turku vluchtzoeker — intake
+# Leiden ↔ Turku flight finder — intake
 
-Overgenomen uit het Claude-artifact (screenshots, 16 sep 2026).
-Artifact-URL: https://claude.ai/artifact/FB5P15iouUZx7ZRCn8qRGx
-
----
-
-## Wat al bekend was (context bovenaan het formulier)
-
-- AMS ⇄ HEL alleen direct. AMS ⇄ TKU precies 1 overstap, max ~2 uur.
-- Naar HEL: aankomst uiterlijk ~21:00 (i.v.m. trein/bus naar Turku). Favoriet: middagvlucht Finnair.
-- Vanuit HEL: vertrek niet vóór ~12:00.
-- Alleen Finnair, SAS, KLM. Finnair/SAS eerst (silver), KLM alleen als goedkoper.
-- Altijd losse enkele reizen, zodat je los kunt annuleren.
-- Voorkeur via Helsinki (rustiger), maar trein/bus HEL ⇄ Turku meetellen in de totaalprijs.
-- SAS is het snelst van deur tot deur.
-- Planning staat een half jaar vooruit: wie reist, welke richting.
+Taken from Claude artifact (screenshots, 16 Sep 2026).
+Artifact URL: https://claude.ai/artifact/FB5P15iouUZx7ZRCn8qRGx
 
 ---
 
-## DOEL
+## What was already known (context at top of form)
 
-**Wat moet het systeem vooral doen?**
-Opties: Geplande reizen bewaken + melding · **Op verzoek zoeken** ← gekozen · Overzicht planning + prijsverloop
-
-> Prio is tonen van goedkoopste mogelijkheden voor een datum
+- AMS ⇄ HEL direct only. AMS ⇄ TKU exactly 1 stop, max ~2 hrs.
+- To HEL: arrival by ~21:00 (for train/bus to Turku). Favorite: afternoon Finnair flight.
+- From HEL: depart no earlier than ~12:00.
+- Finnair, SAS, KLM only. Finnair/SAS first (silver), KLM only if cheaper.
+- Always separate one-way trips, so you can cancel separately.
+- Prefer via Helsinki (quieter), but train/bus HEL ⇄ Turku included in total price.
+- SAS is fastest door to door.
+- Schedule stands half a year out: who travels, which direction.
 
 ---
 
-## TICKETS & PRIJS
+## GOAL
 
-### Bagage
-Opties: Altijd alleen handbagage · Soms ruimbagage · Verschilt per reis — *(geen optie aangeklikt)*
+**What should the system mainly do?**
+Options: Monitor booked trips + alert · **Search on request** ← chosen · Schedule overview + price history
 
-> Neem altijd de light economy, maar laat de plus prijs zien voor los handbagage bijkopen
-> voor finnair en klm en tot hoe lang van te voren de goedkoopste.
-> Bij sas kunnen we met silver gratis ruimbagage mee. We hebben allebei silver bij sas, maar
-> bij finnair heb ik alleen silver en daar heb ik daarom gratis handbagage. We hebben dus geen
-> gratis handbagage bij sas maar dan nemen we de handbagage als ruimbagage mee.
+> Priority is showing cheapest options for a date
 
-### Overstap naar/van Turku: één ticket of zelf overstappen?
-**Alleen één doorgaand ticket** ← gekozen · Zelf overstappen mag ook
+---
 
-> Voorkeur voor Stockholm, Copenhagen als tweede. Volgens mij zijn er geen andere overstappen
-> die zinvol zijn.
+## TICKETS & PRICE
 
-### Hoe flexibel zijn de datums?
-**Vaste dag** ← gekozen · ±1 dag als het veel scheelt · Per reis anders
+### Baggage
+Options: Hand baggage only always · Sometimes checked baggage · Varies per trip — *(no option selected)*
 
-> Maar als het veel scheelt gaan we wel kijken of er iets mogelijk is. Vooral mijn vriendin is
-> flexibel in dagen. Ik zit wel echt vast aan mijn zorg afspraken met coouder.
+> Always take the light economy, but show the plus price for add-on hand baggage
+> for Finnair and KLM and for how long in advance the cheapest.
+> At SAS we can bring checked baggage for free with silver status. We both have silver at SAS, but
+> at Finnair I only have silver so I get free hand baggage there. So we don't
+> get free hand baggage at SAS but then we bring the hand baggage as checked baggage.
 
-### Tijd, rust en status tegenover geld
-*Hoeveel euro extra mag een optie kosten voordat de goedkopere wint?*
+### Connection to/from Turku: one ticket or connect separately?
+**Through ticket only** ← chosen · Can also connect separately
 
-> Dat is afhankelijk van de trein kosten met vr.fi. dus het zou heel handig zijn om die kosten
-> ook er bij te kunnen nemen.
+> Preference for Stockholm, Copenhagen as second. I don't think there are any other connections
+> that make sense.
+
+### How flexible are the dates?
+**Fixed day** ← chosen · ±1 day if it makes a difference · Varies per trip
+
+> But if it makes a big difference we will look to see if something is possible. Especially my partner is
+> flexible with dates. I'm really tied to my care appointments with the co-parent.
+
+### Time, rest and status versus money
+*How much extra can an option cost before the cheaper one wins?*
+
+> That depends on the train costs with vr.fi. so it would be very handy to be able to
+> include those costs too.
 
 ### Helsinki-Vantaa ⇄ Turku
-**Trein (VR)** ← gekozen · Bus
+**Train (VR)** ← chosen · Bus
 
-> Duidelijke voorkeur voor trein. Waarom is de vraag belangrijk wie betaald?
+> Clear preference for train. Why is the question important who pays?
 
 ---
 
-## VOOR WIE
+## FOR WHOM
 
-### Zoekt het ook voor je vriendin vanaf haar kant?
-**Ja, dezelfde regels** ← gekozen · Ja, maar met eigen regels · Alleen voor mij
+### Search also for your partner from her end?
+**Yes, same rules** ← chosen · Yes, but with own rules · Just for me
 
-> Haar lidm[aatschap] … vanuit Turku…
+> Her membership… from Turku…
 >
-> ⚠️ **ONVOLLEDIG** — deze toelichting viel tussen twee screenshots weg.
+> ⚠️ **INCOMPLETE** — this explanation was cut off between two screenshots.
 
 ---
 
-## MELDINGEN & DRAAIEN
+## NOTIFICATIONS & OPERATION
 
-### Waar wil je het resultaat zien?
-E-mail · Telegram · Pushmelding telefoon · **Webpagina / dashboard** ← gekozen
+### Where do you want to see the result?
+Email · Telegram · Push notification phone · **Web page / dashboard** ← chosen
 
-*(geen toelichting ingevuld)*
+*(no explanation filled in)*
 
-### Wanneer wil je een seintje?
-Opties: Onder een vaste prijsgrens · Bij flinke daling · Advies "nu boeken" · Vast overzicht (bv. wekelijks) — *(geen optie aangeklikt)*
+### When do you want an alert?
+Options: Below a fixed price limit · On significant drop · Recommendation to "book now" · Regular overview (e.g. weekly) — *(no option selected)*
 
-> Ik wil vooral een seintje bij korting periode, dus dat het lager is dan de normale goedkoopste
-> prijs. Dat gebeurd namelijk onvoorspelbaar.
-> Normale goedkoopste prijs bij finnair is naar Helsinki 134, naar Amsterdam vanaf Helsinki 80.
-> Van sas weet ik het niet zo goed. Volgens mij iets van 150 naar Turku toe en 90 naar Amsterdam.
-> Prijs stijging voor reisdatums is een high alert. Die hadden we eigenlijk al moeten boeken.
-> Maar bij sas is dat wel erg ver in de toekomst volgens mij.
+> I mainly want an alert during discount periods, so that it's lower than the normal cheapest
+> price. That happens unpredictably.
+> Normal cheapest price for Finnair is to Helsinki 134, from Amsterdam from Helsinki 80.
+> For SAS I don't know so well. I think around 150 to Turku and 90 to Amsterdam.
+> Price rise for travel dates is a high alert. We should have booked already.
+> But for SAS that's still quite far in the future in my opinion.
 
-**Referentieprijzen (normale goedkoopste, enkele reis):**
+**Reference prices (normal cheapest, one-way):**
 
-| Maatschappij | Route | Prijs | Zekerheid |
+| Airline | Route | Price | Certainty |
 |---|---|---|---|
-| Finnair | AMS → HEL | €134 | zeker |
-| Finnair | HEL → AMS | €80 | zeker |
-| SAS | → TKU | ~€150 | onzeker |
-| SAS | → AMS | ~€90 | onzeker |
+| Finnair | AMS → HEL | €134 | certain |
+| Finnair | HEL → AMS | €80 | certain |
+| SAS | → TKU | ~€150 | uncertain |
+| SAS | → AMS | ~€90 | uncertain |
 
-### Hoe vaak checken, en waar mag het draaien?
-Frequentie: Dagelijks · Paar keer per week · Wekelijks — *(geen optie aangeklikt)*
-Locatie: Op mijn laptop · **Server / Raspberry Pi / NAS** ← gekozen · Cloud · Weet ik niet
+### How often to check, and where can it run?
+Frequency: Daily · Couple times a week · Weekly — *(no option selected)*
+Location: On my laptop · **Server / Raspberry Pi / NAS** ← chosen · Cloud · Don't know
 
-### Budget voor een prijsbron
-Alleen gratis · Tot ~€10/mnd · Tot ~€30/mnd · **Hangt ervan af** ← gekozen
+### Budget for a price source
+Free only · Up to ~€10/month · Up to ~€30/month · **Depends** ← chosen
 
-*(hint in formulier: gratis betekent meestal scrapen van zoeksites, en dat gaat vaker kapot)*
+*(hint in form: free usually means scraping search sites, and that breaks more often)*
 
-### Acties en aanbiedingen
-Nieuwsbrieven in Gmail mogen gelezen worden · Niet nodig — *(geen optie aangeklikt)*
+### Actions and offers
+Newsletters in Gmail may be read · Not needed — *(no option selected)*
 
-> Misschien kun je zelf een api of website scannen voor deze informatie
+> Maybe you can scan an API or website yourself for this information
 
 ---
 
 ## PLANNING
 
-### Waar staat de planning nu?
-**Google Calendar** ← gekozen · Spreadsheet · Notities / chat · In ons hoofd
+### Where is the planning now?
+**Google Calendar** ← chosen · Spreadsheet · Notes / chat · In our heads
 
-Geplakte planning:
+Pasted planning:
 
 ```
-25 okt zij naar Nederland
-29 okt zij naar finland
+25 Oct she goes to the Netherlands
+29 Oct she goes to Finland
 ```
 
 ---
 
-## Open punten
+## Open points
 
-1. Toelichting bij "Zoekt het ook voor je vriendin" is afgekapt (lidmaatschap + vanuit Turku).
-2. Bagage: geen van de drie opties aangeklikt — de tekst impliceert "verschilt per maatschappij".
-3. Meldingsmoment: geen optie aangeklikt, maar de tekst beschrijft feitelijk twee triggers
-   (korting onder normaalprijs + prijsstijging op geplande reisdatum = high alert).
-4. Checkfrequentie niet gekozen.
-5. Vraag terug van gebruiker: *"Waarom is de vraag belangrijk wie [de trein] betaalt?"*
+1. Explanation for "Search also for your partner" is cut off (membership + from Turku).
+2. Baggage: none of the three options selected — the text implies "varies per airline".
+3. Notification timing: no option selected, but the text describes two triggers
+   (discount below normal price + price rise on planned travel date = high alert).
+4. Check frequency not chosen.
+5. Question back from user: *"Why is the question important who [pays for the train]?"*

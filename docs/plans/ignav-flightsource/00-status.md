@@ -1,5 +1,5 @@
-# Status: ignav als vluchtbron
+# Status: ignav as flight source
 
-Afgerond (sep 2026). Ouder dan de indeling met `01-product.md` t/m
-`04-slices.md`; alleen `plan.md` bestaat. Alle zes taken zijn af; het besluit
-staat in `docs/adr/0003-ignav-as-flight-source.md`.
+Completed (Sep 2026). Older than the structure with `01-product.md` through
+`04-slices.md`; only `plan.md` exists. All six tasks are done; the decision
+is in `docs/adr/0003-ignav-as-flight-source.md`.

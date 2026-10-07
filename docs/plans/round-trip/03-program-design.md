@@ -1,32 +1,32 @@
-# Program Design: Heen en terug op één scherm
+# Program Design: Outbound and return on one screen
 
-Alleen de frontend verandert (Gate 2). De backend en `api.ts` blijven ongewijzigd.
+Only the frontend changes (Gate 2). The backend and `api.ts` remain unchanged.
 
 ## Files
-- `web/src/roundTrip.ts` (**nieuw**): pure functies zonder Vue. Ze bepalen de
-  richtingen, controleren de datums, kiezen de standaardoptie, tellen het totaal
-  op en verdelen opties in gerangschikt en ongerangschikt. Omdat er geen Vue in
-  zit, zijn ze snel en los te testen.
-- `web/src/money.ts` (**nieuw**): de functie `euro(cents)`, verhuisd uit
-  `OptionCard.vue`. De totaalbalk gebruikt dezelfde notatie, dus het formatteren
-  hoort op één plek.
-- `web/src/types.ts`: krijgt de nieuwe types `StartCountry` en `LegState`.
-- `web/src/components/OptionCard.vue`: wordt kiesbaar met een prop `selected` en
-  een event `select`. Hij gebruikt voortaan `euro` uit `money.ts`; de weergave
-  blijft verder gelijk.
-- `web/src/components/LegColumn.vue` (**nieuw**): één kolom voor één kant, met
-  kop, laadstatus, fout, "geen opties", de gerangschikte opties, de scheidingslijn
-  en de ongerangschikte opties. Dit neemt het splitsen in gerangschikt en
-  ongerangschikt over dat nu in `App.vue` zit.
-- `web/src/components/TotalBar.vue` (**nieuw**): toont de gekozen optie per kant,
-  de som en de opmerkingen (alleen heen / exclusief transfer / onvolledig).
-- `web/src/App.vue`: het formulier krijgt een startland en twee datums. Per kant
-  komt een `LegState`, de zoekacties lopen parallel, de geplande reizen worden
-  aan de juiste kant gekoppeld en het geheel bestaat uit twee kolommen met een
-  totaalbalk.
-- Tests: `web/src/__tests__/roundTrip.spec.ts` (nieuw),
-  `components/__tests__/LegColumn.spec.ts` (nieuw), `TotalBar.spec.ts` (nieuw),
-  `App.spec.ts` (aangepast) en `OptionCard.spec.ts` (uitgebreid).
+- `web/src/roundTrip.ts` (**new**): pure functions without Vue. They determine the
+  directions, validate dates, choose the default option, add up the total
+  and divide options into ranked and unranked. Because there is no Vue in
+  it, they are fast and easy to test.
+- `web/src/money.ts` (**new**): the function `euro(cents)`, moved from
+  `OptionCard.vue`. The total bar uses the same notation, so formatting
+  belongs in one place.
+- `web/src/types.ts`: gets the new types `StartCountry` and `LegState`.
+- `web/src/components/OptionCard.vue`: becomes selectable with a prop `selected` and
+  an event `select`. It now uses `euro` from `money.ts`; the display
+  stays otherwise the same.
+- `web/src/components/LegColumn.vue` (**new**): one column for one side, with
+  header, loading status, error, "no options", the ranked options, the divider
+  and the unranked options. This takes over the splitting into ranked and
+  unranked that now sits in `App.vue`.
+- `web/src/components/TotalBar.vue` (**new**): shows the chosen option per side,
+  the sum and the notes (outbound only / excludes transfer / incomplete).
+- `web/src/App.vue`: the form gets a start country and two dates. Per side
+  comes a `LegState`, the searches run in parallel, the scheduled trips are
+  linked to the correct side and the whole consists of two columns with a
+  total bar.
+- Tests: `web/src/__tests__/roundTrip.spec.ts` (new),
+  `components/__tests__/LegColumn.spec.ts` (new), `TotalBar.spec.ts` (new),
+  `App.spec.ts` (adapted) and `OptionCard.spec.ts` (expanded).
 
 ## Types & signatures
 
@@ -36,11 +36,11 @@ export type StartCountry = 'nl' | 'fi'
 
 export interface LegState {
   direction: Direction
-  date: string                 // 'YYYY-MM-DD'; '' = deze kant wordt niet gezocht
+  date: string                 // 'YYYY-MM-DD'; '' = this side is not searched
   result: SearchResult | null
   error: string
   loading: boolean
-  /** Index in result.options; null = niets gekozen. */
+  /** Index in result.options; null = nothing chosen. */
   selected: number | null
 }
 ```
@@ -49,13 +49,13 @@ export interface LegState {
 // roundTrip.ts
 export function legDirections(start: StartCountry): { out: Direction; back: Direction }
 
-/** null = geldig; anders een Nederlandse foutmelding. Lege terugdatum is geldig. */
+/** null = valid; otherwise an error message in English. Blank return date is valid. */
 export function validateDates(outDate: string, backDate: string): string | null
 
-/** Eerste gerangschikte optie (trainCostKnown); geen → null. */
+/** First ranked option (trainCostKnown); none → null. */
 export function defaultSelection(result: SearchResult): number | null
 
-/** Gerangschikt/ongerangschikt met behoud van de oorspronkelijke index. */
+/** Ranked/unranked with original index retained. */
 export function partition(options: Option[]): {
   ranked: Array<{ option: Option; index: number }>
   unranked: Array<{ option: Option; index: number }>
@@ -65,20 +65,20 @@ export function chosenOption(leg: LegState): Option | null
 
 export interface Combined {
   totalCents: number
-  legsCounted: number          // 0, 1 of 2
-  excludesTransfer: boolean    // een gekozen optie heeft trainCostIncluded=false
-  incomplete: boolean          // een gekozen optie heeft trainCostKnown=false
+  legsCounted: number          // 0, 1 or 2
+  excludesTransfer: boolean    // a chosen option has trainCostIncluded=false
+  incomplete: boolean          // a chosen option has trainCostKnown=false
   indicative: boolean
 }
 export function combine(out: Option | null, back: Option | null): Combined
 
-/** Bij welke kant hoort deze geplande reis, gegeven het startland? */
+/** Which side does this scheduled trip belong to, given the start country? */
 export function legForTrip(trip: Trip, start: StartCountry): 'out' | 'back'
 ```
 
 ```ts
 // money.ts
-export function euro(cents: number): string   // 15650 → '€ 156,50'
+export function euro(cents: number): string   // 15650 → '€ 156.50'
 ```
 
 ```ts
@@ -92,37 +92,37 @@ defineEmits<{ select: [index: number] }>()
 
 // TotalBar.vue
 defineProps<{ out: Option | null; back: Option | null; backRequested: boolean; isDefault: boolean }>()
-// isDefault toegevoegd in slice 4 (eigenaarsbesluit 2026-10-02): "Goedkoopste combinatie"
-// vs. "Jouw keuze" zodra een kant afwijkt van defaultSelection.
+// isDefault added in slice 4 (owner decision 2026-10-02): "Cheapest combination"
+// vs. "Your choice" once a side differs from defaultSelection.
 ```
 
 ## Call stack
 
-**Zoeken**
+**Search**
 ```
 App.run()
-  validateDates(outDate, backDate)  → bij een fout: error tonen, return (geen call)
+  validateDates(outDate, backDate)  → on error: show error, return (no call)
   legDirections(start)              → out.direction, back.direction
   Promise.allSettled([
     search(out.date, out.direction, traveller),
     back.date ? search(back.date, back.direction, traveller) : skip,
   ])
-  per kant: fulfilled → result + selected = defaultSelection(result)
+  per side: fulfilled → result + selected = defaultSelection(result)
             rejected  → error = message, result = null
 ```
 
-**Weergave**
+**Display**
 ```
 App.vue
   TotalBar(out = chosenOption(outLeg), back = chosenOption(backLeg), backRequested)
-    combine(out, back) → som + opmerkingen, euro(totalCents)
-  LegColumn(title="Heen — …", leg=outLeg)  @select → outLeg.selected = i
+    combine(out, back) → sum + notes, euro(totalCents)
+  LegColumn(title="Outbound — …", leg=outLeg)  @select → outLeg.selected = i
     partition(leg.result.options)
     OptionCard(option, selected = index === leg.selected) @select → emit('select', index)
-  LegColumn(title="Terug — …", leg=backLeg) (alleen als backLeg.date)
+  LegColumn(title="Return — …", leg=backLeg) (only if backLeg.date)
 ```
 
-**Geplande reis**
+**Scheduled trip**
 ```
 App.pick(trip)
   legForTrip(trip, start) === 'out' ? outDate = trip.date : backDate = trip.date
@@ -132,72 +132,71 @@ App.pick(trip)
 ## Test plan
 
 `roundTrip.spec.ts`
-- `legDirections geeft nl-fi heen en fi-nl terug bij start in Nederland`
-- `legDirections draait om bij start in Finland`
-- `validateDates accepteert een lege terugdatum`
-- `validateDates accepteert dezelfde dag heen en terug`
-- `validateDates weigert een terugdatum vóór de heendatum`
-- `defaultSelection kiest de eerste gerangschikte optie, ook als er een ongerangschikte vóór staat`
-- `defaultSelection geeft null als er alleen ongerangschikte opties zijn`
-- `partition behoudt de oorspronkelijke index`
-- `combine telt beide totalen in centen op`: twee bedragen met centen, zodat een
-  fout met afronden of met factor 100 zichtbaar wordt
-- `combine met één kant telt alleen die kant en meldt legsCounted 1`
-- `combine zet excludesTransfer als één gekozen optie de transfer niet meetelt`
-- `combine zet incomplete als één gekozen optie een onbekende treinprijs heeft`
-- `legForTrip koppelt nl-fi aan heen bij start NL en aan terug bij start FI`
+- `legDirections gives nl-fi outbound and fi-nl return when starting in Netherlands`
+- `legDirections flips when starting in Finland`
+- `validateDates accepts a blank return date`
+- `validateDates accepts the same day outbound and return`
+- `validateDates rejects a return date before the outbound date`
+- `defaultSelection picks the first ranked option, even if an unranked one comes first`
+- `defaultSelection returns null if there are only unranked options`
+- `partition retains the original index`
+- `combine adds both totals in cents`: two amounts with cents, so an
+  error with rounding or a factor of 100 is visible
+- `combine with one side counts only that side and reports legsCounted 1`
+- `combine sets excludesTransfer if one chosen option does not count the transfer`
+- `combine sets incomplete if one chosen option has an unknown train price`
+- `legForTrip links nl-fi to outbound when starting NL and to return when starting FI`
 
-`OptionCard.spec.ts` (bestaande tests blijven)
-- `klik op de kaart emit select`
-- `selected markeert de kaart (aria-pressed)`
+`OptionCard.spec.ts` (existing tests stay)
+- `click on the card emits select`
+- `selected marks the card (aria-pressed)`
 
 `LegColumn.spec.ts`
-- `toont gerangschikte opties vóór de scheidingslijn en ongerangschikte erna`:
-  deze test verhuist uit `App.spec.ts`, met dezelfde positietoets
-- `emit de oorspronkelijke index als een ongerangschikte optie wordt aangeklikt`
-- `toont de foutmelding van alleen deze kant`
-- `toont "geen opties" bij een leeg resultaat`
+- `shows ranked options before the divider and unranked after it`:
+  this test moves from `App.spec.ts`, with the same position check
+- `emit the original index if an unranked option is clicked`
+- `shows the error message of this side only`
+- `shows "no options" with an empty result`
 
 `TotalBar.spec.ts`
-- `toont de som van heen en terug als euro`
-- `meldt "alleen heenreis" als er geen terugdatum is`
-- `meldt dat de terugreis ontbreekt als er een terugdatum was maar geen keuze`
-- `toont "exclusief transfer HEL→TKU" als een gekozen optie dat vraagt`
+- `shows the sum of outbound and return as euro`
+- `reports "outbound only" if there is no return date`
+- `reports that the return trip is missing if there was a return date but no choice`
+- `shows "excludes transfer HEL→TKU" if a chosen option requests it`
 
-`App.spec.ts` (`api` blijft gemockt, dus geen netwerk)
-- `zoekt heen en terug met de juiste richting en datum per kant`: controleert
-  beide `search`-aanroepen met hun argumenten
-- `zoekt maar één keer zonder terugdatum`
-- `start in Finland draait beide richtingen om`
-- `zoekt niet bij een terugdatum vóór de heendatum en toont een melding`
-- `een fout aan één kant laat de andere kant staan`
-- `standaard is het totaal goedkoopste heen + goedkoopste terug`
-- `een andere optie aanklikken past het totaal aan zonder nieuwe zoekactie`
-- `een laat antwoord van een oudere zoekactie overschrijft de nieuwe niet`
-- `een geplande terugreis vult de terugdatum`
-- `toont de naam van de reiziger na een zoekopdracht` (bestaat al)
+`App.spec.ts` (`api` stays mocked, so no network)
+- `searches outbound and return with the correct direction and date per side`: checks
+  both `search` calls with their arguments
+- `searches only once without a return date`
+- `starting in Finland flips both directions`
+- `does not search with a return date before the outbound date and shows a message`
+- `an error on one side leaves the other side standing`
+- `by default the total is cheapest outbound + cheapest return`
+- `clicking a different option changes the total without a new search`
+- `a late response from an older search does not overwrite the new one`
+- `a scheduled return trip fills the return date`
+- `shows the name of the traveller after a search` (exists already)
 
-Bewijs met een mutatie, per de werkwijze in `AGENTS.md`. Bij elke fix of regel
-draai ik de test één keer tegen de code zonder die regel en laat ik zien dat hij
-rood wordt.
+Prove with a mutation, per the method in `AGENTS.md`. With each fix or rule
+I run the test once against the code without that rule and show that it
+turns red.
 
 ## Least confident decisions
-1. **Ongerangschikte opties (onbekende treinprijs) zijn aan te klikken.** Het
-   totaal krijgt dan "onvolledig". Het alternatief is ze niet kiesbaar maken.
-   Met `TRAIN_COST_ENABLED=0` komen ze in de praktijk niet voor.
-2. **De keuze wordt bewaard als index in `result.options`**, niet als
-   vluchtnummer. Dat werkt omdat een resultaat na het zoeken niet meer
-   verandert; bij een nieuwe zoekactie wordt de keuze opnieuw gezet.
-3. **`requestId` tegen racecondities — GESCHRAPT in slice 5** (eigenaar,
-   2026-10-02). De Zoek-knop staat tijdens het laden op `disabled`, en een
-   uitgeschakelde standaardknop blokkeert ook Enter-submit. De race is dus niet
-   te bereiken; de test `de zoekknop is uitgeschakeld zolang een kant nog laadt`
-   bewaakt dat. **Komt er ooit een manier om tijdens het laden te zoeken
-   (bv. een geplande reis die direct zoekt), dan moet dit terug.**
-4. **De terugkolom verschijnt pas als er een terugdatum is.** Zonder terugdatum
-   ziet het scherm eruit als nu, met één kolom.
-5. **De datumfout staat boven het formulier** als algemene `error`, los van de
-   fouten per kant.
-6. **`euro()` verhuist naar `money.ts`.** Dat is een kleine refactor van
-   `OptionCard` binnen deze feature. Het alternatief is het bedrag twee keer
-   formatteren.
+1. **Unranked options (unknown train price) are clickable.** The
+   total then gets "incomplete". The alternative is to make them not clickable.
+   With `TRAIN_COST_ENABLED=0` they do not occur in practice.
+2. **The choice is stored as an index in `result.options`**, not as
+   flight number. That works because a result doesn't change after search;
+   with a new search the choice is reset.
+3. **`requestId` against race conditions — REMOVED in slice 5** (owner,
+   2026-10-02). The Search button is `disabled` while loading, and a disabled
+   standard button also blocks Enter-submit. So the race is unreachable; the
+   test `search button is disabled as long as one side is still loading`
+   guards that. **If there ever becomes a way to search while loading
+   (e.g. a scheduled trip that searches directly), this must come back.**
+4. **The return column appears only if there is a return date.** Without a return date
+   the screen looks as it does now, with one column.
+5. **The date error sits above the form** as a general `error`, separate from
+   the per-side errors.
+6. **`euro()` moves to `money.ts`.** That is a small refactor of
+   `OptionCard` within this feature. The alternative is to format the amount twice.

@@ -1,60 +1,66 @@
-# Leiden ↔ Turku vluchtzoeker
+# Leiden ↔ Turku flight finder
 
-Zoekt de goedkoopste reis tussen Leiden en Turku. Het totaal is de ticketprijs
-plus de VR-trein Helsinki⇄Turku waar van toepassing. HEL<>AMS toont alleen
-directe vluchten, TKU<>AMS alleen vluchten met precies 1 overstap.
+Finds the cheapest trip between Leiden and Turku. The total is the ticket price
+plus the VR train Helsinki⇄Turku where applicable. HEL<>AMS shows only direct
+flights, TKU<>AMS only flights with exactly 1 connection.
 
-Bagagekosten tellen bewust niet mee (versimpeling) — waarom, en hoe je het
-terughaalt, staat in `docs/adr/0005-exclude-baggage-costs.md`.
+Baggage costs are deliberately not included (simplification) — why, and how to
+bring them back, is in `docs/adr/0005-exclude-baggage-costs.md`.
 
-## Lees dit eerst bij een nieuwe sessie
+## Language
 
-- **`docs/plans/README.md`** — waar het werk staat, wat er open is, en welke
-  beslissingen de eigenaar heeft genomen. Begin hier.
-- `docs/plans/<feature>/` — één map per feature: `00-status.md` (stand),
-  `01-product.md` t/m `04-slices.md`, mockups en metingen.
-  Nieuwe features komen hier ook.
-- `docs/adr/` — blijvende besluiten.
-  Wijzig een besluit met een nieuw ADR, herschrijf nooit een oud.
-- `docs/plans/flight-finder-phase-1/` — intake, spec, plan en logboek van fase 1.
+Everything in the repo is in English: code, comments, UI copy, docs and commit
+messages. Historical logs (`docs/plans/*/plan.md`, `progress.md`) are still in
+Dutch and are not translated.
 
-## Draaien
+## Read this first in a new session
+
+- **`docs/plans/README.md`** — where the work stands, what is open, and which
+  decisions the owner has made. Start here.
+- `docs/plans/<feature>/` — one folder per feature: `00-status.md` (state),
+  `01-product.md` through `04-slices.md`, mockups and measurements.
+  New features go here too.
+- `docs/adr/` — lasting decisions.
+  Change a decision with a new ADR; never rewrite an old one.
+- `docs/plans/flight-finder-phase-1/` — intake, spec, plan and log of phase 1.
+
+## Running
 
 ```bash
-docker compose exec -T php php bin/phpunit          # PHP-suite
+docker compose exec -T php php bin/phpunit          # PHP suite
 docker compose run --rm node npm run test           # frontend
 docker compose run --rm node npm run build
-docker compose up                                   # app op http://localhost:8080
+docker compose up                                   # app at http://localhost:8080
 ```
 
-Bewijzen dat geen test het netwerk raakt:
+Proving that no test touches the network:
 
 ```bash
 docker run --rm --network none -v "$PWD/api:/app" -w /app flights-php:latest php bin/phpunit
 ```
 
-PHPUnit-config heet `phpunit.dist.xml`; werkpad in de container is `/app` (= `api/`).
+The PHPUnit config is `phpunit.dist.xml`; the working directory in the container is `/app` (= `api/`).
 
-## Randvoorwaarden
+## Constraints
 
-- PHP 8.4 / Symfony 7.4 LTS + Vue 3. **Geen Python** — harde eis.
-- `declare(strict_types=1)` overal; `src/Domain/**` framework-vrij (er is een
-  architectuurtest die daarop controleert).
-- Geldbedragen altijd in hele centen als int.
-- Maatschappijen AY/SK/KL; luchthavens AMS/HEL/TKU/ARN/CPH; overstap ≤120 minuten.
-- **Geen enkele test mag het netwerk op.** Externe tegoeden zijn klein: Bright
-  Data 5.000 credits/maand, Apify ~20–50 draaibeurten/maand.
+- PHP 8.4 / Symfony 7.4 LTS + Vue 3. **No Python** — hard requirement.
+- `declare(strict_types=1)` everywhere; `src/Domain/**` is framework-free (an
+  architecture test checks this).
+- Money amounts always in whole cents as int.
+- Airlines AY/SK/KL; airports AMS/HEL/TKU/ARN/CPH; connection ≤120 minutes.
+- **No test may touch the network.** External credits are small: Bright
+  Data 5,000 credits/month, Apify ~20–50 runs/month.
 
-## Werkwijze die deze codebase heeft geleerd
+## How this codebase learned to work
 
-Drie eindreviews vonden zes ernstige fouten. **Geen enkele zat in een losse
-component** — allemaal in de naad ertussen: adapter versus regel, domein versus
-bedrading, aanroeper versus mapper.
+Three final reviews found six serious bugs. **None was inside a single
+component** — all were in the seam between them: adapter versus rule, domain
+versus wiring, caller versus mapper.
 
-- Meet gedrag door de **echte container** (`WebTestCase`), niet langs de
-  configuratie heen. Een fout van factor 100 in een parameter bleef onzichtbaar
-  omdat zowel de tests als een handmatige controle de waarde zelf meegaven.
-- Wantrouw een test die om een probleem heen werkt in plaats van het te dichten.
-- Een fix zonder test die faalt zónder die fix, is geen fix. Bewijs het met een
-  mutatie.
-- Verifieer reviewbevindingen empirisch vóór je ze aanneemt óf afwijst.
+- Measure behaviour through the **real container** (`WebTestCase`), not around
+  the configuration. A factor-100 error in a parameter stayed invisible because
+  both the tests and a manual check passed the value in themselves.
+- Distrust a test that works around a problem instead of closing it.
+- A fix without a test that fails *without* that fix is not a fix. Prove it with
+  a mutation.
+- Verify review findings empirically before accepting *or* rejecting them.

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mockup — Boeken-knop</title>
+<title>Mockup — Book button</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 0; padding: 1.5rem; background: #fafafa; color: #222; }
   h1 { font-size: 1.1rem; margin: 0 0 .25rem; }
@@ -30,42 +30,42 @@
 </style>
 </head>
 <body>
-<h1>Leiden → Turku · heen 29 okt</h1>
-<p class="note">Wegwerp-mockup. Klik op een regel = selecteren (zoals nu). Klik op "Boeken" = nieuw tabblad, regel blijft ongemoeid.</p>
+<h1>Leiden → Turku · outbound 29 Oct</h1>
+<p class="note">Throwaway mockup. Click a row = select (as now). Click "Book" = new tab, row unchanged.</p>
 
 <div class="col">
   <div class="row selected">
     <div class="flight"><strong>Finnair</strong><span class="small">AY1302</span></div>
     <div class="route"><span>11:55 → 15:15</span><span class="small">direct</span></div>
-    <div class="breakdown">Vlucht € 139 · Trein HEL–TKU niet meegerekend</div>
-    <div class="total"><strong>€ 139,00</strong><button class="book">Boeken ↗</button></div>
+    <div class="breakdown">Flight €139 · Train HEL–TKU not included</div>
+    <div class="total"><strong>€139.00</strong><button class="book">Book ↗</button></div>
   </div>
   <div class="row">
     <div class="flight"><strong>KLM</strong><span class="small">KL1251 · KL1213</span></div>
     <div class="route"><span>07:10 → 13:40</span><span class="small">via HEL (55 min)</span></div>
-    <div class="breakdown">Vlucht € 155</div>
-    <div class="total"><strong>€ 155,00</strong><button class="book">Boeken ↗</button></div>
+    <div class="breakdown">Flight €155</div>
+    <div class="total"><strong>€155.00</strong><button class="book">Book ↗</button></div>
   </div>
   <div class="row">
     <div class="flight"><strong>SAS</strong><span class="small">SK550 · SK1720</span></div>
     <div class="route"><span>06:30 → 14:05</span><span class="small">via ARN (80 min)</span></div>
-    <div class="breakdown">Vlucht € 169</div>
-    <div class="total"><strong>€ 169,00</strong><button class="book">Boeken ↗</button></div>
+    <div class="breakdown">Flight €169</div>
+    <div class="total"><strong>€169.00</strong><button class="book">Book ↗</button></div>
   </div>
 </div>
 
-<h2>Het nieuwe tabblad na een klik op "Boeken"</h2>
+<h2>The new tab after a click on "Book"</h2>
 <div class="tabs">
-  <div class="tab"><div class="bar">Nieuw tabblad</div>
-    <div class="page">Boekingslink ophalen bij KLM…<br><span class="small">KL1251 · 29 okt</span></div></div>
-  <div class="tab"><div class="bar">Daarna → klm.nl/boeken/…</div>
-    <div class="page">(boekingsscherm van KLM met KL1251 op 29 okt)</div></div>
-  <div class="tab"><div class="bar">Geen directe link</div>
-    <div class="page">Geen directe boekingslink bij SAS gevonden voor SK550 op 29 okt.<br>
-      <a href="#">Verder op flysas.com</a></div></div>
-  <div class="tab"><div class="bar">Fout</div>
-    <div class="page">De boekingslink kon nu niet worden opgehaald.<br>
-      <span class="small">Probeer het zo nog eens; je zoekresultaten staan nog in het andere tabblad.</span></div></div>
+  <div class="tab"><div class="bar">New tab</div>
+    <div class="page">Fetching booking link from KLM…<br><span class="small">KL1251 · 29 Oct</span></div></div>
+  <div class="tab"><div class="bar">Then → klm.nl/book/…</div>
+    <div class="page">(KLM booking screen with KL1251 on 29 Oct)</div></div>
+  <div class="tab"><div class="bar">No direct link</div>
+    <div class="page">No direct booking link found with SAS for SK550 on 29 Oct.<br>
+      <a href="#">Continue on flysas.com</a></div></div>
+  <div class="tab"><div class="bar">Error</div>
+    <div class="page">The booking link could not be fetched now.<br>
+      <span class="small">Try again; your search results are still in the other tab.</span></div></div>
 </div>
 </body>
 </html>

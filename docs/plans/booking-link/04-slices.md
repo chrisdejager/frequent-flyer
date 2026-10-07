@@ -1,28 +1,28 @@
-# Slices: Boeken-knop per vlucht
+# Slices: Book button per flight
 
-Elke slice eindigt werkend en getest, met een mutatie die bewijst dat de nieuwe
-tests falen zonder de nieuwe code. Na elke slice: tonen, afvinken, vragen.
+Each slice ends working and tested, with a mutation that proves the new
+tests fail without the new code. After each slice: show, check off, ask.
 
-1. **Tracer bullet** — knop "Boeken ↗" in `OptionCard` (`@click.stop` + `@keydown.stop`)
-   opent `boeken.html` (tweede Vite-entry, ook in `npm run build`); die toont
-   "ophalen…", roept `GET /api/booking-link` aan, en die stub-controller geeft
-   hard `found` + `https://www.finnair.com` terug → tabblad springt door.
-   Nog geen ignav, geen echte ref. Bewijs: klik in de echte app → finnair.com.
-2. **Happy path, echt** — `ignav_id` → `Itinerary::$bookingRef` → presenter →
-   `Option.bookingRef` → querystring. `IgnavBookingLinkSource` tegen de gemeten
-   fixture (`measurements/…ay1302.json` → `tests/…/fixtures/`), kiest
-   de link met `provider_type: "airline"`; bedrading +
-   controller echt. Knop alleen bij een `bookingRef`.
-   Bewijs: klik op AY/KL/SK in de echte app → deeplink van die maatschappij.
-3. **Geen directe link** — alleen `third_party`-links, geen links of een niet-https url →
-   `no_direct_link` → tabblad met tekst + homepage (finnair.com, klm.nl,
-   flysas.com). Plus 400 bij een ongeldige `ref`, bron nooit aangeroepen.
-4. **Fouten** — HTTP-fout, onleesbare JSON, ontbrekende `booking_options`,
-   verlopen id → `BookingLinkUnavailable` → 502 → foutmelding in het tabblad.
-   Ontbrekende querystring → melding zonder fetch.
-5. **Cache** — tweede klik op dezelfde vlucht = geen ignav-call (ook na herladen),
-   `no_direct_link` ook gecachet, fouten niet. Bewezen door de echte container
-   (`BookingLinkSourceWiringTest`) en in de app (2e klik direct, geen 3 s).
-6. **Afronden** — ADR-0006 (boekingslink op aanvraag, cache op de server, alleen
-   de maatschappij zelf), `OVERDRACHT.md`/`progress.md` bij, volledige suites +
-   netwerkloze PHP-run (`--network none`).
+1. **Tracer bullet** — "Book ↗" button in `OptionCard` (`@click.stop` + `@keydown.stop`)
+   opens `book.html` (second Vite entry, also in `npm run build`); that shows
+   "fetching…", calls `GET /api/booking-link`, and that stub controller returns
+   hard `found` + `https://www.finnair.com` → tab navigates.
+   No ignav yet, no real ref. Proof: click in real app → finnair.com.
+2. **Happy path, real** — `ignav_id` → `Itinerary::$bookingRef` → presenter →
+   `Option.bookingRef` → query string. `IgnavBookingLinkSource` against the measured
+   fixture (`measurements/…ay1302.json` → `tests/…/fixtures/`), picks
+   the link with `provider_type: "airline"`; wiring +
+   controller real. Button only with a `bookingRef`.
+   Proof: click on AY/KL/SK in real app → deep link from that airline.
+3. **No direct link** — only `third_party` links, no links or a non-https url →
+   `no_direct_link` → tab with text + homepage (finnair.com, klm.nl,
+   flysas.com). Plus 400 on an invalid `ref`, source never called.
+4. **Errors** — HTTP error, unreadable JSON, missing `booking_options`,
+   expired id → `BookingLinkUnavailable` → 502 → error message in tab.
+   Missing query string → message without fetch.
+5. **Cache** — second click on same flight = no ignav call (even after reload),
+   `no_direct_link` also cached, errors not. Proven by real container
+   (`BookingLinkSourceWiringTest`) and in app (2nd click direct, no 3 s).
+6. **Wrap-up** — ADR-0006 (booking link on demand, cache on server, only
+   the airline itself), `OVERDRACHT.md`/`progress.md` added, full suites +
+   network-free PHP run (`--network none`).

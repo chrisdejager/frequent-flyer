@@ -1,38 +1,38 @@
-# Slices: Heen en terug op één scherm
+# Slices: Outbound and return on one screen
 
-Elke slice eindigt groen (`npm run test` + `npm run build`). Ik bewijs elke slice
-in de draaiende app op http://localhost:8080 en lever hem af als één commit.
+Each slice ends green (`npm run test` + `npm run build`). I prove each slice
+in the running app at http://localhost:8080 and deliver it as one commit.
 
 1. **Tracer bullet.**
-   - Het formulier krijgt twee datums: heen (NL→FI) en terug (FI→NL).
-   - "Zoek" start twee parallelle `search()`-calls.
-   - Er komen twee kale `LegColumn`-kolommen naast elkaar, die onder elkaar
-     schuiven op een smal scherm.
-   - `TotalBar` bestaat al, maar toont nog een vaste placeholder ("€ —").
-   - Tests: `zoekt heen en terug met de juiste richting en datum per kant`.
-2. **Happy path met het echte totaal.**
+   - The form gets two dates: outbound (NL→FI) and return (FI→NL).
+   - "Search" starts two parallel `search()` calls.
+   - Two bare `LegColumn` columns appear side by side, stacking one below the
+     other on a narrow screen.
+   - `TotalBar` exists already, but still shows a fixed placeholder ("€ —").
+   - Tests: `searches outbound and return with the correct direction and date per side`.
+2. **Happy path with the real total.**
    - `roundTrip.ts`: `legDirections`, `defaultSelection`, `partition`,
-     `chosenOption` en `combine`.
-   - `money.ts` krijgt `euro`; `OptionCard` gebruikt die voortaan.
-   - Elke kolom splitst in gerangschikt en ongerangschikt, met de scheidingslijn.
-   - De totaalbalk toont goedkoopste heen + goedkoopste terug, met de
-     opmerkingen "excl. transfer", "onvolledig" en "indicatief".
-3. **Zelf kiezen.**
-   - `OptionCard` krijgt `selected` en `select`.
-   - Een klik verandert de keuze aan die kant en het totaal rekent mee, zonder
-     nieuwe zoekactie.
-4. **Terugdatum optioneel en datumcontrole.**
-   - Zonder terugdatum: één call, één kolom en de melding "alleen heenreis".
-   - `validateDates`: bij een terugdatum vóór de heendatum volgt een melding en
-     geen call.
-5. **Robuust.**
-   - Een fout aan één kant laat de andere kant staan.
-   - "Geen opties" per kant.
-   - De totaalbalk meldt als de terugreis ontbreekt.
-   - ~~`requestId`~~ geschrapt (eigenaar, 2026-10-02): de Zoek-knop is tijdens
-     het laden uitgeschakeld, dus de race is via de UI niet te bereiken. Een
-     test legt die uitgeschakelde knop vast.
-6. **Startland en geplande reizen.**
-   - Een keuze "Vertrek vanuit Nederland/Finland" draait beide richtingen om.
-   - `legForTrip`: een geplande reis vult de datum bij de juiste kant.
-   - De labels in het formulier volgen het startland.
+     `chosenOption` and `combine`.
+   - `money.ts` gets `euro`; `OptionCard` uses that from now on.
+   - Each column splits into ranked and unranked, with the divider.
+   - The total bar shows cheapest outbound + cheapest return, with the
+     notes "excl. transfer", "incomplete" and "indicative".
+3. **Choose yourself.**
+   - `OptionCard` gets `selected` and `select`.
+   - A click changes the choice on that side and the total is recalculated, without
+     a new search.
+4. **Return date optional and date validation.**
+   - Without return date: one call, one column and the message "outbound only".
+   - `validateDates`: with a return date before the outbound date a message follows and
+     no call.
+5. **Robust.**
+   - An error on one side leaves the other side standing.
+   - "No options" per side.
+   - The total bar notes when the return trip is missing.
+   - ~~`requestId`~~ removed (owner, 2026-10-02): the Search button is disabled while
+     loading, so the race is unreachable via the UI. A
+     test fixes that disabled button.
+6. **Start country and scheduled trips.**
+   - A choice "Departing from Netherlands/Finland" flips both directions.
+   - `legForTrip`: a scheduled trip fills the date on the correct side.
+   - The labels in the form follow the start country.
