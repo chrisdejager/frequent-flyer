@@ -37,5 +37,5 @@ terugdatum leeg.
    zonder dat de andere kant verdwijnt.
 
 ## Screens
-- `mockups/zoeken-heen-en-terug.html` — zoekformulier met twee datums, resultaten
+- `mockups/search-round-trip.html` — zoekformulier met twee datums, resultaten
   in twee kolommen, totaalbalk met de gekozen combinatie.

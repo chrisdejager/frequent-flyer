@@ -20,6 +20,6 @@ gaat. Zo zie je nooit een prijs die niet van SAS zelf komt, en mis je toch geen
 vlucht. Zodra SAS weer eigen prijzen doorgeeft, gaat het met één schakelaar terug.
 
 ## Screens
-- `mockups/zoekresultaat.html` — heenreis-kolom: gerangschikte opties, daaronder
+- `mockups/search-result.html` — heenreis-kolom: gerangschikte opties, daaronder
   "Niet gerangschikt — prijs onbekend" met de SAS-kaarten; plus de totaalbalk
   wanneer je een SAS-kaart kiest.

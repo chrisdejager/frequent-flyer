@@ -5,19 +5,19 @@
 
 ## 00. Stand 3 okt 2026 — boekingslink af, SAS-prijs geparkeerd
 
-**Boeken-knop per vlucht is af** (6 slices, `docs/plans/boekingslink/`, besluit in
-`docs/adr/0006-boekingslink-op-aanvraag.md`). Klik → `boeken.html` → `GET
+**Boeken-knop per vlucht is af** (6 slices, `docs/plans/booking-link/`, besluit in
+`docs/adr/0006-booking-link-on-demand.md`). Klik → `boeken.html` → `GET
 /api/booking-link?ref=<ignav_id>` → `IgnavBookingLinkSource` (alleen
 `provider_type: airline` + https, goedkoopste wint, 30 min in `cache.app`) →
 deeplink van de maatschappij. Storing → 502 + melding; geen directe link →
 homepage. **SAS gaat buiten ignav om**: de frontend bouwt zelf een flysas.com-link.
-Volledig verloop en metingen: `docs/plans/boekingslink/00-status.md`.
+Volledig verloop en metingen: `docs/plans/booking-link/00-status.md`.
 
 **SAS-prijs: geparkeerd (besluit eigenaar).** ignav geeft bij SAS-vluchten de
 KLM-codeshareprijs als zoekprijs (± dubbel: € 374 in de app, € 193 op flysas.com,
 26-11-2026). Eigenaar acht het tijdelijk; de SAS-knop opent een zelfgebouwde
 flysas.com-link om handmatig te checken. Plan + overwegingen:
-`docs/plans/sas-prijs-onbekend/00-status.md`. Af en toe nameten; blijft het, dan
+`docs/plans/sas-price-unknown/00-status.md`. Af en toe nameten; blijft het, dan
 misschien een andere prijsbron. (ADR-0006 noemt "prijs onbekend" nog als open
 actiepunt — dat is hiermee geparkeerd.)
 
@@ -109,7 +109,7 @@ kleiner dan bij Bright Data, maar auth ontbreekt nog steeds.
 in `tearDown` *wissen* in plaats van herstellen laat `%env(bool:...)%` gooien,
 waarna élke volgende test stil een 500 geeft in plaats van zijn eigen resultaat.
 
-Lees dit samen met [`vluchtzoeker-fase-1/progress.md`](vluchtzoeker-fase-1/progress.md); dat bevat de volledige
+Lees dit samen met [`flight-finder-phase-1/progress.md`](flight-finder-phase-1/progress.md); dat bevat de volledige
 taakgeschiedenis en de doorgeschoven Minor-bevindingen. Dit bestand vult aan wat
 alleen in de gespreksgeschiedenis stond.
 
@@ -298,11 +298,11 @@ docker compose run --rm node npm run build
 ### Opgeruimde werkbestanden
 
 De werkmap van fase 1 bevatte 1,9 MB aan reviewdiffs, taakbriefs en
-agentrapporten. Op `vluchtzoeker-fase-1/progress.md` en dit bestand na is dat
+agentrapporten. Op `flight-finder-phase-1/progress.md` en dit bestand na is dat
 weggegooid. Een reviewdiff maak je opnieuw met
 `git diff -U10 <base>..<head>`; alle commits staan nog in git.
 
 De agentrapporten zijn niet regenereerbaar, maar hun inhoud is tijdens de rit
-samengevat in `vluchtzoeker-fase-1/progress.md` en in de commitberichten — die zijn met opzet
+samengevat in `flight-finder-phase-1/progress.md` en in de commitberichten — die zijn met opzet
 uitgebreid geschreven en leggen per reparatie uit wát er mis was en waaróm dat
 erg was.

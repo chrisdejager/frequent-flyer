@@ -29,7 +29,7 @@
   € 162"): de prijs uit de boekingslink wordt niet getoond.
 - Gate 3 goedgekeurd 2026-10-03. Eigenaar bevestigde homepages: finnair.com,
   klm.nl, flysas.com.
-- **Meting 2026-10-03** (`metingen/`): booking-links mét `market` → 400
+- **Meting 2026-10-03** (`measurements/`): booking-links mét `market` → 400
   (`conflicting_booking_lookup_mode`), dus request = alleen `{ignav_id}`. Gaf voor
   AY1302 2 links: Finnair `airline` € 143 (deeplink met vluchtnummer en datum) en
   lastminute.com `third_party` € 199. Docs 02/03 daarop gecorrigeerd. Kosten:

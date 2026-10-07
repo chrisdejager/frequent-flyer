@@ -54,5 +54,5 @@ export function bookingPageUrl(option: Option): string | null {
     date: departureDate(option),
   })
 
-  return `/boeken.html?${params}`
+  return `/book.html?${params}`
 }

@@ -8,7 +8,7 @@ describe('bookingPageUrl', () => {
 
     const url = new URL(bookingPageUrl(option)!, 'http://x')
 
-    expect(url.pathname).toBe('/boeken.html')
+    expect(url.pathname).toBe('/book.html')
     expect(url.searchParams.get('ref')).toBe('0ea5aa41342f00000056346ef96d746d')
     expect(url.searchParams.get('carrier')).toBe('AY')
     expect(url.searchParams.get('flight')).toBe('AY1302')

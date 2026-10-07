@@ -5,7 +5,7 @@ plus de VR-trein Helsinki⇄Turku waar van toepassing. HEL<>AMS toont alleen
 directe vluchten, TKU<>AMS alleen vluchten met precies 1 overstap.
 
 Bagagekosten tellen bewust niet mee (versimpeling) — waarom, en hoe je het
-terughaalt, staat in `docs/adr/0005-bagagekosten-niet-meerekenen.md`.
+terughaalt, staat in `docs/adr/0005-exclude-baggage-costs.md`.
 
 ## Lees dit eerst bij een nieuwe sessie
 
@@ -16,7 +16,7 @@ terughaalt, staat in `docs/adr/0005-bagagekosten-niet-meerekenen.md`.
   Nieuwe features komen hier ook.
 - `docs/adr/` — blijvende besluiten.
   Wijzig een besluit met een nieuw ADR, herschrijf nooit een oud.
-- `docs/plans/vluchtzoeker-fase-1/` — intake, spec, plan en logboek van fase 1.
+- `docs/plans/flight-finder-phase-1/` — intake, spec, plan en logboek van fase 1.
 
 ## Draaien
 

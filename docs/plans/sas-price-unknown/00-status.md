@@ -44,7 +44,7 @@ Herstart dit plan als het probleem blijft (af en toe nameten: SAS-zoekprijs vs f
   toont "prijs onbekend" en geen "€"; LegColumn-kop; TotalBar "onbekend".
 
 ## Notes for a fresh session
-- Aanleiding (2026-10-03, zie `docs/plans/boekingslink/00-status.md`): ignav geeft
+- Aanleiding (2026-10-03, zie `docs/plans/booking-link/00-status.md`): ignav geeft
   bij SAS-vluchten de prijs van de KLM-codeshare als zoekprijs. Gemeten 26-11-2026:
   SK556+SK2728 € 374 in de app, € 193 op flysas.com; SK1556+SK2720 € 515 vs € 259.
   De zoekrespons verraadt het niet (zelfde `status: verified`).

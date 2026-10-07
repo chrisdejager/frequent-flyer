@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * Haalt pas bij een klik op "Boeken" de link op: ignav rekent één call per
- * aanvraag, dus niet bij voorbaat voor elke optie (docs/plans/boekingslink).
+ * aanvraag, dus niet bij voorbaat voor elke optie (docs/plans/booking-link).
  */
 #[AsController]
 final readonly class BookingLinkController

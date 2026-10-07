@@ -1,6 +1,6 @@
 # Vluchtzoeker fase 1 — voortgang
 
-Plan: docs/plans/vluchtzoeker-fase-1/plan.md
+Plan: docs/plans/flight-finder-phase-1/plan.md
 Branch: feature/vluchtzoeker-fase-1
 Startcommit: ddcf372
 
@@ -599,7 +599,7 @@ Eindstand: PHP 148 groen, frontend 14 groen, werktree schoon.
 Bewust geparkeerd door de eigenaar: de twee ignav-calls (AMS->HEL, AMS->TKU) parallel
 uitvoeren; dat verandert de vorm van de FlightPriceSource-poort.
 
-## Boekingslink (3 okt 2026) — `docs/plans/boekingslink/`
+## Boekingslink (3 okt 2026) — `docs/plans/booking-link/`
 
 Vier gates goedgekeurd, zes slices, alles op master:
 - Slice 1 tracer bullet `3cef90f` · slice 2 echte link `1f252a9` · slice 3 geen

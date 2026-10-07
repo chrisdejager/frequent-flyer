@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { runBookingPage, type BookingPageDeps } from '../boeken'
+import { runBookingPage, type BookingPageDeps } from '../bookingPage'
 import type { BookingLinkResult } from '../types'
 
 function deps(overrides: Partial<BookingPageDeps> = {}): BookingPageDeps & { rendered: string[] } {

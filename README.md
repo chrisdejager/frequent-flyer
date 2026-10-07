@@ -4,8 +4,8 @@ Zoekt de goedkoopste reisopties tussen Leiden en Turku, met een totaalprijs
 die de VR-trein meerekent (bagagekosten bewust niet, zie ADR-0005).
 
 - [Stand van zaken](docs/plans/README.md)
-- [Ontwerp fase 1](docs/plans/vluchtzoeker-fase-1/spec.md)
-- [Implementatieplan fase 1](docs/plans/vluchtzoeker-fase-1/plan.md)
+- [Ontwerp fase 1](docs/plans/flight-finder-phase-1/spec.md)
+- [Implementatieplan fase 1](docs/plans/flight-finder-phase-1/plan.md)
 
 ## Instellen
 

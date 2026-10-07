@@ -69,5 +69,5 @@ eerdere Criticals zaten.
   gelijkwaardig.
 
 ## Action Items
-1. [x] Gebouwd in zes slices; zie `docs/plans/heen-en-terug/`.
+1. [x] Gebouwd in zes slices; zie `docs/plans/round-trip/`.
 2. [ ] Bij een retourspecifieke prijsregel: een nieuw ADR dat dit vervangt.

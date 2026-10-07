@@ -82,5 +82,5 @@ eigenaar nooit de codeshare-prijs wil, gaat SAS buiten ignav om.
   of als ignav de quotumtelling voor booking-links wijzigt.
 
 ## Action Items
-1. [x] Gebouwd in zes slices volgens `docs/plans/boekingslink/`.
+1. [x] Gebouwd in zes slices volgens `docs/plans/booking-link/`.
 2. [ ] SAS-prijs = onbekend (eigen feature).

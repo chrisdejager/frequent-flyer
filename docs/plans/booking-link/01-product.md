@@ -43,5 +43,5 @@ link geven, dan zie je dat meteen en kun je verder zoeken op hun site.
    eigen knoppen (past bij "ik boek graag losse reizen").
 
 ## Screens
-- `mockups/boeken-knop.html` — vluchtlijst met "Boeken"-knoppen, het nieuwe
+- `mockups/book-button.html` — vluchtlijst met "Boeken"-knoppen, het nieuwe
   tabblad in drie toestanden (ophalen, geen directe link, fout).

@@ -10,7 +10,7 @@ tests falen zonder de nieuwe code. Na elke slice: tonen, afvinken, vragen.
    Nog geen ignav, geen echte ref. Bewijs: klik in de echte app → finnair.com.
 2. **Happy path, echt** — `ignav_id` → `Itinerary::$bookingRef` → presenter →
    `Option.bookingRef` → querystring. `IgnavBookingLinkSource` tegen de gemeten
-   fixture (`metingen/…ay1302.json` → `tests/…/fixtures/`), kiest
+   fixture (`measurements/…ay1302.json` → `tests/…/fixtures/`), kiest
    de link met `provider_type: "airline"`; bedrading +
    controller echt. Knop alleen bij een `bookingRef`.
    Bewijs: klik op AY/KL/SK in de echte app → deeplink van die maatschappij.

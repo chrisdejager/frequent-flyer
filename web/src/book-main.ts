@@ -1,4 +1,4 @@
-import { runBookingPage } from './boeken'
+import { runBookingPage } from './bookingPage'
 import { fetchBookingLink } from './api'
 
 runBookingPage({

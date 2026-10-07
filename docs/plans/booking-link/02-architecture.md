@@ -78,7 +78,7 @@ Meerdere directe links (bijv. verschillende `fare_name`s)? Neem de goedkoopste
   cache beperken dat, lossen het niet op.
 
 ## Meting 2026-10-03 (na goedkeuring, correctie)
-Ruwe respons: `metingen/2026-10-03-booking-links-ay1302.json` (Finnair AY1302, AMS→HEL, 29 okt).
+Ruwe respons: `measurements/2026-10-03-booking-links-ay1302.json` (Finnair AY1302, AMS→HEL, 29 okt).
 - **`market` mag niet** bij een `ignav_id`-lookup → 400. De request is alleen `{ignav_id}`.
 - Antwoord in **3,0 s**; 1 `booking_option` met 2 links:
   - `provider_type: "airline"`, `provider_name: "Finnair"`, € 143 — een **deeplink**
