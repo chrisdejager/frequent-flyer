@@ -19,18 +19,18 @@ interface CostRow {
   label: string
   cents: number
   unknown?: boolean
-  /** Bewust niet meegeteld — anders dan "onbekend", want de optie blijft gerangschikt. */
+  /** Deliberately not counted — unlike "unknown", since the option remains ranked. */
   excluded?: boolean
 }
 
 const rows = computed(() => {
   const r: CostRow[] = [
-    { label: 'Vlucht', cents: props.option.cost.basePrice },
+    { label: 'Flight', cents: props.option.cost.basePrice },
   ]
 
   if (props.option.pattern === 'via_hel_train') {
     r.push({
-      label: 'Trein HEL–TKU',
+      label: 'Train HEL–TKU',
       cents: props.option.cost.trainCost,
       unknown: !props.option.cost.trainCostKnown,
       excluded: !props.option.cost.trainCostIncluded,
@@ -74,21 +74,21 @@ function openBooking() {
     <dl class="breakdown">
       <div v-for="row in rows" :key="row.label" data-testid="cost-row">
         <dt>{{ row.label }}</dt>
-        <dd v-if="row.excluded" data-testid="train-excluded">niet meegerekend</dd>
-        <dd v-else-if="row.unknown">onbekend</dd>
+        <dd v-if="row.excluded" data-testid="train-excluded">not included</dd>
+        <dd v-else-if="row.unknown">unknown</dd>
         <dd v-else>{{ euro(row.cents) }}</dd>
       </div>
     </dl>
 
     <div class="total">
       <strong>{{ option.cost.totalFormatted }}</strong>
-      <em v-if="option.cost.indicative" data-testid="indicative">indicatief</em>
+      <em v-if="option.cost.indicative" data-testid="indicative">indicative</em>
       <small
         v-if="!option.cost.trainCostIncluded"
         class="excluded-notice"
         data-testid="excluded-notice"
-      >Totaal is exclusief transfer HEL→TKU</small>
-      <button v-if="bookingUrl" type="button" class="book" data-testid="book" @click.stop="openBooking" @keydown.stop>Boeken ↗</button>
+      >Total excludes transfer HEL→TKU</small>
+      <button v-if="bookingUrl" type="button" class="book" data-testid="book" @click.stop="openBooking" @keydown.stop>Book ↗</button>
     </div>
   </article>
 </template>
@@ -96,7 +96,7 @@ function openBooking() {
 <style scoped>
 .row {
   display: grid;
-  /* Smal genoeg voor een halve kolom naast de andere kant. */
+  /* Narrow enough for half a column next to the other side. */
   grid-template-columns: minmax(5.5rem, 1fr) minmax(7rem, 1fr) minmax(10rem, 2fr) minmax(6rem, auto);
   align-items: center;
   gap: .75rem;

@@ -29,29 +29,28 @@ const viaHelsinki: Option = {
 }
 
 describe('OptionCard', () => {
-  it('toont de totaalprijs', () => {
+  it('shows the total price', () => {
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
 
     expect(card.text()).toContain('€ 156,50')
     expect(card.text()).toContain('Finnair')
   })
 
-  it('splitst de prijs uit zodat zichtbaar is waarom een optie wint', () => {
+  it('splits the price so you can see why an option wins', () => {
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
     const rows = card.findAll('[data-testid="cost-row"]')
 
     expect(rows).toHaveLength(2)
-    expect(rows[0].text()).toContain('Vlucht')
-    expect(rows[1].text()).toContain('Trein')
+    expect(rows[0].text()).toContain('Flight')
+    expect(rows[1].text()).toContain('Train')
 
-    // Ook de bedragen toetsen: met alleen de labels zou een kapotte
-    // centen-omrekening onopgemerkt blijven, terwijl juist deze opbouw
-    // moet laten zien waarom een optie wint.
+    // Also check the amounts: with only the labels, a broken cents conversion
+    // would go unnoticed, while this breakdown should show why an option wins.
     expect(rows[0].text()).toContain('€ 134,00')
     expect(rows[1].text()).toContain('€ 22,50')
   })
 
-  it('telt de uitgesplitste bedragen op tot het getoonde totaal', () => {
+  it('adds up the split amounts to the displayed total', () => {
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
     const { basePrice, trainCost, total } = viaHelsinki.cost
 
@@ -59,7 +58,7 @@ describe('OptionCard', () => {
     expect(card.text()).toContain('€ 156,50')
   })
 
-  it('laat de treinregel weg bij een doorgaand ticket', () => {
+  it('omits the train line for through-ticketed flights', () => {
     const through: Option = {
       ...viaHelsinki,
       pattern: 'through',
@@ -71,7 +70,7 @@ describe('OptionCard', () => {
     expect(card.findAll('[data-testid="cost-row"]')).toHaveLength(1)
   })
 
-  it('markeert een indicatieve prijs', () => {
+  it('marks an indicative price', () => {
     const klm: Option = {
       ...viaHelsinki,
       carrier: 'KL',
@@ -82,16 +81,16 @@ describe('OptionCard', () => {
     const card = mount(OptionCard, { props: { option: klm } })
 
     expect(card.find('[data-testid="indicative"]').exists()).toBe(true)
-    expect(card.text()).toContain('indicatief')
+    expect(card.text()).toContain('indicative')
   })
 
-  it('markeert een vaste prijs niet', () => {
+  it('does not mark a fixed price', () => {
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
 
     expect(card.find('[data-testid="indicative"]').exists()).toBe(false)
   })
 
-  it('toont de overstap als die er is', () => {
+  it('shows the connection if there is one', () => {
     const through: Option = {
       ...viaHelsinki,
       carrier: 'SK',
@@ -109,19 +108,19 @@ describe('OptionCard', () => {
     expect(card.text()).toContain('90 min')
   })
 
-  it('toont vertrek- en aankomsttijd in de lokale tijd van dat vliegveld, niet in UTC', () => {
-    // viaHelsinki: departAt 13:00 UTC vanaf AMS (CET, UTC+1 na de zomertijd),
-    // arriveAt 16:45 UTC in HEL (EET, UTC+2). Puur UTC tonen (het oude gedrag)
-    // is voor de reiziger fout: een Helsinki-tijd die 2 uur achterloopt.
+  it('shows departure and arrival times in local time of that airport, not UTC', () => {
+    // viaHelsinki: departAt 13:00 UTC from AMS (CET, UTC+1 after daylight saving),
+    // arriveAt 16:45 UTC in HEL (EET, UTC+2). Showing only UTC (the old behavior)
+    // is wrong for the traveller: a Helsinki time that's 2 hours behind.
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
 
     expect(card.text()).toContain('14:00')
     expect(card.text()).toContain('18:45')
   })
 
-  it('meldt dat de transfer niet is meegerekend als trainCostIncluded false is', () => {
-    // Anders dan "onbekend": de optie blijft gerangschikt, maar het totaal is
-    // onvolledig. Zonder deze melding is € 0,00 niet te onderscheiden van gratis.
+  it('reports that transfer is not included if trainCostIncluded is false', () => {
+    // Unlike "unknown": the option remains ranked, but the total is incomplete.
+    // Without this notice, € 0.00 cannot be distinguished from free.
     const excludedTrain: Option = {
       ...viaHelsinki,
       cost: {
@@ -134,22 +133,22 @@ describe('OptionCard', () => {
 
     const card = mount(OptionCard, { props: { option: excludedTrain } })
 
-    expect(card.find('[data-testid="train-excluded"]').text()).toBe('niet meegerekend')
-    expect(card.find('[data-testid="excluded-notice"]').text()).toContain('exclusief transfer HEL→TKU')
+    expect(card.find('[data-testid="train-excluded"]').text()).toBe('not included')
+    expect(card.find('[data-testid="excluded-notice"]').text()).toContain('excludes transfer HEL→TKU')
   })
 
-  it('meldt niets over een ontbrekende transfer als die wél is meegerekend', () => {
+  it('reports nothing about missing transfer if it is included', () => {
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
 
     expect(card.find('[data-testid="excluded-notice"]').exists()).toBe(false)
   })
 
-  it('toont "onbekend" in de treinregel als trainCostKnown false is', () => {
+  it('shows "unknown" in the train line if trainCostKnown is false', () => {
     const unknownTrain: Option = {
       ...viaHelsinki,
       cost: {
         ...viaHelsinki.cost,
-        trainCost: 0,      // TotalCostCalculator zet trainCost op 0 als de prijs onbekend is
+        trainCost: 0,      // TotalCostCalculator sets trainCost to 0 if price is unknown
         trainCostKnown: false,
         trainCostIncluded: true,
         indicative: true,
@@ -158,15 +157,15 @@ describe('OptionCard', () => {
 
     const card = mount(OptionCard, { props: { option: unknownTrain } })
     const rows = card.findAll('[data-testid="cost-row"]')
-    const trainRow = rows.find(r => r.text().includes('Trein'))
+    const trainRow = rows.find(r => r.text().includes('Train'))
 
     expect(trainRow).toBeDefined()
-    expect(trainRow!.text()).toContain('onbekend')
+    expect(trainRow!.text()).toContain('unknown')
     expect(trainRow!.text()).not.toContain('€ 0,00')
     expect(card.find('[data-testid="indicative"]').exists()).toBe(true)
   })
 
-  it('klik op de kaart emit select', async () => {
+  it('click on the card emits select', async () => {
     const card = mount(OptionCard, { props: { option: viaHelsinki } })
 
     await card.trigger('click')
@@ -174,7 +173,7 @@ describe('OptionCard', () => {
     expect(card.emitted('select')).toHaveLength(1)
   })
 
-  it('selected markeert de kaart (aria-pressed)', () => {
+  it('selected marks the card (aria-pressed)', () => {
     const plain = mount(OptionCard, { props: { option: viaHelsinki } })
     const chosen = mount(OptionCard, { props: { option: viaHelsinki, selected: true } })
 
@@ -182,10 +181,10 @@ describe('OptionCard', () => {
     expect(chosen.attributes('aria-pressed')).toBe('true')
   })
 
-  describe('Boeken-knop', () => {
+  describe('Book button', () => {
     afterEach(() => vi.restoreAllMocks())
 
-    it('opent de boekingspagina in een nieuw tabblad, zonder opener', async () => {
+    it('opens the booking page in a new tab, without opener', async () => {
       const open = vi.spyOn(window, 'open').mockReturnValue(null)
       const card = mount(OptionCard, { props: { option: viaHelsinki } })
 
@@ -194,7 +193,7 @@ describe('OptionCard', () => {
       expect(open).toHaveBeenCalledWith(bookingPageUrl(viaHelsinki), '_blank', 'noopener')
     })
 
-    it('een klik op Boeken selecteert de regel niet', async () => {
+    it('clicking Book does not select the row', async () => {
       vi.spyOn(window, 'open').mockReturnValue(null)
       const card = mount(OptionCard, { props: { option: viaHelsinki } })
 
@@ -203,7 +202,7 @@ describe('OptionCard', () => {
       expect(card.emitted('select')).toBeUndefined()
     })
 
-    it('Enter of spatie op Boeken selecteert de regel niet', async () => {
+    it('Enter or space on Book does not select the row', async () => {
       vi.spyOn(window, 'open').mockReturnValue(null)
       const card = mount(OptionCard, { props: { option: viaHelsinki } })
       const button = card.find('[data-testid="book"]')
@@ -214,7 +213,7 @@ describe('OptionCard', () => {
       expect(card.emitted('select')).toBeUndefined()
     })
 
-    it('ontbreekt zonder bookingRef', () => {
+    it('is missing without bookingRef', () => {
       const card = mount(OptionCard, { props: { option: { ...viaHelsinki, bookingRef: null } } })
 
       expect(card.find('[data-testid="book"]').exists()).toBe(false)

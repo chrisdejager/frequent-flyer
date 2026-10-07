@@ -8,7 +8,7 @@ const props = defineProps<{
   out: Option | null
   back: Option | null
   backRequested: boolean
-  /** True = de gekozen opties zijn de standaardkeuze (goedkoopste gerangschikte). */
+  /** True = the chosen options are the default choice (cheapest ranked). */
   isDefault: boolean
 }>()
 
@@ -20,19 +20,19 @@ const legLine = (option: Option) => `${option.carrierLabel} · ${option.flightNu
 <template>
   <section class="totalbar" data-testid="total-bar">
     <div class="legs">
-      <span v-if="out"><strong>Heen</strong> {{ legLine(out) }}</span>
-      <span v-if="back"><strong>Terug</strong> {{ legLine(back) }}</span>
+      <span v-if="out"><strong>Outbound</strong> {{ legLine(out) }}</span>
+      <span v-if="back"><strong>Return</strong> {{ legLine(back) }}</span>
     </div>
 
     <div class="sum">
       <strong data-testid="total-sum">{{ euro(combined.totalCents) }}</strong>
-      <small>{{ isDefault ? 'Goedkoopste combinatie' : 'Jouw keuze' }} · los te boeken</small>
-      <small v-if="!backRequested">Alleen heenreis</small>
-      <small v-if="!out" class="warn">Heenreis ontbreekt — niet meegeteld</small>
-      <small v-if="backRequested && !back" class="warn">Terugreis ontbreekt — niet meegeteld</small>
-      <small v-if="combined.indicative" class="warn">indicatief</small>
-      <small v-if="combined.incomplete" class="warn">onvolledig — treinprijs onbekend</small>
-      <small v-if="combined.excludesTransfer">exclusief transfer HEL→TKU</small>
+      <small>{{ isDefault ? 'Cheapest combination' : 'Your choice' }} · booked separately</small>
+      <small v-if="!backRequested">Outbound only</small>
+      <small v-if="!out" class="warn">Outbound missing — not counted</small>
+      <small v-if="backRequested && !back" class="warn">Return missing — not counted</small>
+      <small v-if="combined.indicative" class="warn">indicative</small>
+      <small v-if="combined.incomplete" class="warn">incomplete — train cost unknown</small>
+      <small v-if="combined.excludesTransfer">excl. transfer HEL→TKU</small>
     </div>
   </section>
 </template>

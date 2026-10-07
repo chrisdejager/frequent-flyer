@@ -9,8 +9,8 @@ export async function search(
   const response = await fetch(`/api/search?${params}`)
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ error: 'Onbekende fout' }))
-    throw new Error(body.error ?? `Zoeken mislukte (${response.status})`)
+    const body = await response.json().catch(() => ({ error: 'Unknown error' }))
+    throw new Error(body.error ?? `Search failed (${response.status})`)
   }
 
   return response.json()
@@ -33,8 +33,8 @@ export async function fetchBookingLink(ref: string): Promise<BookingLinkResult> 
   const response = await fetch(`/api/booking-link?${params}`)
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ error: 'Onbekende fout' }))
-    throw new Error(body.error ?? `Boekingslink ophalen mislukte (${response.status})`)
+    const body = await response.json().catch(() => ({ error: 'Unknown error' }))
+    throw new Error(body.error ?? `Failed to fetch booking link (${response.status})`)
   }
 
   return response.json()

@@ -4,7 +4,7 @@ import TotalBar from '../TotalBar.vue'
 import { makeOption } from '../../__tests__/fixtures'
 
 describe('TotalBar', () => {
-  it('toont de som van heen en terug als euro', () => {
+  it('shows the sum of outbound and return as euro', () => {
     const bar = mount(TotalBar, {
       props: { out: makeOption('KLM', 15650), back: makeOption('Finnair', 9875), backRequested: true, isDefault: true },
     })
@@ -14,7 +14,7 @@ describe('TotalBar', () => {
     expect(bar.text()).toContain('Finnair')
   })
 
-  it('toont "exclusief transfer HEL→TKU" als een gekozen optie dat vraagt', () => {
+  it('shows "excl. transfer HEL→TKU" if a chosen option requires it', () => {
     const plain = mount(TotalBar, {
       props: { out: makeOption('SAS', 100), back: makeOption('SAS', 100), backRequested: true, isDefault: true },
     })
@@ -22,36 +22,36 @@ describe('TotalBar', () => {
       props: { out: makeOption('SAS', 100), back: makeOption('KLM', 100, { trainCostIncluded: false }), backRequested: true, isDefault: true },
     })
 
-    expect(plain.text()).not.toContain('exclusief transfer')
-    expect(excl.text()).toContain('exclusief transfer HEL→TKU')
+    expect(plain.text()).not.toContain('excl. transfer')
+    expect(excl.text()).toContain('excl. transfer HEL→TKU')
   })
 
-  it('meldt "alleen heenreis" als er geen terugdatum is', () => {
+  it('reports "outbound only" if there is no return date', () => {
     const oneWay = mount(TotalBar, { props: { out: makeOption('KLM', 100), back: null, backRequested: false, isDefault: true } })
     const roundTrip = mount(TotalBar, { props: { out: makeOption('KLM', 100), back: makeOption('SAS', 100), backRequested: true, isDefault: true } })
 
-    expect(oneWay.text()).toContain('Alleen heenreis')
-    expect(roundTrip.text()).not.toContain('Alleen heenreis')
+    expect(oneWay.text()).toContain('Outbound only')
+    expect(roundTrip.text()).not.toContain('Outbound only')
   })
 
-  it('zegt "Jouw keuze" in plaats van "Goedkoopste combinatie" als de keuze afwijkt', () => {
+  it('says "your choice" instead of "cheapest combination" if the choice differs', () => {
     const own = mount(TotalBar, { props: { out: makeOption('KLM', 100), back: null, backRequested: false, isDefault: false } })
 
-    expect(own.text()).toContain('Jouw keuze')
-    expect(own.text()).not.toContain('Goedkoopste')
+    expect(own.text()).toContain('Your choice')
+    expect(own.text()).not.toContain('Cheapest')
   })
 
-  it('meldt dat de terugreis ontbreekt als er een terugdatum was maar geen keuze', () => {
+  it('reports that return is missing if there was a return date but no choice', () => {
     const missing = mount(TotalBar, { props: { out: makeOption('KLM', 100), back: null, backRequested: true, isDefault: true } })
     const oneWay = mount(TotalBar, { props: { out: makeOption('KLM', 100), back: null, backRequested: false, isDefault: true } })
 
-    expect(missing.text()).toContain('Terugreis ontbreekt')
-    expect(oneWay.text()).not.toContain('ontbreekt')
+    expect(missing.text()).toContain('Return missing')
+    expect(oneWay.text()).not.toContain('missing')
   })
 
-  it('meldt dat de heenreis ontbreekt als alleen terug gekozen is', () => {
+  it('reports that outbound is missing if only return is chosen', () => {
     const bar = mount(TotalBar, { props: { out: null, back: makeOption('KLM', 100), backRequested: true, isDefault: true } })
 
-    expect(bar.text()).toContain('Heenreis ontbreekt')
+    expect(bar.text()).toContain('Outbound missing')
   })
 })

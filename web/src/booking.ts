@@ -7,7 +7,7 @@ export const CARRIER_HOMEPAGES: Record<string, { label: string; url: string }> =
   SK: { label: 'SAS', url: 'https://www.flysas.com' },
 }
 
-/** Vertrekdatum zoals de maatschappij hem kent: lokaal op de vertrekluchthaven. */
+/** Departure date as the carrier knows it: local to the departure airport. */
 function departureDate(option: Option): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: timezoneFor(option.origin),
@@ -18,10 +18,10 @@ function departureDate(option: Option): string {
 }
 
 /**
- * SAS bouwen we zelf: ignav geeft daar alleen een http-homepage of de
- * KLM-codeshare met ± dubbele prijs (gemeten 2026-10-03). Zonder outFareBasis,
- * die we niet kennen, toont SAS de vluchtlijst van die datum en route.
- * carrier 'SK' betekent dat alle benen SK zijn: KLM en Finnair gaan voor.
+ * We build SAS ourselves: ignav only gives a homepage or KLM codeshare with
+ * ~double price (measured 2026-10-03). Without outFareBasis, which we don't
+ * know, SAS shows the flight list for that date and route.
+ * carrier 'SK' means all legs are SK: KLM and Finnair go first.
  */
 function sasBookingUrl(option: Option): string {
   const params = new URLSearchParams({

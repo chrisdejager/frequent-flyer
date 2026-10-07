@@ -4,15 +4,15 @@ import { euro } from '../money'
 import { makeLeg, makeOption, makeResult } from './fixtures'
 
 describe('roundTrip', () => {
-  it('legDirections geeft nl-fi heen en fi-nl terug bij start in Nederland', () => {
+  it('legDirections gives nl-fi outbound and fi-nl return when starting in Netherlands', () => {
     expect(legDirections('nl')).toEqual({ out: 'nl-fi', back: 'fi-nl' })
   })
 
-  it('legDirections draait om bij start in Finland', () => {
+  it('legDirections reverses when starting in Finland', () => {
     expect(legDirections('fi')).toEqual({ out: 'fi-nl', back: 'nl-fi' })
   })
 
-  it('defaultSelection kiest de eerste gerangschikte optie, ook als er een ongerangschikte vóór staat', () => {
+  it('defaultSelection chooses the first ranked option, even if an unranked one comes before', () => {
     const result = makeResult([
       makeOption('KLM', 9000, { trainCostKnown: false }),
       makeOption('Finnair', 12000),
@@ -21,12 +21,12 @@ describe('roundTrip', () => {
     expect(defaultSelection(result)).toBe(1)
   })
 
-  it('defaultSelection geeft null als er alleen ongerangschikte opties zijn', () => {
+  it('defaultSelection returns null if there are only unranked options', () => {
     expect(defaultSelection(makeResult([makeOption('KLM', 9000, { trainCostKnown: false })]))).toBeNull()
     expect(defaultSelection(makeResult([]))).toBeNull()
   })
 
-  it('partition behoudt de oorspronkelijke index', () => {
+  it('partition preserves the original index', () => {
     const a = makeOption('KLM', 9000, { trainCostKnown: false })
     const b = makeOption('Finnair', 12000)
     const c = makeOption('SAS', 15000)
@@ -37,7 +37,7 @@ describe('roundTrip', () => {
     })
   })
 
-  it('chosenOption geeft de gekozen optie, of null zonder keuze of resultaat', () => {
+  it('chosenOption returns the chosen option, or null without choice or result', () => {
     const b = makeOption('Finnair', 12000)
     const result = makeResult([makeOption('KLM', 9000), b])
 
@@ -46,8 +46,8 @@ describe('roundTrip', () => {
     expect(chosenOption(makeLeg(null, 0))).toBeNull()
   })
 
-  it('combine telt beide totalen in centen op', () => {
-    // Bedragen met losse centen: een afrondings- of factor-100-fout valt dan op.
+  it('combine adds up both totals in cents', () => {
+    // Amounts with loose cents: a rounding or factor-100 error shows up.
     const combined = combine(makeOption('KLM', 15650), makeOption('Finnair', 9875))
 
     expect(combined.totalCents).toBe(25525)
@@ -55,13 +55,13 @@ describe('roundTrip', () => {
     expect(euro(combined.totalCents)).toBe('€ 255,25')
   })
 
-  it('combine met één kant telt alleen die kant en meldt legsCounted 1', () => {
+  it('combine with one leg counts only that leg and reports legsCounted 1', () => {
     expect(combine(makeOption('KLM', 15650), null)).toMatchObject({ totalCents: 15650, legsCounted: 1 })
     expect(combine(null, makeOption('KLM', 9875))).toMatchObject({ totalCents: 9875, legsCounted: 1 })
     expect(combine(null, null)).toMatchObject({ totalCents: 0, legsCounted: 0 })
   })
 
-  it('combine zet excludesTransfer als één gekozen optie de transfer niet meetelt', () => {
+  it('combine sets excludesTransfer if a chosen option does not count the transfer', () => {
     const plain = makeOption('SAS', 10000)
     const excl = makeOption('KLM', 10000, { trainCostIncluded: false })
 
@@ -70,14 +70,14 @@ describe('roundTrip', () => {
     expect(combine(excl, null).excludesTransfer).toBe(true)
   })
 
-  it('combine zet incomplete als één gekozen optie een onbekende treinprijs heeft', () => {
+  it('combine sets incomplete if a chosen option has an unknown train cost', () => {
     const plain = makeOption('SAS', 10000)
 
     expect(combine(plain, plain).incomplete).toBe(false)
     expect(combine(makeOption('KLM', 1, { trainCostKnown: false }), plain).incomplete).toBe(true)
   })
 
-  it('combine zet indicative als één gekozen optie indicatief is', () => {
+  it('combine sets indicative if a chosen option is indicative', () => {
     const plain = makeOption('SAS', 10000)
 
     expect(combine(plain, plain).indicative).toBe(false)
@@ -86,28 +86,28 @@ describe('roundTrip', () => {
 })
 
 describe('validateDates', () => {
-  it('accepteert een lege terugdatum', () => {
+  it('accepts an empty return date', () => {
     expect(validateDates('2026-10-29', '')).toBeNull()
   })
 
-  it('accepteert dezelfde dag heen en terug', () => {
+  it('accepts the same day for outbound and return', () => {
     expect(validateDates('2026-10-29', '2026-10-29')).toBeNull()
   })
 
-  it('weigert een terugdatum vóór de heendatum', () => {
-    expect(validateDates('2026-10-29', '2026-10-28')).toBe('Terugdatum ligt vóór de heendatum.')
+  it('rejects a return date before the departure date', () => {
+    expect(validateDates('2026-10-29', '2026-10-28')).toBe('Return date is before departure date.')
   })
 })
 
 describe('legForTrip', () => {
   const trip = (direction: 'nl-fi' | 'fi-nl') => ({ date: '2026-10-29', direction, traveller: 'chris' as const })
 
-  it('koppelt nl-fi aan heen bij start NL en aan terug bij start FI', () => {
+  it('links nl-fi to outbound when starting NL and to return when starting FI', () => {
     expect(legForTrip(trip('nl-fi'), 'nl')).toBe('out')
     expect(legForTrip(trip('nl-fi'), 'fi')).toBe('back')
   })
 
-  it('koppelt fi-nl aan terug bij start NL en aan heen bij start FI', () => {
+  it('links fi-nl to return when starting NL and to outbound when starting FI', () => {
     expect(legForTrip(trip('fi-nl'), 'nl')).toBe('back')
     expect(legForTrip(trip('fi-nl'), 'fi')).toBe('out')
   })

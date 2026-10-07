@@ -20,8 +20,8 @@ const back = reactive<LegState>(emptyLeg('fi-nl', ''))
 
 const trips = ref<Trip[]>([])
 const formError = ref('')
-// De datums van de laatste zoekactie: kolomkoppen en de terugkolom volgen
-// wat er gezocht is, niet wat er sindsdien in het formulier is getypt.
+// The dates from the last search: column headers and the return column follow
+// what was searched, not what has been typed in the form since.
 const searched = ref<{ out: string; back: string } | null>(null)
 
 onMounted(async () => {
@@ -72,8 +72,8 @@ async function run() {
   out.direction = directions.value.out
   Object.assign(back, { direction: directions.value.back, result: null, error: '', selected: null })
 
-  // Beide kanten tegelijk: twee losse enkele reizen, elk met hun eigen uitkomst.
-  // Zonder terugdatum is het een enkele reis: één call.
+  // Both sides simultaneously: two separate one-way trips, each with their own result.
+  // Without a return date, it's a one-way trip: one call.
   await Promise.allSettled(back.date ? [runLeg(out), runLeg(back)] : [runLeg(out)])
 }
 
@@ -92,29 +92,29 @@ const isDefault = computed(() =>
     <h1>Leiden ↔ Turku</h1>
 
     <nav v-if="trips.length > 0" class="trips">
-      <span>Gepland:</span>
+      <span>Scheduled:</span>
       <button v-for="trip in trips" :key="trip.date" type="button" @click="pick(trip)">
         {{ label(trip) }}
       </button>
     </nav>
 
     <form @submit.prevent="run">
-      <label>Vertrek vanuit
+      <label>Departing from
         <select v-model="start" data-testid="start">
-          <option value="nl">Nederland</option>
+          <option value="nl">Netherlands</option>
           <option value="fi">Finland</option>
         </select>
       </label>
 
-      <label>Heen ({{ arrow(directions.out) }})
+      <label>Outbound ({{ arrow(directions.out) }})
         <input v-model="out.date" type="date" required data-testid="out-date" />
       </label>
 
-      <label>Terug ({{ arrow(directions.back) }}) — optioneel
+      <label>Return ({{ arrow(directions.back) }}) — optional
         <input v-model="back.date" type="date" data-testid="back-date" />
       </label>
 
-      <label>Reiziger
+      <label>Traveller
         <select v-model="traveller" data-testid="traveller">
           <option value="chris">Chris</option>
           <option value="partner">Partner</option>
@@ -122,14 +122,14 @@ const isDefault = computed(() =>
       </label>
 
       <button type="submit" :disabled="loading()">
-        {{ loading() ? 'Zoeken…' : 'Zoek' }}
+        {{ loading() ? 'Searching…' : 'Search' }}
       </button>
     </form>
 
     <p v-if="formError" class="error" data-testid="form-error">{{ formError }}</p>
 
     <template v-if="searched">
-      <p v-if="out.result" class="traveller-label">Prijzen voor {{ out.result.traveller.name }}</p>
+      <p v-if="out.result" class="traveller-label">Prices for {{ out.result.traveller.name }}</p>
 
       <TotalBar
         :out="chosenOption(out)"
@@ -139,10 +139,10 @@ const isDefault = computed(() =>
       />
 
       <div class="columns">
-        <LegColumn :title="`Heen — ${dayLabel(searched.out)}`" :leg="out" @select="i => (out.selected = i)" />
+        <LegColumn :title="`Outbound — ${dayLabel(searched.out)}`" :leg="out" @select="i => (out.selected = i)" />
         <LegColumn
           v-if="searched.back"
-          :title="`Terug — ${dayLabel(searched.back)}`"
+          :title="`Return — ${dayLabel(searched.back)}`"
           :leg="back"
           @select="i => (back.selected = i)"
         />

@@ -7,8 +7,8 @@ import type { LegState } from '../types'
 const props = defineProps<{ title: string; leg: LegState }>()
 const emit = defineEmits<{ select: [index: number] }>()
 
-// Opties met bekende treinprijs zijn gerangschikt op totaalprijs.
-// Opties met onbekende treinprijs staan achteraan en zijn niet vergeleken.
+// Options with known train cost are ranked by total price.
+// Options with unknown train cost are listed at the end and are not compared.
 const groups = computed(() => partition(props.leg.result?.options ?? []))
 </script>
 
@@ -16,12 +16,12 @@ const groups = computed(() => partition(props.leg.result?.options ?? []))
   <section class="leg" data-testid="leg-column">
     <h2>{{ title }}</h2>
 
-    <p v-if="leg.loading" class="sub">Zoeken…</p>
+    <p v-if="leg.loading" class="sub">Searching…</p>
     <p v-if="leg.error" class="error">{{ leg.error }}</p>
 
     <template v-if="leg.result">
       <p v-if="leg.result.options.length === 0">
-        Geen opties die aan de regels voldoen op deze datum.
+        No options meeting the criteria on this date.
       </p>
 
       <OptionCard
@@ -34,7 +34,7 @@ const groups = computed(() => partition(props.leg.result?.options ?? []))
 
       <template v-if="groups.unranked.length > 0">
         <p class="unranked-notice" data-testid="unranked-notice">
-          Niet gerangschikt — treinprijs onbekend
+          Unranked — train cost unknown
         </p>
 
         <OptionCard

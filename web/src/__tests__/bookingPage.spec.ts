@@ -20,16 +20,16 @@ function deps(overrides: Partial<BookingPageDeps> = {}): BookingPageDeps & { ren
 }
 
 describe('runBookingPage', () => {
-  it('toont eerst dat de link bij de maatschappij wordt opgehaald', async () => {
+  it('first shows that the link is being fetched from the carrier', async () => {
     const d = deps()
 
     await runBookingPage(d)
 
-    expect(d.rendered[0]).toContain('Boekingslink ophalen bij KLM')
+    expect(d.rendered[0]).toContain('Fetching booking link from KLM')
     expect(d.rendered[0]).toContain('KL1251')
   })
 
-  it('ontsmet waarden uit de querystring precies één keer', async () => {
+  it('sanitizes values from the query string exactly once', async () => {
     const d = deps({ search: '?ref=0ea5aa41342f00000056346ef96d746d&carrier=<b>X</b>&flight=<i>1</i>&date=2026-10-29' })
 
     await runBookingPage(d)
@@ -40,40 +40,40 @@ describe('runBookingPage', () => {
     expect(d.rendered[0]).not.toContain('&amp;lt;')
   })
 
-  it('springt door naar de gevonden link', async () => {
+  it('navigates to the found link', async () => {
     const d = deps()
 
     await runBookingPage(d)
 
     expect(d.navigate).toHaveBeenCalledWith('https://www.klm.nl/boeken')
-    // Tijdens het doorspringen mag er niet ineens "geen link" staan.
-    expect(d.rendered.join()).not.toContain('Geen directe boekingslink')
+    // While navigating, "no link" must not suddenly appear.
+    expect(d.rendered.join()).not.toContain('No direct booking link')
   })
 
-  it('vraagt de link op met de ref uit de querystring', async () => {
+  it('requests the link with the ref from the query string', async () => {
     const d = deps()
 
     await runBookingPage(d)
 
     expect(d.fetchLink).toHaveBeenCalledWith('0ea5aa41342f00000056346ef96d746d')
   })
-  describe('zonder directe link', () => {
+  describe('without direct link', () => {
     const noDirect = async (): Promise<BookingLinkResult> => ({ status: 'no_direct_link' })
 
-    it('legt het uit en linkt naar de homepage van de maatschappij', async () => {
+    it('explains and links to the carrier homepage', async () => {
       const d = deps({ fetchLink: vi.fn(noDirect) })
 
       await runBookingPage(d)
 
       const last = d.rendered.at(-1)!
-      expect(last).toContain('Geen directe boekingslink')
+      expect(last).toContain('No direct booking link')
       expect(last).toContain('KLM')
       expect(last).toContain('KL1251')
       expect(last).toContain('href="https://www.klm.nl"')
       expect(d.navigate).not.toHaveBeenCalled()
     })
 
-    it('volgt de maatschappij uit de querystring', async () => {
+    it('follows the carrier from the query string', async () => {
       const d = deps({
         search: '?ref=0ea5aa41342f00000056346ef96d746d&carrier=SK&flight=SK556&date=2026-11-26',
         fetchLink: vi.fn(noDirect),
@@ -84,7 +84,7 @@ describe('runBookingPage', () => {
       expect(d.rendered.at(-1)).toContain('href="https://www.flysas.com"')
     })
 
-    it('geeft bij een onbekende maatschappij geen kapotte link', async () => {
+    it('does not show a broken link for an unknown carrier', async () => {
       const d = deps({
         search: '?ref=0ea5aa41342f00000056346ef96d746d&carrier=XX&flight=XX1&date=2026-11-26',
         fetchLink: vi.fn(noDirect),
@@ -93,12 +93,12 @@ describe('runBookingPage', () => {
       await runBookingPage(d)
 
       const last = d.rendered.at(-1)!
-      expect(last).toContain('Geen directe boekingslink')
+      expect(last).toContain('No direct booking link')
       expect(last).not.toContain('href=')
       expect(last).not.toContain('undefined')
     })
 
-    it('vat een carrier als constructor niet op als bekende maatschappij', async () => {
+    it('does not treat carrier as constructor as a known carrier', async () => {
       const d = deps({
         search: '?ref=0ea5aa41342f00000056346ef96d746d&carrier=constructor&flight=X&date=2026-11-26',
         fetchLink: vi.fn(noDirect),
@@ -109,19 +109,19 @@ describe('runBookingPage', () => {
       expect(d.rendered.at(-1)).not.toContain('href=')
     })
   })
-  describe('fouten', () => {
-    it('toont een foutmelding als het ophalen mislukt, en springt nergens heen', async () => {
-      const d = deps({ fetchLink: vi.fn(async () => { throw new Error('De boekingslink kon niet worden opgehaald.') }) })
+  describe('errors', () => {
+    it('shows an error message if fetching fails, and does not navigate anywhere', async () => {
+      const d = deps({ fetchLink: vi.fn(async () => { throw new Error('Could not fetch the booking link.') }) })
 
       await runBookingPage(d)
 
       const last = d.rendered.at(-1)!
-      expect(last).toContain('De boekingslink kon niet worden opgehaald.')
+      expect(last).toContain('Could not fetch the booking link.')
       expect(last).toContain('href="https://www.klm.nl"')
       expect(d.navigate).not.toHaveBeenCalled()
     })
 
-    it('ontsmet de foutmelding', async () => {
+    it('sanitizes the error message', async () => {
       const d = deps({ fetchLink: vi.fn(async () => { throw new Error('<img src=x onerror=alert(1)>') }) })
 
       await runBookingPage(d)
@@ -130,16 +130,16 @@ describe('runBookingPage', () => {
     })
 
     it.each([
-      ['zonder ref', '?carrier=KL&flight=KL1251&date=2026-10-29'],
-      ['met lege ref', '?ref=&carrier=KL&flight=KL1251&date=2026-10-29'],
-      ['zonder carrier', '?ref=0ea5aa41342f00000056346ef96d746d&flight=KL1251&date=2026-10-29'],
-    ])('vraagt %s niets op en meldt dat de link onvolledig is', async (_, search) => {
+      ['without ref', '?carrier=KL&flight=KL1251&date=2026-10-29'],
+      ['with empty ref', '?ref=&carrier=KL&flight=KL1251&date=2026-10-29'],
+      ['without carrier', '?ref=0ea5aa41342f00000056346ef96d746d&flight=KL1251&date=2026-10-29'],
+    ])('does not request %s and reports that the link is incomplete', async (_, search) => {
       const d = deps({ search })
 
       await runBookingPage(d)
 
       expect(d.fetchLink).not.toHaveBeenCalled()
-      expect(d.rendered.at(-1)).toContain('Deze boekingslink is onvolledig')
+      expect(d.rendered.at(-1)).toContain('This booking link is incomplete')
     })
   })
 })

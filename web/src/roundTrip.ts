@@ -6,7 +6,7 @@ export function legDirections(start: StartCountry): { out: Direction; back: Dire
     : { out: 'fi-nl', back: 'nl-fi' }
 }
 
-/** Eerste gerangschikte optie (trainCostKnown); geen → null. */
+/** First ranked option (trainCostKnown); none → null. */
 export function defaultSelection(result: SearchResult): number | null {
   const index = result.options.findIndex(o => o.cost.trainCostKnown)
 
@@ -18,7 +18,7 @@ export interface IndexedOption {
   index: number
 }
 
-/** Gerangschikt/ongerangschikt met behoud van de oorspronkelijke index. */
+/** Ranked/unranked preserving original index. */
 export function partition(options: Option[]): { ranked: IndexedOption[]; unranked: IndexedOption[] } {
   const indexed = options.map((option, index) => ({ option, index }))
 
@@ -39,9 +39,9 @@ export function chosenOption(leg: LegState): Option | null {
 export interface Combined {
   totalCents: number
   legsCounted: number
-  /** Een gekozen optie heeft trainCostIncluded=false. */
+  /** A chosen option has trainCostIncluded=false. */
   excludesTransfer: boolean
-  /** Een gekozen optie heeft trainCostKnown=false. */
+  /** A chosen option has trainCostKnown=false. */
   incomplete: boolean
   indicative: boolean
 }
@@ -58,17 +58,17 @@ export function combine(out: Option | null, back: Option | null): Combined {
   }
 }
 
-/** null = geldig; anders een melding. Lege terugdatum = enkele reis, dus geldig. */
+/** null = valid; otherwise a message. Empty return date = one-way, so valid. */
 export function validateDates(outDate: string, backDate: string): string | null {
-  // 'YYYY-MM-DD' sorteert als tekst gelijk aan de datum zelf.
+  // 'YYYY-MM-DD' sorts as text equal to the date itself.
   if (backDate !== '' && backDate < outDate) {
-    return 'Terugdatum ligt vóór de heendatum.'
+    return 'Return date is before departure date.'
   }
 
   return null
 }
 
-/** Bij welke kant hoort deze geplande reis, gegeven het startland? */
+/** Which leg does this planned trip belong to, given the starting country? */
 export function legForTrip(trip: Trip, start: StartCountry): 'out' | 'back' {
   return trip.direction === legDirections(start).out ? 'out' : 'back'
 }

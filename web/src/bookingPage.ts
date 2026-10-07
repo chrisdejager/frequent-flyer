@@ -24,29 +24,29 @@ export async function runBookingPage(deps: BookingPageDeps): Promise<void> {
   const date = params.get('date') ?? ''
   const ref = params.get('ref') ?? ''
 
-  // Alles uit de querystring komt van buiten: pas bij het renderen escapen, precies één keer.
-  // hasOwn: anders is "constructor" uit de querystring een "bekende" maatschappij.
+  // Everything from the query string is from outside: escape only when rendering, exactly once.
+  // hasOwn: otherwise "constructor" from the query string would be a "known" carrier.
   const homepage = Object.hasOwn(CARRIER_HOMEPAGES, carrier) ? CARRIER_HOMEPAGES[carrier] : undefined
   const label = homepage?.label ?? carrier
   const details = `<p class="small">${escape(flight)} · ${escape(date)}</p>`
   const onward = homepage
-    ? `<p><a href="${homepage.url}">Zoek deze vlucht op de site van ${escape(homepage.label)} ↗</a></p>`
+    ? `<p><a href="${homepage.url}">Search for this flight on ${escape(homepage.label)}'s website ↗</a></p>`
     : ''
 
-  // Zonder ref valt er niets op te vragen; zonder carrier weten we niet waarheen.
-  // Geen fetch: elke aanvraag kan een ignav-call kosten.
+  // Without ref, there's nothing to request; without carrier we don't know where to go.
+  // No fetch: every request can cost an ignav call.
   if (!ref || !carrier) {
-    deps.render('<p>Deze boekingslink is onvolledig. Ga terug naar de vluchtzoeker en klik opnieuw op Boeken.</p>')
+    deps.render('<p>This booking link is incomplete. Go back to the flight finder and click Book again.</p>')
     return
   }
 
-  deps.render(`<p>Boekingslink ophalen bij ${escape(label)}…</p>${details}`)
+  deps.render(`<p>Fetching booking link from ${escape(label)}…</p>${details}`)
 
   let result: BookingLinkResult
   try {
     result = await deps.fetchLink(ref)
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'De boekingslink kon niet worden opgehaald.'
+    const message = error instanceof Error ? error.message : 'Could not fetch the booking link.'
     deps.render(`<p>${escape(message)}</p>${details}${onward}`)
     return
   }
@@ -56,5 +56,5 @@ export async function runBookingPage(deps: BookingPageDeps): Promise<void> {
     return
   }
 
-  deps.render(`<p>Geen directe boekingslink van ${escape(label)} gevonden.</p>${details}${onward}`)
+  deps.render(`<p>No direct booking link from ${escape(label)} found.</p>${details}${onward}`)
 }

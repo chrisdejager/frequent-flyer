@@ -14,7 +14,7 @@ export interface Cost {
   totalFormatted: string
   indicative: boolean
   trainCostKnown: boolean
-  /** False = de transfer HEL–TKU zit bewust niet in dit totaal. */
+  /** False = the transfer HEL–TKU is deliberately not in this total. */
   trainCostIncluded: boolean
 }
 
@@ -31,7 +31,7 @@ export interface Option {
   connectionMinutes: number | null
   flightNumbers: string[]
   cost: Cost
-  /** Verwijzing om de boekingslink op te vragen; null = geen Boeken-knop. */
+  /** Reference to fetch the booking link; null = no Book button. */
   bookingRef: string | null
 }
 
@@ -49,11 +49,11 @@ export interface Trip {
 
 export interface LegState {
   direction: Direction
-  /** 'YYYY-MM-DD'; '' = deze kant wordt niet gezocht. */
+  /** 'YYYY-MM-DD'; '' = this leg is not searched. */
   date: string
   result: SearchResult | null
   error: string
   loading: boolean
-  /** Index in result.options; null = niets gekozen. */
+  /** Index in result.options; null = nothing chosen. */
   selected: number | null
 }

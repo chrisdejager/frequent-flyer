@@ -70,25 +70,25 @@ describe('App', () => {
     vi.clearAllMocks()
   })
 
-  it('toont gerangschikte opties vóór ongerangschikte en toont de scheidingslijn', async () => {
+  it('shows ranked options before unranked and shows the separator line', async () => {
     const wrapper = mount(App)
     await flushPromises()
 
-    // Dien het formulier in om zoekresultaten te laden
+    // Submit the form to load search results
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     const unrankedNotice = wrapper.find('[data-testid="unranked-notice"]')
 
-    // De ongerangschikte-melding moet zichtbaar zijn
+    // The unranked notice must be visible
     expect(unrankedNotice.exists()).toBe(true)
-    expect(unrankedNotice.text()).toContain('Niet gerangschikt')
+    expect(unrankedNotice.text()).toContain('Unranked')
 
-    // De scheidingsregel moet écht tússen de twee groepen staan, niet er
-    // willekeurig omheen: gerangschikt (Finnair) → notice → ongerangschikt (KLM).
-    // Alleen "Finnair vóór KLM" toetsen zou ook groen blijven als de notice
-    // boven of onder beide kaarten belandt, en dat is precies de semantiek
-    // die deze test moet vastleggen.
+    // The separator must really be between the two groups, not
+    // randomly around them: ranked (Finnair) → notice → unranked (KLM).
+    // Only testing "Finnair before KLM" would also pass if the notice
+    // ends up above or below both cards, and that's exactly the semantics
+    // this test must capture.
     const html = wrapper.html()
     const finnairPos = html.indexOf('Finnair')
     const noticePos = html.indexOf('unranked-notice')
@@ -102,7 +102,7 @@ describe('App', () => {
     expect(noticePos).toBeLessThan(klmPos)
   })
 
-  it('toont de naam van de reiziger na een zoekopdracht', async () => {
+  it('shows the traveller name after a search', async () => {
     const wrapper = mount(App)
     await flushPromises()
 
@@ -113,7 +113,7 @@ describe('App', () => {
     expect(wrapper.find('.traveller-label').text()).toContain('Chris')
   })
 
-  it('gaat het netwerk niet op — api.search wordt gemockt aangeroepen', async () => {
+  it('does not go on the network — api.search is called mocked', async () => {
     const wrapper = mount(App)
     await flushPromises()
 
@@ -123,7 +123,7 @@ describe('App', () => {
     expect(vi.mocked(search)).toHaveBeenCalled()
   })
 
-  it('zoekt heen en terug met de juiste richting en datum per kant', async () => {
+  it('searches outbound and return with the correct direction and date per leg', async () => {
     const wrapper = mount(App)
     await flushPromises()
 
@@ -136,12 +136,12 @@ describe('App', () => {
     expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
     expect(vi.mocked(search)).toHaveBeenCalledWith('2026-11-09', 'fi-nl', 'partner')
 
-    // Beide kanten krijgen een eigen kolom met hun eigen opties.
+    // Each leg gets its own column with its own options.
     const columns = wrapper.findAll('[data-testid="leg-column"]')
     expect(columns).toHaveLength(2)
-    expect(columns[0].text()).toContain('Heen')
+    expect(columns[0].text()).toContain('Outbound')
     expect(columns[0].text()).toContain('Finnair')
-    expect(columns[1].text()).toContain('Terug')
+    expect(columns[1].text()).toContain('Return')
     expect(columns[1].text()).toContain('Finnair')
 
     expect(wrapper.find('[data-testid="total-bar"]').exists()).toBe(true)
@@ -159,27 +159,27 @@ async function searchWith(outDate: string, backDate: string) {
   return wrapper
 }
 
-describe('App — totaal', () => {
+describe('App — total', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('standaard is het totaal goedkoopste heen + goedkoopste terug', async () => {
-    // Per richting een eigen resultaat, met een ongerangschikte optie die
-    // goedkoper is maar niet als standaard gekozen mag worden.
+  it('default is the cheapest outbound + cheapest return', async () => {
+    // Per direction its own result, with an unranked option that is cheaper
+    // but must not be chosen as default.
     vi.mocked(search).mockImplementation(async (_date, direction) =>
       direction === 'nl-fi'
         ? makeResult([makeOption('KLM', 15650), makeOption('SAS', 17000)])
-        : makeResult([makeOption('Goedkoop', 100, { trainCostKnown: false }), makeOption('Finnair', 9875)]),
+        : makeResult([makeOption('Cheap', 100, { trainCostKnown: false }), makeOption('Finnair', 9875)]),
     )
 
     const wrapper = await searchWith('2026-10-29', '2026-11-09')
 
     expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 255,25')
-    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Goedkoopste combinatie')
+    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Cheapest combination')
   })
 
-  it('een andere optie aanklikken past het totaal aan zonder nieuwe zoekactie', async () => {
+  it('clicking another option updates the total without a new search', async () => {
     vi.mocked(search).mockImplementation(async (_date, direction) =>
       direction === 'nl-fi'
         ? makeResult([makeOption('KLM', 15650), makeOption('SAS', 17000)])
@@ -189,49 +189,49 @@ describe('App — totaal', () => {
     const wrapper = await searchWith('2026-10-29', '2026-11-09')
     expect(vi.mocked(search)).toHaveBeenCalledTimes(2)
 
-    // Tweede kaart van de heenkolom: SAS € 170,00.
+    // Second card from the outbound column: SAS € 170.00.
     const outColumn = wrapper.findAll('[data-testid="leg-column"]')[0]
     await outColumn.findAll('article')[1].trigger('click')
 
     const bar = wrapper.find('[data-testid="total-bar"]')
     expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 268,75')
     expect(bar.text()).toContain('SAS')
-    // Niet meer de goedkoopste — dan mag de balk dat ook niet beweren.
-    expect(bar.text()).toContain('Jouw keuze')
-    expect(bar.text()).not.toContain('Goedkoopste combinatie')
+    // No longer the cheapest — the bar should not claim that either.
+    expect(bar.text()).toContain('Your choice')
+    expect(bar.text()).not.toContain('Cheapest combination')
     expect(vi.mocked(search)).toHaveBeenCalledTimes(2)
 
-    // Terug naar de goedkoopste: de balk zegt het weer.
+    // Back to the cheapest: the bar says so again.
     await outColumn.findAll('article')[0].trigger('click')
-    expect(bar.text()).toContain('Goedkoopste combinatie')
+    expect(bar.text()).toContain('Cheapest combination')
   })
 })
 
-describe('App — datums', () => {
+describe('App — dates', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(search).mockImplementation(async () => makeResult([makeOption('KLM', 15650)]))
   })
 
-  it('zoekt maar één keer zonder terugdatum', async () => {
+  it('searches only once without return date', async () => {
     const wrapper = await searchWith('2026-10-29', '')
 
     expect(vi.mocked(search)).toHaveBeenCalledOnce()
     expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
     expect(wrapper.findAll('[data-testid="leg-column"]')).toHaveLength(1)
     expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 156,50')
-    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Alleen heenreis')
+    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Outbound only')
   })
 
-  it('zoekt niet bij een terugdatum vóór de heendatum en toont een melding', async () => {
+  it('does not search with return date before departure date and shows a message', async () => {
     const wrapper = await searchWith('2026-11-09', '2026-10-29')
 
     expect(vi.mocked(search)).not.toHaveBeenCalled()
-    expect(wrapper.find('[data-testid="form-error"]').text()).toContain('Terugdatum ligt vóór de heendatum')
+    expect(wrapper.find('[data-testid="form-error"]').text()).toContain('Return date is before departure date')
     expect(wrapper.find('[data-testid="total-bar"]').exists()).toBe(false)
   })
 
-  it('een terugdatum die ná het zoeken wordt ingevuld toont geen lege terugkolom', async () => {
+  it('a return date filled in after the search does not show an empty return column', async () => {
     const wrapper = await searchWith('2026-10-29', '')
     await wrapper.find('[data-testid="back-date"]').setValue('2026-11-09')
 
@@ -239,15 +239,15 @@ describe('App — datums', () => {
   })
 })
 
-describe('App — robuust', () => {
+describe('App — robust', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('een fout aan één kant laat de andere kant staan', async () => {
+  it('an error on one side leaves the other side standing', async () => {
     vi.mocked(search).mockImplementation(async (_date, direction) => {
       if (direction === 'fi-nl') {
-        throw new Error('ignav gaf een 503')
+        throw new Error('ignav returned 503')
       }
       return makeResult([makeOption('KLM', 15650)])
     })
@@ -256,15 +256,15 @@ describe('App — robuust', () => {
     const [outColumn, backColumn] = wrapper.findAll('[data-testid="leg-column"]')
 
     expect(outColumn.text()).toContain('KLM')
-    expect(backColumn.text()).toContain('ignav gaf een 503')
+    expect(backColumn.text()).toContain('ignav returned 503')
     expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 156,50')
-    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Terugreis ontbreekt')
+    expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Return missing')
   })
 
-  it('de zoekknop is uitgeschakeld zolang een kant nog laadt', async () => {
-    // Dit is wat een race tussen twee zoekacties voorkomt (eigenaarsbesluit
-    // slice 5: geen requestId). Zonder :disabled kan een tweede zoekactie
-    // starten terwijl de eerste nog loopt.
+  it('the search button is disabled while one side is still loading', async () => {
+    // This is what prevents a race between two search actions (owner decision
+    // slice 5: no requestId). Without :disabled a second search could start
+    // while the first is still running.
     let releaseBack!: (r: SearchResult) => void
     vi.mocked(search).mockImplementation((_date, direction) =>
       direction === 'fi-nl'
@@ -275,32 +275,32 @@ describe('App — robuust', () => {
     const wrapper = await searchWith('2026-10-29', '2026-11-09')
     const button = wrapper.find('button[type="submit"]')
 
-    // Heen is binnen, terug nog niet: knop blijft dicht.
+    // Outbound is in, return not yet: button stays disabled.
     expect(wrapper.find('[data-testid="leg-column"]').text()).toContain('KLM')
     expect(button.attributes('disabled')).toBeDefined()
-    expect(button.text()).toBe('Zoeken…')
+    expect(button.text()).toBe('Searching…')
 
     releaseBack(makeResult([makeOption('Finnair', 9875)]))
     await flushPromises()
 
     expect(button.attributes('disabled')).toBeUndefined()
-    expect(button.text()).toBe('Zoek')
+    expect(button.text()).toBe('Search')
   })
 })
 
-describe('App — startland en geplande reizen', () => {
+describe('App — start country and planned trips', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(search).mockImplementation(async () => makeResult([makeOption('KLM', 15650)]))
   })
 
-  it('start in Finland draait beide richtingen om', async () => {
+  it('starting in Finland reverses both directions', async () => {
     const wrapper = mount(App)
     await flushPromises()
     await wrapper.find('[data-testid="start"]').setValue('fi')
 
-    expect(wrapper.find('form').text()).toContain('Heen (FI → NL)')
-    expect(wrapper.find('form').text()).toContain('Terug (NL → FI)')
+    expect(wrapper.find('form').text()).toContain('Outbound (FI → NL)')
+    expect(wrapper.find('form').text()).toContain('Return (NL → FI)')
 
     await wrapper.find('[data-testid="out-date"]').setValue('2026-10-25')
     await wrapper.find('[data-testid="back-date"]').setValue('2026-10-29')
@@ -311,7 +311,7 @@ describe('App — startland en geplande reizen', () => {
     expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
   })
 
-  it('een geplande reis vult de datum bij de juiste kant, gegeven het startland', async () => {
+  it('a planned trip fills the date at the correct leg, given the start country', async () => {
     vi.mocked(plannedTrips).mockResolvedValueOnce([
       { date: '2026-10-25', direction: 'fi-nl', traveller: 'chris' },
       { date: '2026-10-29', direction: 'nl-fi', traveller: 'chris' },
@@ -325,7 +325,7 @@ describe('App — startland en geplande reizen', () => {
     await toNl.trigger('click')
     await toFi.trigger('click')
 
-    // Start in Finland: fi-nl is de heenreis, nl-fi de terugreis.
+    // Start in Finland: fi-nl is the outbound, nl-fi is the return.
     expect((wrapper.find('[data-testid="out-date"]').element as HTMLInputElement).value).toBe('2026-10-25')
     expect((wrapper.find('[data-testid="back-date"]').element as HTMLInputElement).value).toBe('2026-10-29')
     expect((wrapper.find('select[data-testid="traveller"]').element as HTMLSelectElement).value).toBe('chris')
