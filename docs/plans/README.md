@@ -1,6 +1,6 @@
 # Handoff — flight finder
 
-**Updated:** 20 Oct 2026 · **branch:** `main` · all green: **PHP 182/182
+**Updated:** 20 Oct 2026 · **branch:** `main` · all green: **PHP 180/180
 (also `--network none`), frontend 95/95, build green.**
 
 ## 00. Status 20 Oct 2026 — feedback after real use
@@ -31,6 +31,12 @@ The owner used the app a few times and sent seven points. What was done:
   return takes the return along. An empty return stays empty.
 - **SAS workaround stays** — measured 20 Oct 2026, see
   `docs/plans/sas-price-unknown/00-status.md`.
+- **Planned trips ("Scheduled:" row) removed** (owner: unused). Gone: `/api/trips`,
+  `PlannedTrips`/`PlannedTrip` (two hardcoded dates; the spec had them replaced
+  by Google Calendar in phase 4), `legForTrip`. The form's default outbound
+  date `2026-10-29` came from there and is still hardcoded.
+- **Stale results cleared**: a side empties the moment it is searched again;
+  the total bar shows "…" while searching.
 - **Forcing no-cache: not built** (owner). Flight prices aren't cached by us;
   for the booking-link/train cache: `bin/console cache:pool:clear cache.app`.
 

@@ -1,4 +1,4 @@
-import type { BookingLinkResult, Direction, SearchResult, Trip, TravellerId } from './types'
+import type { BookingLinkResult, Direction, SearchResult, TravellerId } from './types'
 
 export async function search(
   date: string,
@@ -14,18 +14,6 @@ export async function search(
   }
 
   return response.json()
-}
-
-export async function plannedTrips(): Promise<Trip[]> {
-  const response = await fetch('/api/trips')
-
-  if (!response.ok) {
-    return []
-  }
-
-  const body = await response.json()
-
-  return body.trips
 }
 
 export async function fetchBookingLink(ref: string): Promise<BookingLinkResult> {

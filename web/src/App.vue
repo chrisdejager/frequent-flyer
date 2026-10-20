@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { plannedTrips, search } from './api'
+import { computed, reactive, ref, watch } from 'vue'
+import { search } from './api'
 import LegColumn from './components/LegColumn.vue'
 import TotalBar from './components/TotalBar.vue'
-import { chosenOption, defaultSelection, legDirections, legForTrip, shiftedDate, validateDates } from './roundTrip'
-import type { Direction, LegState, StartCountry, Trip, TravellerId } from './types'
+import { chosenOption, defaultSelection, legDirections, shiftedDate, validateDates } from './roundTrip'
+import type { Direction, LegState, StartCountry, TravellerId } from './types'
 
 // No traveller choice: without baggage costs (ADR-0005) both get the same
 // price. The API still takes one, so baggage can come back without an API change.
@@ -28,27 +28,10 @@ watch(() => out.date, date => {
   }
 })
 
-const trips = ref<Trip[]>([])
 const formError = ref('')
 // The dates from the last search: column headers and the return column follow
 // what was searched, not what has been typed in the form since.
 const searched = ref<{ out: string; back: string } | null>(null)
-
-onMounted(async () => {
-  trips.value = await plannedTrips()
-})
-
-function pick(trip: Trip) {
-  if (legForTrip(trip, start.value) === 'out') {
-    out.date = trip.date
-  } else {
-    back.date = trip.date
-  }
-}
-
-const label = (trip: Trip) =>
-  `${new Date(trip.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'UTC' })} ` +
-  `${trip.direction === 'nl-fi' ? '→ Finland' : '→ Nederland'}`
 
 const dayLabel = (date: string) =>
   new Date(date).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })
@@ -125,13 +108,6 @@ const isDefault = computed(() =>
   <main>
     <h1>Leiden ↔ Turku</h1>
 
-    <nav v-if="trips.length > 0" class="trips">
-      <span>Scheduled:</span>
-      <button v-for="trip in trips" :key="trip.date" type="button" @click="pick(trip)">
-        {{ label(trip) }}
-      </button>
-    </nav>
-
     <form @submit.prevent="run">
       <label>Departing from
         <select v-model="start" data-testid="start">
@@ -193,9 +169,6 @@ main { max-width: 76rem; margin: 0 auto; padding: 1.5rem; }
 form { display: flex; gap: .75rem; flex-wrap: wrap; align-items: end; margin-bottom: 1.5rem; }
 label { display: flex; flex-direction: column; font-size: .75rem; color: #666; gap: .2rem; }
 input, select, button { padding: .5rem; font: inherit; }
-.trips { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
-.trips span { color: #666; font-size: .9rem; }
-.trips button { background: #eef3ff; border: 1px solid #c7d7ff; border-radius: 999px; cursor: pointer; }
 .error { color: #b00020; }
 .columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; }
 @media (max-width: 70rem) { .columns { grid-template-columns: 1fr; } }

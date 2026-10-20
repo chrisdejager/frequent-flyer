@@ -43,12 +43,6 @@ export interface SearchResult {
   options: Option[]
 }
 
-export interface Trip {
-  date: string
-  direction: Direction
-  traveller: TravellerId
-}
-
 export interface LegState {
   direction: Direction
   /** 'YYYY-MM-DD'; '' = this leg is not searched. */

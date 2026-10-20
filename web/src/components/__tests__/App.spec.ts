@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import App from '../../App.vue'
-import type { SearchResult, Trip } from '../../types'
+import type { SearchResult } from '../../types'
 
 vi.mock('../../api', () => ({
-  plannedTrips: vi.fn(async (): Promise<Trip[]> => []),
   search: vi.fn(async (): Promise<SearchResult> => mockResult),
 }))
 
-import { plannedTrips, search } from '../../api'
+import { search } from '../../api'
 import { makeOption, makeResult } from '../../__tests__/fixtures'
 
 const rankedOption = {
@@ -299,7 +298,7 @@ describe('App — robust', () => {
   })
 })
 
-describe('App — start country and planned trips', () => {
+describe('App — start country', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(search).mockImplementation(async () => makeResult([makeOption('KLM', 15650)]))
@@ -322,24 +321,6 @@ describe('App — start country and planned trips', () => {
     expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
   })
 
-  it('a planned trip fills the date at the correct leg, given the start country', async () => {
-    vi.mocked(plannedTrips).mockResolvedValueOnce([
-      { date: '2026-10-25', direction: 'fi-nl', traveller: 'chris' },
-      { date: '2026-10-29', direction: 'nl-fi', traveller: 'chris' },
-    ])
-
-    const wrapper = mount(App)
-    await flushPromises()
-    await wrapper.find('[data-testid="start"]').setValue('fi')
-
-    const [toNl, toFi] = wrapper.findAll('.trips button')
-    await toNl.trigger('click')
-    await toFi.trigger('click')
-
-    // Start in Finland: fi-nl is the outbound, nl-fi is the return.
-    expect((wrapper.find('[data-testid="out-date"]').element as HTMLInputElement).value).toBe('2026-10-25')
-    expect((wrapper.find('[data-testid="back-date"]').element as HTMLInputElement).value).toBe('2026-10-29')
-  })
 })
 
 describe('App — return date picker', () => {

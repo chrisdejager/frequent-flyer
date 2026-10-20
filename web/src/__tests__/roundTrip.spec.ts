@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chosenOption, combine, defaultSelection, legDirections, legForTrip, partition, shiftedDate, validateDates } from '../roundTrip'
+import { chosenOption, combine, defaultSelection, legDirections, partition, shiftedDate, validateDates } from '../roundTrip'
 import { euro } from '../money'
 import { makeLeg, makeOption, makeResult } from './fixtures'
 
@@ -96,20 +96,6 @@ describe('validateDates', () => {
 
   it('rejects a return date before the departure date', () => {
     expect(validateDates('2026-10-29', '2026-10-28')).toBe('Return date is before departure date.')
-  })
-})
-
-describe('legForTrip', () => {
-  const trip = (direction: 'nl-fi' | 'fi-nl') => ({ date: '2026-10-29', direction, traveller: 'chris' as const })
-
-  it('links nl-fi to outbound when starting NL and to return when starting FI', () => {
-    expect(legForTrip(trip('nl-fi'), 'nl')).toBe('out')
-    expect(legForTrip(trip('nl-fi'), 'fi')).toBe('back')
-  })
-
-  it('links fi-nl to return when starting NL and to outbound when starting FI', () => {
-    expect(legForTrip(trip('fi-nl'), 'nl')).toBe('back')
-    expect(legForTrip(trip('fi-nl'), 'fi')).toBe('out')
   })
 })
 
