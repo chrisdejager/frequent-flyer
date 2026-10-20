@@ -9,6 +9,12 @@ with one click. Also considered but not chosen: a generic list `CARRIERS_WITHOUT
 Restart this plan if the problem persists (check periodically: SAS search price vs
 flysas.com).
 
+**Checked 20 Oct 2026:** unchanged at ignav. SK556+SK2728 AMS→TKU 26 Nov:
+search price €371; booking-links gives KLM (codeshare KL2858+KL8528, €371)
+and SAS only as an `http:` homepage without price. Removing the flysas.com
+link would send the SAS button to KLM. The owner saw correct SAS prices in
+the app; whether flysas.com itself is now ~€371 was not checked.
+
 **Fast version** (owner, 2026-10-03): no four gates; product choices from
 `01-product.md` + mockup apply, design below, two slices.
 

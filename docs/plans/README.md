@@ -1,7 +1,43 @@
 # Handoff — flight finder
 
-**Updated:** 3 Oct 2026 · **branch:** `main` · all green: **PHP 176/176
-(also `--network none`), frontend 77/77, build green.**
+**Updated:** 20 Oct 2026 · **branch:** `main` · all green: **PHP 182/182
+(also `--network none`), frontend 95/95, build green.**
+
+## 00. Status 20 Oct 2026 — feedback after real use
+
+The owner used the app a few times and sent seven points. What was done:
+
+- **Faster search: HEL and TKU in parallel.** The `FlightPriceSource` port now
+  takes a list of `Route`s in one call; `IgnavFlightSource` sends every request
+  before reading any answer (Symfony HttpClient is lazy, curl multiplexes).
+  Measured: one ignav call ~1.6 s; a whole search through the app 2.3 s.
+  Looking for a different free API: not now (owner: parallel first).
+- **Day forward/back per leg (‹ ›).** One ignav call per click, none in advance
+  (owner). Shifts from the *searched* date, never before today, never outbound
+  after return, disabled while searching (same race guard as ADR-0002).
+  ignav's `cheapest-dates` endpoint (31 days in one call) was considered as a
+  "from €X" hint; not chosen: it has no carrier filter, so its price can be
+  airBaltic/Turkish and undercut what we show.
+- **"Prices as of …" per column.** ignav's `observed_at` goes per itinerary to
+  `observedAt` in `/api/search`; the column shows the oldest, plus "· N h old"
+  when ≥ 1 h. Unknown/unparseable → null, never "now". The owner saw prices
+  that seemed to lag; we cache no flight prices ourselves, so if it happens
+  again this line says whether ignav's data was old. Not investigated further
+  (owner).
+- **Traveller dropdown removed.** Without baggage costs (ADR-0005) both get
+  the same price. The API still takes `traveller` (fixed `partner` in the
+  frontend), so baggage can come back without an API change.
+- **Return date picker** has `min` = outbound date; moving the outbound past the
+  return takes the return along. An empty return stays empty.
+- **SAS workaround stays** — measured 20 Oct 2026, see
+  `docs/plans/sas-price-unknown/00-status.md`.
+- **Forcing no-cache: not built** (owner). Flight prices aren't cached by us;
+  for the booking-link/train cache: `bin/console cache:pool:clear cache.app`.
+
+Side observation: ignav booking-links took **19.8 s** for one SAS itinerary
+(search: 1.6 s). If "Book" feels slow, that's where.
+
+---
 
 ## 00. Status 3 Oct 2026 — booking link done, SAS price deferred
 
