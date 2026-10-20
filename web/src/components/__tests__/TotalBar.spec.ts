@@ -54,4 +54,14 @@ describe('TotalBar', () => {
 
     expect(bar.text()).toContain('Outbound missing')
   })
+
+  it('while searching shows no amount and no "missing": the side is coming, not gone', () => {
+    const bar = mount(TotalBar, {
+      props: { out: makeOption('KLM', 100), back: null, backRequested: true, isDefault: true, searching: true },
+    })
+
+    expect(bar.find('[data-testid="total-sum"]').text()).toBe('…')
+    expect(bar.text()).toContain('Searching')
+    expect(bar.text()).not.toContain('missing')
+  })
 })

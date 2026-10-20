@@ -422,3 +422,47 @@ describe('App — day shift', () => {
     expect(wrapper.find('[data-testid="next-day"]').attributes('disabled')).toBeUndefined()
   })
 })
+
+describe('App — no stale results while searching', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  /** First search answers at once; every later call waits until released. */
+  async function searchThenHold() {
+    let release!: (r: SearchResult) => void
+    vi.mocked(search).mockImplementation(async () => makeResult([makeOption('Oldair', 15650)]))
+    const wrapper = await searchWith('2026-10-29', '2026-11-09')
+    vi.mocked(search).mockImplementation(() => new Promise(resolve => { release = resolve }))
+
+    return { wrapper, release: (r: SearchResult) => release(r) }
+  }
+
+  it('a day shift clears that side at once and leaves the other side standing', async () => {
+    const { wrapper, release } = await searchThenHold()
+
+    await wrapper.findAll('[data-testid="leg-column"]')[0].find('[data-testid="next-day"]').trigger('click')
+
+    const [outColumn, backColumn] = wrapper.findAll('[data-testid="leg-column"]')
+    expect(outColumn.text()).not.toContain('Oldair')
+    expect(outColumn.text()).toContain('Searching')
+    expect(backColumn.text()).toContain('Oldair')
+    expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('…')
+
+    release(makeResult([makeOption('Newair', 9875)]))
+    await flushPromises()
+    expect(wrapper.findAll('[data-testid="leg-column"]')[0].text()).toContain('Newair')
+    expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 255,25')
+  })
+
+  it('a new search from the form clears both sides at once', async () => {
+    const { wrapper } = await searchThenHold()
+
+    await wrapper.find('[data-testid="out-date"]').setValue('2026-10-30')
+    await wrapper.find('form').trigger('submit')
+
+    for (const column of wrapper.findAll('[data-testid="leg-column"]')) {
+      expect(column.text()).not.toContain('Oldair')
+    }
+  })
+})

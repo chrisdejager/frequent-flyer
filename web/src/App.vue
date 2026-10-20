@@ -54,8 +54,11 @@ const dayLabel = (date: string) =>
   new Date(date).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'long', timeZone: 'UTC' })
 
 async function runLeg(leg: LegState) {
+  // Clear at once: old results under a new date header are misleading.
   leg.loading = true
   leg.error = ''
+  leg.result = null
+  leg.selected = null
 
   try {
     leg.result = await search(leg.date, leg.direction, traveller)
@@ -158,6 +161,7 @@ const isDefault = computed(() =>
         :back="chosenOption(back)"
         :back-requested="searched.back !== ''"
         :is-default="isDefault"
+        :searching="loading()"
       />
 
       <div class="columns">

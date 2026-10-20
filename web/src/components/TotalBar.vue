@@ -10,6 +10,8 @@ const props = defineProps<{
   backRequested: boolean
   /** True = the chosen options are the default choice (cheapest ranked). */
   isDefault: boolean
+  /** A side is being searched: its amount is coming, not missing. */
+  searching?: boolean
 }>()
 
 const combined = computed(() => combine(props.out, props.back))
@@ -25,14 +27,20 @@ const legLine = (option: Option) => `${option.carrierLabel} · ${option.flightNu
     </div>
 
     <div class="sum">
-      <strong data-testid="total-sum">{{ euro(combined.totalCents) }}</strong>
-      <small>{{ isDefault ? 'Cheapest combination' : 'Your choice' }} · booked separately</small>
-      <small v-if="!backRequested">Outbound only</small>
-      <small v-if="!out" class="warn">Outbound missing — not counted</small>
-      <small v-if="backRequested && !back" class="warn">Return missing — not counted</small>
-      <small v-if="combined.indicative" class="warn">indicative</small>
-      <small v-if="combined.incomplete" class="warn">incomplete — train cost unknown</small>
-      <small v-if="combined.excludesTransfer">excl. transfer HEL→TKU</small>
+      <template v-if="searching">
+        <strong data-testid="total-sum">…</strong>
+        <small>Searching…</small>
+      </template>
+      <template v-else>
+        <strong data-testid="total-sum">{{ euro(combined.totalCents) }}</strong>
+        <small>{{ isDefault ? 'Cheapest combination' : 'Your choice' }} · booked separately</small>
+        <small v-if="!backRequested">Outbound only</small>
+        <small v-if="!out" class="warn">Outbound missing — not counted</small>
+        <small v-if="backRequested && !back" class="warn">Return missing — not counted</small>
+        <small v-if="combined.indicative" class="warn">indicative</small>
+        <small v-if="combined.incomplete" class="warn">incomplete — train cost unknown</small>
+        <small v-if="combined.excludesTransfer">excl. transfer HEL→TKU</small>
+      </template>
     </div>
   </section>
 </template>
