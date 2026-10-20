@@ -29,8 +29,11 @@ The owner used the app a few times and sent seven points. What was done:
   frontend), so baggage can come back without an API change.
 - **Return date picker** has `min` = outbound date; moving the outbound past the
   return takes the return along. An empty return stays empty.
-- **SAS workaround stays** — measured 20 Oct 2026, see
-  `docs/plans/sas-price-unknown/00-status.md`.
+- **SAS price is wrong, structurally** (measured on 4 dates): ignav gives
+  SAS-only tickets the KLM codeshare price. Open: a SerpApi experiment, waiting
+  for the owner to create an account. Everything — measurements, rejected
+  options, the exact next steps — is in `docs/plans/sas-price-unknown/00-status.md`
+  under "Where this stands — 20 Oct 2026". The flysas.com button stays.
 - **Planned trips ("Scheduled:" row) removed** (owner: unused). Gone: `/api/trips`,
   `PlannedTrips`/`PlannedTrip` (two hardcoded dates; the spec had them replaced
   by Google Calendar in phase 4), `legForTrip`. The form's default outbound

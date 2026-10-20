@@ -15,6 +15,56 @@ and SAS only as an `http:` homepage without price. Removing the flysas.com
 link would send the SAS button to KLM. The owner saw correct SAS prices in
 the app; whether flysas.com itself is now ~€371 was not checked.
 
+## Where this stands — 20 Oct 2026 (pick up here)
+
+**The problem is structural, not temporary.** The owner checked Google Flights
+for SK556 11:15 + SK2728 14:30 AMS→TKU on 26 Nov: €371 appears nowhere; Google
+says it has no price for that flight. ignav gives every SAS-only ticket the KLM
+codeshare price. Measured 20 Oct 2026 (search + booking-links per date):
+
+| Date   | Price in app | booking-links                         |
+|--------|--------------|---------------------------------------|
+| 5 Nov  | €502         | KLM €502, SAS without price           |
+| 12 Nov | €502         | KLM €502, SAS without price           |
+| 26 Nov | €371         | KLM €371 (KL2858+KL8528), SAS http-homepage without price |
+| 3 Dec  | €502         | only Kiwi €220                        |
+
+Not stale data: ignav does cache searches (a repeat call 18 min later came back
+in 0.5 s with the same `observed_at`), but the price was minutes old, not days.
+Mixed KLM+SAS tickets (e.g. KL1215+SK2728 €301) are KLM's own price and fine.
+
+**Rejected by the owner (20 Oct 2026):**
+- Taking a booking agency's price (e.g. Kiwi) as the SAS estimate, or a
+  "check other sellers" button calling booking-links on click: "too complex a
+  workaround". Also: agencies were found on only 1 of 4 dates, booking-links
+  took up to 20 s, and it would conflict with "no estimates in sorting".
+- Duffel (only source found with a direct SAS NDC connection; ~$0.005 per
+  search without bookings): not interested.
+
+**Researched, ruled out:** Amadeus Self-Service (shut down 17 Jul 2026), Kiwi
+Tequila (invite only), Skyscanner (commercial only), FlightAPI.io (20 free
+calls, then from $49/month). SerpApi, Apify Google Flights actors and
+fast-flights all read Google Flights, so their *list* price will likely miss
+SAS just like ignav.
+
+**Next step: a SerpApi experiment (open; owner can't create an account yet).**
+The owner sees agency prices on Google Flights that ignav's booking-links
+don't return; SerpApi's per-flight booking options (`booking_token` request)
+might have them. Plan, ~3 calls of the free tier (≈250/month), nothing built:
+1. Owner creates a free SerpApi account and puts `SERPAPI_KEY=...` in
+   `api/.env.local` (never in `api/.env`).
+2. Call the Google Flights engine for AMS→TKU 2026-11-26 one-way (`type=2`,
+   `gl=nl`, `currency=EUR`) and look at the SK556+SK2728 entry: price missing,
+   €371, or something else?
+3. Call booking options with that flight's `booking_token`; compare the sellers
+   and prices with ignav's booking-links (above) and with what the owner sees
+   in Google Flights.
+
+If SerpApi isn't better: the fallback is this plan's slices A+B below
+(SAS-only = "price unknown", unranked, flysas.com button stays).
+
+---
+
 **Fast version** (owner, 2026-10-03): no four gates; product choices from
 `01-product.md` + mockup apply, design below, two slices.
 
