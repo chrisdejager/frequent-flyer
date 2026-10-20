@@ -17,6 +17,7 @@ const viaHelsinki: Option = {
   connectionMinutes: null,
   flightNumbers: ['AY842'],
   bookingRef: '0ea5aa41342f00000056346ef96d746d',
+  observedAt: null,
   cost: {
     basePrice: 13400,
     trainCost: 2250,

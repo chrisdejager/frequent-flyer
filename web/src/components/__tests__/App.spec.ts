@@ -24,6 +24,7 @@ const rankedOption = {
   connectionMinutes: null,
   flightNumbers: ['AY842'],
   bookingRef: null,
+  observedAt: null,
   cost: {
     basePrice: 13400,
     trainCost: 2250,
@@ -48,6 +49,7 @@ const unrankedOption = {
   connectionMinutes: 60,
   flightNumbers: ['KL1234', 'KL5678'],
   bookingRef: null,
+  observedAt: null,
   cost: {
     basePrice: 19900,
     trainCost: 0,
@@ -102,15 +104,15 @@ describe('App', () => {
     expect(noticePos).toBeLessThan(klmPos)
   })
 
-  it('shows the traveller name after a search', async () => {
+  it('has no traveller choice: without baggage costs both get the same price', async () => {
     const wrapper = mount(App)
     await flushPromises()
 
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.find('.traveller-label').exists()).toBe(true)
-    expect(wrapper.find('.traveller-label').text()).toContain('Chris')
+    expect(wrapper.find('[data-testid="traveller"]').exists()).toBe(false)
+    expect(wrapper.find('.traveller-label').exists()).toBe(false)
   })
 
   it('does not go on the network — api.search is called mocked', async () => {
@@ -224,7 +226,16 @@ describe('App — dates', () => {
   })
 
   it('does not search with return date before departure date and shows a message', async () => {
-    const wrapper = await searchWith('2026-11-09', '2026-10-29')
+    // :min keeps the picker from offering such a date, but a typed date can still
+    // get past it in a browser. jsdom instead empties a value below min, which
+    // would turn this into a one-way search; so drop min to reach the guard.
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.find('[data-testid="out-date"]').setValue('2026-11-09')
+    wrapper.find('[data-testid="back-date"]').element.removeAttribute('min')
+    await wrapper.find('[data-testid="back-date"]').setValue('2026-10-29')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
     expect(vi.mocked(search)).not.toHaveBeenCalled()
     expect(wrapper.find('[data-testid="form-error"]').text()).toContain('Return date is before departure date')
@@ -328,6 +339,86 @@ describe('App — start country and planned trips', () => {
     // Start in Finland: fi-nl is the outbound, nl-fi is the return.
     expect((wrapper.find('[data-testid="out-date"]').element as HTMLInputElement).value).toBe('2026-10-25')
     expect((wrapper.find('[data-testid="back-date"]').element as HTMLInputElement).value).toBe('2026-10-29')
-    expect((wrapper.find('select[data-testid="traveller"]').element as HTMLSelectElement).value).toBe('chris')
+  })
+})
+
+describe('App — return date picker', () => {
+  it('the return picker cannot go before the outbound date', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.find('[data-testid="out-date"]').setValue('2026-11-03')
+
+    expect(wrapper.find('[data-testid="back-date"]').attributes('min')).toBe('2026-11-03')
+  })
+
+  it('moving the outbound past the return takes the return along', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.find('[data-testid="out-date"]').setValue('2026-10-29')
+    await wrapper.find('[data-testid="back-date"]').setValue('2026-11-02')
+    await wrapper.find('[data-testid="out-date"]').setValue('2026-11-05')
+
+    expect((wrapper.find('[data-testid="back-date"]').element as HTMLInputElement).value).toBe('2026-11-05')
+  })
+
+  it('an empty return stays empty: one-way stays one-way', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+    await wrapper.find('[data-testid="out-date"]').setValue('2026-11-05')
+
+    expect((wrapper.find('[data-testid="back-date"]').element as HTMLInputElement).value).toBe('')
+  })
+})
+
+describe('App — day shift', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(search).mockImplementation(async () => makeResult([makeOption('KLM', 15650)]))
+  })
+
+  it('a day forward on the outbound searches only the outbound, on the next day', async () => {
+    const wrapper = await searchWith('2026-10-29', '2026-11-09')
+    vi.mocked(search).mockClear()
+
+    await wrapper.findAll('[data-testid="leg-column"]')[0].find('[data-testid="next-day"]').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(search)).toHaveBeenCalledOnce()
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-30', 'nl-fi', 'partner')
+    const [outColumn, backColumn] = wrapper.findAll('[data-testid="leg-column"]')
+    expect(outColumn.find('h2').text()).toContain('30 oktober')
+    expect(backColumn.find('h2').text()).toContain('9 november')
+    expect((wrapper.find('[data-testid="out-date"]').element as HTMLInputElement).value).toBe('2026-10-30')
+  })
+
+  it('shifting uses the searched date, not a date typed into the form since', async () => {
+    const wrapper = await searchWith('2026-10-29', '2026-11-09')
+    await wrapper.find('[data-testid="back-date"]').setValue('2026-12-01')
+    vi.mocked(search).mockClear()
+
+    await wrapper.findAll('[data-testid="leg-column"]')[1].find('[data-testid="prev-day"]').trigger('click')
+    await flushPromises()
+
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-11-08', 'fi-nl', 'partner')
+  })
+
+  it('the outbound cannot be shifted past the return', async () => {
+    const wrapper = await searchWith('2026-11-09', '2026-11-09')
+
+    const [outColumn, backColumn] = wrapper.findAll('[data-testid="leg-column"]')
+    expect(outColumn.find('[data-testid="next-day"]').attributes('disabled')).toBeDefined()
+    expect(backColumn.find('[data-testid="prev-day"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('the arrows are disabled while a search is running', async () => {
+    let release!: (r: SearchResult) => void
+    vi.mocked(search).mockImplementation(() => new Promise(resolve => { release = resolve }))
+
+    const wrapper = await searchWith('2026-10-29', '')
+
+    expect(wrapper.find('[data-testid="next-day"]').attributes('disabled')).toBeDefined()
+    release(makeResult([makeOption('KLM', 15650)]))
+    await flushPromises()
+    expect(wrapper.find('[data-testid="next-day"]').attributes('disabled')).toBeUndefined()
   })
 })

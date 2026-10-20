@@ -72,3 +72,34 @@ export function validateDates(outDate: string, backDate: string): string | null 
 export function legForTrip(trip: Trip, start: StartCountry): 'out' | 'back' {
   return trip.direction === legDirections(start).out ? 'out' : 'back'
 }
+
+/**
+ * The searched date of one leg moved by `days`; null when that is not allowed:
+ * before today, outbound after return, or a return that was not searched.
+ * 'YYYY-MM-DD' sorts as text equal to the date itself.
+ */
+export function shiftedDate(
+  searched: { out: string; back: string },
+  leg: 'out' | 'back',
+  days: number,
+  today: string,
+): string | null {
+  const from = searched[leg]
+
+  if (from === '') {
+    return null
+  }
+
+  const date = new Date(`${from}T00:00:00Z`)
+  date.setUTCDate(date.getUTCDate() + days)
+  const shifted = date.toISOString().slice(0, 10)
+
+  const out = leg === 'out' ? shifted : searched.out
+  const back = leg === 'back' ? shifted : searched.back
+
+  if (shifted < today || validateDates(out, back) !== null) {
+    return null
+  }
+
+  return shifted
+}

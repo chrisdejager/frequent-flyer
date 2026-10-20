@@ -33,6 +33,8 @@ export interface Option {
   cost: Cost
   /** Reference to fetch the booking link; null = no Book button. */
   bookingRef: string | null
+  /** When the source fetched this price (ISO); null = unknown. */
+  observedAt: string | null
 }
 
 export interface SearchResult {

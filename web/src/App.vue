@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { plannedTrips, search } from './api'
 import LegColumn from './components/LegColumn.vue'
 import TotalBar from './components/TotalBar.vue'
-import { chosenOption, defaultSelection, legDirections, legForTrip, validateDates } from './roundTrip'
+import { chosenOption, defaultSelection, legDirections, legForTrip, shiftedDate, validateDates } from './roundTrip'
 import type { Direction, LegState, StartCountry, Trip, TravellerId } from './types'
 
-const traveller = ref<TravellerId>('partner')
+// No traveller choice: without baggage costs (ADR-0005) both get the same
+// price. The API still takes one, so baggage can come back without an API change.
+const traveller: TravellerId = 'partner'
 const start = ref<StartCountry>('nl')
 const directions = computed(() => legDirections(start.value))
 
@@ -17,6 +19,14 @@ const emptyLeg = (direction: Direction, date: string): LegState =>
 
 const out = reactive<LegState>(emptyLeg('nl-fi', '2026-10-29'))
 const back = reactive<LegState>(emptyLeg('fi-nl', ''))
+
+// The return picker starts at the outbound date (via :min); an outbound moved past
+// the return takes it along. An empty return stays empty: one-way stays one-way.
+watch(() => out.date, date => {
+  if (back.date !== '' && back.date < date) {
+    back.date = date
+  }
+})
 
 const trips = ref<Trip[]>([])
 const formError = ref('')
@@ -34,7 +44,6 @@ function pick(trip: Trip) {
   } else {
     back.date = trip.date
   }
-  traveller.value = trip.traveller
 }
 
 const label = (trip: Trip) =>
@@ -49,7 +58,7 @@ async function runLeg(leg: LegState) {
   leg.error = ''
 
   try {
-    leg.result = await search(leg.date, leg.direction, traveller.value)
+    leg.result = await search(leg.date, leg.direction, traveller)
     leg.selected = defaultSelection(leg.result)
   } catch (e) {
     leg.error = e instanceof Error ? e.message : String(e)
@@ -78,6 +87,28 @@ async function run() {
 }
 
 const loading = () => out.loading || back.loading
+
+// Local date: the picker and "today" are the user's, not UTC.
+const today = () => new Intl.DateTimeFormat('en-CA').format(new Date())
+
+// A day earlier or later for one leg: searches only that leg, from the date that
+// was searched (not what has been typed into the form since). One ignav call
+// per click, none in advance.
+const shiftTo = (leg: 'out' | 'back', days: number) =>
+  searched.value && !loading() ? shiftedDate(searched.value, leg, days, today()) : null
+
+async function shift(leg: 'out' | 'back', days: number) {
+  const date = shiftTo(leg, days)
+
+  if (date === null || searched.value === null) {
+    return
+  }
+
+  searched.value = { ...searched.value, [leg]: date }
+  const state = leg === 'out' ? out : back
+  state.date = date
+  await runLeg(state)
+}
 
 const isDefaultLeg = (leg: LegState) =>
   leg.selected === (leg.result ? defaultSelection(leg.result) : null)
@@ -111,14 +142,7 @@ const isDefault = computed(() =>
       </label>
 
       <label>Return ({{ arrow(directions.back) }}) — optional
-        <input v-model="back.date" type="date" data-testid="back-date" />
-      </label>
-
-      <label>Traveller
-        <select v-model="traveller" data-testid="traveller">
-          <option value="chris">Chris</option>
-          <option value="partner">Partner</option>
-        </select>
+        <input v-model="back.date" type="date" :min="out.date" data-testid="back-date" />
       </label>
 
       <button type="submit" :disabled="loading()">
@@ -129,8 +153,6 @@ const isDefault = computed(() =>
     <p v-if="formError" class="error" data-testid="form-error">{{ formError }}</p>
 
     <template v-if="searched">
-      <p v-if="out.result" class="traveller-label">Prices for {{ out.result.traveller.name }}</p>
-
       <TotalBar
         :out="chosenOption(out)"
         :back="chosenOption(back)"
@@ -139,12 +161,22 @@ const isDefault = computed(() =>
       />
 
       <div class="columns">
-        <LegColumn :title="`Outbound — ${dayLabel(searched.out)}`" :leg="out" @select="i => (out.selected = i)" />
+        <LegColumn
+          :title="`Outbound — ${dayLabel(searched.out)}`"
+          :leg="out"
+          :can-prev="shiftTo('out', -1) !== null"
+          :can-next="shiftTo('out', 1) !== null"
+          @select="i => (out.selected = i)"
+          @shift="d => shift('out', d)"
+        />
         <LegColumn
           v-if="searched.back"
           :title="`Return — ${dayLabel(searched.back)}`"
           :leg="back"
+          :can-prev="shiftTo('back', -1) !== null"
+          :can-next="shiftTo('back', 1) !== null"
           @select="i => (back.selected = i)"
+          @shift="d => shift('back', d)"
         />
       </div>
     </template>
@@ -160,7 +192,6 @@ input, select, button { padding: .5rem; font: inherit; }
 .trips { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
 .trips span { color: #666; font-size: .9rem; }
 .trips button { background: #eef3ff; border: 1px solid #c7d7ff; border-radius: 999px; cursor: pointer; }
-.traveller-label { font-size: .85rem; color: #555; margin-bottom: .75rem; }
 .error { color: #b00020; }
 .columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; }
 @media (max-width: 70rem) { .columns { grid-template-columns: 1fr; } }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chosenOption, combine, defaultSelection, legDirections, legForTrip, partition, validateDates } from '../roundTrip'
+import { chosenOption, combine, defaultSelection, legDirections, legForTrip, partition, shiftedDate, validateDates } from '../roundTrip'
 import { euro } from '../money'
 import { makeLeg, makeOption, makeResult } from './fixtures'
 
@@ -110,5 +110,35 @@ describe('legForTrip', () => {
   it('links fi-nl to return when starting NL and to outbound when starting FI', () => {
     expect(legForTrip(trip('fi-nl'), 'nl')).toBe('back')
     expect(legForTrip(trip('fi-nl'), 'fi')).toBe('out')
+  })
+})
+
+describe('shiftedDate', () => {
+  const today = '2026-10-20'
+
+  it('moves a leg one day forward or back', () => {
+    expect(shiftedDate({ out: '2026-10-29', back: '2026-11-09' }, 'out', 1, today)).toBe('2026-10-30')
+    expect(shiftedDate({ out: '2026-10-29', back: '2026-11-09' }, 'back', -1, today)).toBe('2026-11-08')
+  })
+
+  it('crosses month and year ends', () => {
+    expect(shiftedDate({ out: '2026-10-31', back: '' }, 'out', 1, today)).toBe('2026-11-01')
+    expect(shiftedDate({ out: '2026-12-31', back: '' }, 'out', 1, today)).toBe('2027-01-01')
+  })
+
+  it('never goes before today', () => {
+    expect(shiftedDate({ out: '2026-10-20', back: '' }, 'out', -1, today)).toBeNull()
+    expect(shiftedDate({ out: '2026-10-21', back: '' }, 'out', -1, today)).toBe('2026-10-20')
+  })
+
+  it('never puts the outbound after the return', () => {
+    expect(shiftedDate({ out: '2026-11-09', back: '2026-11-09' }, 'out', 1, today)).toBeNull()
+    expect(shiftedDate({ out: '2026-11-09', back: '2026-11-09' }, 'back', -1, today)).toBeNull()
+    // Same day out and back is allowed, as in the form.
+    expect(shiftedDate({ out: '2026-11-08', back: '2026-11-09' }, 'out', 1, today)).toBe('2026-11-09')
+  })
+
+  it('a return that was not searched cannot be shifted', () => {
+    expect(shiftedDate({ out: '2026-10-29', back: '' }, 'back', 1, today)).toBeNull()
   })
 })
