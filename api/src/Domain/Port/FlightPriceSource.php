@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Domain\Port;
 
-use App\Domain\Flight\Airport;
 use App\Domain\Flight\Itinerary;
+use App\Domain\Flight\Route;
 
 interface FlightPriceSource
 {
     /**
-     * @return Itinerary[] unfiltered; rules are applied later
+     * All routes in one call, so an adapter can fetch them concurrently.
+     *
+     * @param list<Route> $routes
+     *
+     * @return Itinerary[] unfiltered, all routes together; rules are applied later
      */
-    public function search(Airport $from, Airport $to, \DateTimeImmutable $date): array;
+    public function search(array $routes, \DateTimeImmutable $date): array;
 }

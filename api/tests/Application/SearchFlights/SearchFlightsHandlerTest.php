@@ -140,6 +140,8 @@ final class SearchFlightsHandlerTest extends TestCase
             [[Airport::Hel, Airport::Ams, '2026-10-25'], [Airport::Tku, Airport::Ams, '2026-10-25']],
             $flights->calls,
         );
+        self::assertSame([2], $flights->batches,
+            'both routes in one call, so the source can fetch them concurrently');
     }
 
     public function test_return_flight_via_helsinki_includes_train_cost(): void

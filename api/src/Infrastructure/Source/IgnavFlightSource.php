@@ -8,11 +8,13 @@ use App\Domain\Flight\Airport;
 use App\Domain\Flight\Carrier;
 use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\Money;
+use App\Domain\Flight\Route;
 use App\Domain\Flight\RoutePattern;
 use App\Domain\Flight\Segment;
 use App\Domain\Port\FlightPriceSource;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final readonly class IgnavFlightSource implements FlightPriceSource
 {
@@ -50,30 +52,59 @@ final readonly class IgnavFlightSource implements FlightPriceSource
     ) {
     }
 
-    public function search(Airport $from, Airport $to, \DateTimeImmutable $date): array
+    public function search(array $routes, \DateTimeImmutable $date): array
+    {
+        // Send every request before reading any answer. Symfony's HttpClient is
+        // lazy, so the transfers run concurrently: the wait is the slowest route,
+        // not the sum (one call measured ~1.6 s on 20 Oct 2026).
+        $pending = [];
+
+        foreach ($routes as $route) {
+            $pending[] = [$route, $this->request($route, $date)];
+        }
+
+        $found = [];
+
+        foreach ($pending as [$route, $response]) {
+            if (null !== $response) {
+                $found = [...$found, ...$this->read($response, $route->from, $route->to, $date)];
+            }
+        }
+
+        return $found;
+    }
+
+    private function request(Route $route, \DateTimeImmutable $date): ?ResponseInterface
     {
         try {
-            $response = $this->http->request('POST', self::ENDPOINT, [
+            return $this->http->request('POST', self::ENDPOINT, [
                 'headers' => [
                     'X-Api-Key: '.$this->apiKey,
                     'Content-Type: application/json',
                 ],
                 'json' => [
-                    'origin' => $from->value,
-                    'destination' => $to->value,
+                    'origin' => $route->from->value,
+                    'destination' => $route->to->value,
                     'departure_date' => $date->format('Y-m-d'),
                     'market' => self::MARKET,
                 ],
             ]);
+        } catch (\Symfony\Contracts\HttpClient\Exception\ExceptionInterface $e) {
+            $this->logHttpError($route->from, $route->to, $date, $e);
 
+            return null;
+        }
+    }
+
+    /**
+     * @return Itinerary[]
+     */
+    private function read(ResponseInterface $response, Airport $from, Airport $to, \DateTimeImmutable $date): array
+    {
+        try {
             $payload = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
         } catch (\Symfony\Contracts\HttpClient\Exception\ExceptionInterface $e) {
-            $this->logger?->warning('ignav HTTP error fetching flights ({from}→{to}, {date}): {reason}', [
-                'from'   => $from->value,
-                'to'     => $to->value,
-                'date'   => $date->format('Y-m-d'),
-                'reason' => $e->getMessage(),
-            ]);
+            $this->logHttpError($from, $to, $date, $e);
 
             return [];
         } catch (\JsonException $e) {
@@ -100,6 +131,7 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             return [];
         }
 
+        $observedAt = self::observedAt($payload['observed_at'] ?? null);
         $itineraries = [];
         $skipped = 0;
 
@@ -109,7 +141,7 @@ final readonly class IgnavFlightSource implements FlightPriceSource
                 continue;
             }
 
-            $itinerary = $this->toItinerary($offer, $from, $to);
+            $itinerary = $this->toItinerary($offer, $from, $to, $observedAt);
 
             if (null !== $itinerary) {
                 $itineraries[] = $itinerary;
@@ -133,7 +165,7 @@ final readonly class IgnavFlightSource implements FlightPriceSource
     /**
      * @param array<string, mixed> $offer
      */
-    private function toItinerary(array $offer, Airport $from, Airport $to): ?Itinerary
+    private function toItinerary(array $offer, Airport $from, Airport $to, ?\DateTimeImmutable $observedAt): ?Itinerary
     {
         // A self-transfer is not a through ticket: baggage is not checked through
         // and there is no compensation for a missed connection. The baggage calculation below
@@ -306,6 +338,35 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             $trainNeeded ? RoutePattern::ViaHelsinkiWithTrain : RoutePattern::ThroughTicket,
             // Without a usable id the option remains as is, just without a Book button.
             is_string($offer['ignav_id'] ?? null) && '' !== $offer['ignav_id'] ? $offer['ignav_id'] : null,
+            $observedAt,
         );
+    }
+
+    /**
+     * Only an absolute UTC timestamp as ignav sends it ("2026-10-20T19:05:53.833840Z").
+     * Anything else is null: the constructor would read "" or "yesterday" as a
+     * relative time and make an unknown age look fresh.
+     */
+    private static function observedAt(mixed $raw): ?\DateTimeImmutable
+    {
+        if (!is_string($raw) || 1 !== preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z\z/', $raw)) {
+            return null;
+        }
+
+        try {
+            return new \DateTimeImmutable($raw);
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    private function logHttpError(Airport $from, Airport $to, \DateTimeImmutable $date, \Throwable $e): void
+    {
+        $this->logger?->warning('ignav HTTP error fetching flights ({from}→{to}, {date}): {reason}', [
+            'from'   => $from->value,
+            'to'     => $to->value,
+            'date'   => $date->format('Y-m-d'),
+            'reason' => $e->getMessage(),
+        ]);
     }
 }

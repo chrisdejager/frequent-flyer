@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Domain\Port;
 
 use App\Domain\Flight\Airport;
+use App\Domain\Flight\Route;
 use App\Domain\Flight\Carrier;
 use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\Money;
@@ -21,7 +22,7 @@ final class InMemoryFlightPriceSourceTest extends TestCase
         $source = new InMemoryFlightPriceSource();
         $source->give(Airport::Ams, Airport::Hel, [self::anItinerary()]);
 
-        $found = $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-29'));
+        $found = $source->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-29'));
 
         self::assertCount(1, $found);
         self::assertSame([[Airport::Ams, Airport::Hel, '2026-10-29']], $source->calls);
@@ -31,7 +32,7 @@ final class InMemoryFlightPriceSourceTest extends TestCase
     {
         $source = new InMemoryFlightPriceSource();
 
-        self::assertSame([], $source->search(Airport::Ams, Airport::Tku, new \DateTimeImmutable('2026-10-29')));
+        self::assertSame([], $source->search([new Route(Airport::Ams, Airport::Tku)], new \DateTimeImmutable('2026-10-29')));
     }
 
     public function test_the_train_double_counts_its_calls(): void

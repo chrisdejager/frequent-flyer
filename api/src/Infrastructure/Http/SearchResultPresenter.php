@@ -58,6 +58,7 @@ final readonly class SearchResultPresenter
                 'trainCostIncluded' => $cost->trainCostIncluded,
             ],
             'bookingRef' => $itinerary->bookingRef,
+            'observedAt' => $itinerary->observedAt?->format(\DATE_ATOM),
         ];
     }
 }

@@ -16,6 +16,8 @@ final readonly class Itinerary
         public RoutePattern $pattern,
         /** Reference from the source to retrieve a booking link later (ignav_id). */
         public ?string $bookingRef = null,
+        /** When the source fetched this price; null = unknown. Not the airline's quote time. */
+        public ?\DateTimeImmutable $observedAt = null,
     ) {
         if ([] === $segments) {
             throw new \InvalidArgumentException('A travel option must have at least one segment.');

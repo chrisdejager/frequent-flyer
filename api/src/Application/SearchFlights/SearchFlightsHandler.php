@@ -6,6 +6,7 @@ namespace App\Application\SearchFlights;
 
 use App\Domain\Flight\Airport;
 use App\Domain\Flight\Itinerary;
+use App\Domain\Flight\Route;
 use App\Domain\Flight\RoutePattern;
 use App\Domain\Port\FlightPriceSource;
 use App\Domain\Port\PriceHistory;
@@ -30,10 +31,11 @@ final readonly class SearchFlightsHandler
         $rules = RuleSet::standard($query->direction);
         $searchedAt = new \DateTimeImmutable();
 
-        $candidates = [
-            ...$this->fetch(Airport::Hel, $query),
-            ...$this->fetch(Airport::Tku, $query),
-        ];
+        // Both routes in one call, so the source can fetch them concurrently.
+        $candidates = $this->flights->search(
+            [$this->route(Airport::Hel, $query), $this->route(Airport::Tku, $query)],
+            $query->date,
+        );
 
         $valid = $rules->filter($candidates);
 
@@ -74,14 +76,11 @@ final readonly class SearchFlightsHandler
         return new SearchResult([...$ranked, ...$unranked], $traveller, $searchedAt);
     }
 
-    /**
-     * @return Itinerary[]
-     */
-    private function fetch(Airport $finnishEnd, SearchFlightsQuery $query): array
+    private function route(Airport $finnishEnd, SearchFlightsQuery $query): Route
     {
         return $query->direction->isOutbound()
-            ? $this->flights->search(Airport::Ams, $finnishEnd, $query->date)
-            : $this->flights->search($finnishEnd, Airport::Ams, $query->date);
+            ? new Route(Airport::Ams, $finnishEnd)
+            : new Route($finnishEnd, Airport::Ams);
     }
 
     /**

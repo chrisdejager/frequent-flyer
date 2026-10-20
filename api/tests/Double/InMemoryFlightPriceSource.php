@@ -6,6 +6,7 @@ namespace App\Tests\Double;
 
 use App\Domain\Flight\Airport;
 use App\Domain\Flight\Itinerary;
+use App\Domain\Flight\Route;
 use App\Domain\Port\FlightPriceSource;
 
 final class InMemoryFlightPriceSource implements FlightPriceSource
@@ -16,6 +17,9 @@ final class InMemoryFlightPriceSource implements FlightPriceSource
     /** @var array<int, array{Airport, Airport, string}> */
     public array $calls = [];
 
+    /** Number of routes per search() call: one entry per call. @var list<int> */
+    public array $batches = [];
+
     /**
      * @param Itinerary[] $itineraries
      */
@@ -24,10 +28,16 @@ final class InMemoryFlightPriceSource implements FlightPriceSource
         $this->byRoute[$from->value.'-'.$to->value] = $itineraries;
     }
 
-    public function search(Airport $from, Airport $to, \DateTimeImmutable $date): array
+    public function search(array $routes, \DateTimeImmutable $date): array
     {
-        $this->calls[] = [$from, $to, $date->format('Y-m-d')];
+        $this->batches[] = count($routes);
+        $found = [];
 
-        return $this->byRoute[$from->value.'-'.$to->value] ?? [];
+        foreach ($routes as $route) {
+            $this->calls[] = [$route->from, $route->to, $date->format('Y-m-d')];
+            $found = [...$found, ...$this->byRoute[$route->from->value.'-'.$route->to->value] ?? []];
+        }
+
+        return $found;
     }
 }

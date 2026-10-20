@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\Source;
 
 use App\Domain\Flight\Airport;
+use App\Domain\Flight\Route;
 use App\Domain\Flight\Carrier;
 use App\Domain\Flight\RoutePattern;
 use App\Infrastructure\Source\IgnavFlightSource;
@@ -125,7 +126,7 @@ final class IgnavFlightSourceTest extends TestCase
     private function searchWith(array $offer): array
     {
         return $this->sourceReturning(['itineraries' => [$offer]])
-            ->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17'));
+            ->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-17'));
     }
 
     /**
@@ -134,7 +135,7 @@ final class IgnavFlightSourceTest extends TestCase
     private function searchRealPayload(): array
     {
         return $this->sourceReturning($this->realPayload())
-            ->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17'));
+            ->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-17'));
     }
 
     // ------------------------------------------------- map the real response
@@ -227,7 +228,7 @@ final class IgnavFlightSourceTest extends TestCase
             },
         );
 
-        $source->search(Airport::Ams, Airport::Tku, new \DateTimeImmutable('2026-10-17'));
+        $source->search([new Route(Airport::Ams, Airport::Tku)], new \DateTimeImmutable('2026-10-17'));
 
         self::assertSame('POST', $seen['method']);
         self::assertSame('https://ignav.com/api/fares/one-way', $seen['url']);
@@ -245,6 +246,117 @@ final class IgnavFlightSourceTest extends TestCase
             ['origin' => 'AMS', 'destination' => 'TKU', 'departure_date' => '2026-10-17', 'market' => 'NL'],
             $body,
         );
+    }
+
+    // -------------------------------------------------------- several routes
+
+    public function test_all_routes_are_requested_before_the_first_answer_is_read(): void
+    {
+        // Measured 20 Oct 2026: one ignav call takes ~1.6 s. If the adapter waits
+        // for the HEL answer before sending the TKU request, the two add up.
+        $requested = 0;
+        $requestedWhenFirstRead = null;
+
+        $client = new MockHttpClient(function () use (&$requested, &$requestedWhenFirstRead): MockResponse {
+            ++$requested;
+
+            return new MockResponse((static function () use (&$requested, &$requestedWhenFirstRead): \Generator {
+                $requestedWhenFirstRead ??= $requested;
+                yield '{"itineraries":[]}';
+            })());
+        });
+
+        (new IgnavFlightSource($client, 'test-key'))->search(
+            [new Route(Airport::Ams, Airport::Hel), new Route(Airport::Ams, Airport::Tku)],
+            new \DateTimeImmutable('2026-10-17'),
+        );
+
+        self::assertSame(2, $requestedWhenFirstRead, 'both requests must be out before either answer is read');
+    }
+
+    public function test_results_of_all_routes_are_combined(): void
+    {
+        $client = new MockHttpClient($this->answerPerDestination([
+            'HEL' => new MockResponse(json_encode(['itineraries' => [$this->offer()]], JSON_THROW_ON_ERROR)),
+            'TKU' => new MockResponse(json_encode(['itineraries' => [$this->tkuOffer()]], JSON_THROW_ON_ERROR)),
+        ]));
+
+        $found = (new IgnavFlightSource($client, 'test-key'))->search(
+            [new Route(Airport::Ams, Airport::Hel), new Route(Airport::Ams, Airport::Tku)],
+            new \DateTimeImmutable('2026-10-17'),
+        );
+
+        self::assertSame(
+            [Airport::Hel, Airport::Tku],
+            array_map(static fn ($i) => $i->destination(), $found),
+        );
+    }
+
+    public function test_a_failing_route_does_not_drop_the_other(): void
+    {
+        $client = new MockHttpClient($this->answerPerDestination([
+            'HEL' => new MockResponse('', ['http_code' => 429]),
+            'TKU' => new MockResponse(json_encode(['itineraries' => [$this->tkuOffer()]], JSON_THROW_ON_ERROR)),
+        ]));
+
+        $found = (new IgnavFlightSource($client, 'test-key'))->search(
+            [new Route(Airport::Ams, Airport::Hel), new Route(Airport::Ams, Airport::Tku)],
+            new \DateTimeImmutable('2026-10-17'),
+        );
+
+        self::assertCount(1, $found);
+        self::assertSame(Airport::Tku, $found[0]->destination());
+    }
+
+    /**
+     * @param array<string, MockResponse> $byDestination
+     */
+    private function answerPerDestination(array $byDestination): \Closure
+    {
+        return static function (string $method, string $url, array $options) use ($byDestination): MockResponse {
+            $body = json_decode((string) $options['body'], true, 512, JSON_THROW_ON_ERROR);
+
+            return $byDestination[$body['destination']];
+        };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function tkuOffer(): array
+    {
+        $offer = $this->offer();
+        $offer['outbound']['segments'][0]['arrival_airport'] = 'TKU';
+
+        return $offer;
+    }
+
+    // ------------------------------------------------------------ observed_at
+
+    public function test_observed_at_is_carried_onto_every_itinerary(): void
+    {
+        $found = $this->sourceReturning([
+            'observed_at' => '2026-10-20T19:05:53.833840Z',
+            'itineraries' => [$this->offer(), $this->offer()],
+        ])->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-17'));
+
+        self::assertCount(2, $found);
+        foreach ($found as $itinerary) {
+            self::assertSame('2026-10-20T19:05:53+00:00', $itinerary->observedAt?->format(\DATE_ATOM));
+        }
+    }
+
+    public function test_missing_or_unreadable_observed_at_is_null_not_now(): void
+    {
+        // new \DateTimeImmutable('') would silently mean "now" — exactly the
+        // false freshness this field exists to expose.
+        foreach ([null, '', 'yesterday', '2026-10-20 19:05', 12345] as $raw) {
+            $found = $this->sourceReturning(['observed_at' => $raw, 'itineraries' => [$this->offer()]])
+                ->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-17'));
+
+            self::assertCount(1, $found, var_export($raw, true));
+            self::assertNull($found[0]->observedAt, var_export($raw, true));
+        }
     }
 
     // ------------------------------------------------------------ rejection rules
@@ -424,7 +536,7 @@ final class IgnavFlightSourceTest extends TestCase
         $client = new MockHttpClient(new MockResponse('', ['http_code' => 429]));
         $source = new IgnavFlightSource($client, 'test-key');
 
-        self::assertSame([], $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17')));
+        self::assertSame([], $source->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-17')));
     }
 
     public function test_html_body_yields_no_results_and_does_not_throw(): void
@@ -432,7 +544,7 @@ final class IgnavFlightSourceTest extends TestCase
         $client = new MockHttpClient(new MockResponse('<html>rate limited</html>'));
         $source = new IgnavFlightSource($client, 'test-key');
 
-        self::assertSame([], $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17')));
+        self::assertSame([], $source->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-17')));
     }
 
     public function test_missing_itineraries_key_is_logged_as_a_shape_change(): void
@@ -441,7 +553,7 @@ final class IgnavFlightSourceTest extends TestCase
         $client = new MockHttpClient(new MockResponse('{"error":"quota exceeded"}'));
         $source = new IgnavFlightSource($client, 'test-key', $logger);
 
-        self::assertSame([], $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17')));
+        self::assertSame([], $source->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-17')));
         self::assertCount(1, $logger->warnings);
         self::assertStringContainsString('itineraries', $logger->warnings[0]);
     }
@@ -453,7 +565,7 @@ final class IgnavFlightSourceTest extends TestCase
         $client = new MockHttpClient(new MockResponse('{"itineraries":[]}'));
         $source = new IgnavFlightSource($client, 'test-key', $logger);
 
-        self::assertSame([], $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17')));
+        self::assertSame([], $source->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-17')));
         self::assertSame([], $logger->warnings);
     }
 
@@ -468,7 +580,7 @@ final class IgnavFlightSourceTest extends TestCase
         ));
         $source = new IgnavFlightSource($client, 'test-key', $logger);
 
-        self::assertSame([], $source->search(Airport::Ams, Airport::Hel, new \DateTimeImmutable('2026-10-17')));
+        self::assertSame([], $source->search([new Route(Airport::Ams, Airport::Hel)], new \DateTimeImmutable('2026-10-17')));
         self::assertCount(1, $logger->warnings);
         self::assertStringContainsString('skipped', $logger->warnings[0]);
     }

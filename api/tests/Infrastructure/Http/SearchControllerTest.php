@@ -148,7 +148,7 @@ final class SearchControllerTest extends WebTestCase
         // A FlightPriceSource that throws InvalidArgumentException,
         // as if Money or Itinerary received corrupt source data.
         $broken = new class implements FlightPriceSource {
-            public function search(Airport $from, Airport $to, \DateTimeImmutable $date): array
+            public function search(array $routes, \DateTimeImmutable $date): array
             {
                 throw new \InvalidArgumentException('Amount must not be negative.');
             }
@@ -381,6 +381,38 @@ final class SearchControllerTest extends WebTestCase
         // Without a ref the key is present anyway, as null: the frontend then shows no button.
         self::assertArrayHasKey('bookingRef', $body['options'][1]);
         self::assertNull($body['options'][1]['bookingRef']);
+    }
+
+    public function test_each_option_exposes_when_the_source_observed_its_price(): void
+    {
+        $client = static::createClient();
+
+        $observed = new Itinerary(
+            Carrier::Finnair,
+            [new Segment(
+                Airport::Ams,
+                Airport::Hel,
+                new \DateTimeImmutable('2026-10-29 13:00'),
+                new \DateTimeImmutable('2026-10-29 16:45'),
+                'AY842',
+            )],
+            Money::fromEuros(120), // cheaper, so guaranteed options[0]
+            RoutePattern::ViaHelsinkiWithTrain,
+            observedAt: new \DateTimeImmutable('2026-10-20T19:05:53Z'),
+        );
+
+        $flights = new InMemoryFlightPriceSource();
+        $flights->give(Airport::Ams, Airport::Hel, [$observed, self::aFinnairFlight()]);
+        static::getContainer()->set(FlightPriceSource::class, $flights);
+
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+        $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('2026-10-20T19:05:53+00:00', $body['options'][0]['observedAt']);
+        // Unknown is null, never "now": a made-up timestamp would look fresh.
+        self::assertArrayHasKey('observedAt', $body['options'][1]);
+        self::assertNull($body['options'][1]['observedAt']);
     }
 
     private static function aFinnairFlight(): Itinerary
