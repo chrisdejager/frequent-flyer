@@ -46,10 +46,19 @@ docker compose run --rm node npm run test
 ## To the VPS
 
 Production runs from two images with the code baked in (`docker/php/Dockerfile`
-target `prod`, `docker/nginx/Dockerfile`). Try the production stack locally:
+target `prod`, `docker/nginx/Dockerfile`); see ADR-0007. Locally they don't run
+by default: check them with the smoke test, which starts them without internet
+access and tears them down again.
+
+```bash
+docker compose -f compose.prod.yaml build
+scripts/smoke-test.sh
+```
+
+Only when you want to click through the production build yourself:
 
 ```bash
 cp app.env.example app.env        # fill in; git-ignored
-docker compose -f compose.prod.yaml build
-docker compose -f compose.prod.yaml up -d   # http://127.0.0.1:8081
+docker compose -f compose.prod.yaml up -d     # http://127.0.0.1:8081
+docker compose -f compose.prod.yaml down      # when done
 ```
