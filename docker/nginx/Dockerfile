@@ -10,5 +10,7 @@ COPY web/ ./
 RUN npm run build
 
 FROM nginx:alpine
+
+LABEL org.opencontainers.image.source=https://github.com/chrisdejager/flight-planner
 COPY docker/nginx/prod.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /web/dist /srv/web

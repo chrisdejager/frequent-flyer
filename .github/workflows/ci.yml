@@ -1,0 +1,72 @@
+# Tests, then the production images: build, smoke test, and only on main
+# push them to ghcr.io. Deploying is a separate, manual step (ADR-0007).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Its own name, so a local run of these commands never touches the dev stack.
+  COMPOSE_PROJECT_NAME: flights-ci
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # The same containers as in development (compose.yaml), so CI runs
+      # the PHP and Node versions we develop against.
+      - name: Install PHP dependencies
+        run: |
+          echo "HOST_UID=$(id -u)" >> "$GITHUB_ENV"
+          echo "HOST_GID=$(id -g)" >> "$GITHUB_ENV"
+          HOST_UID=$(id -u) HOST_GID=$(id -g) \
+            docker compose run --rm -e COMPOSER_HOME=/tmp/composer php \
+            composer install --no-interaction --no-progress
+
+      # --network none: proves no test touches the network (AGENTS.md).
+      - name: PHP suite, without network
+        run: |
+          docker run --rm --network none --user "$HOST_UID:$HOST_GID" \
+            -v "$PWD/api:/app" -w /app "$COMPOSE_PROJECT_NAME-php" php bin/phpunit
+
+      - name: Frontend suite and build
+        run: docker compose run --rm --no-deps node sh -c "npm ci && npm run test && npm run build"
+
+  images:
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    env:
+      TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build production images
+        run: docker compose -f compose.prod.yaml build
+
+      - name: Smoke test
+        run: scripts/smoke-test.sh
+
+      # Only what passed the smoke test is pushed; the sha tag is what gets deployed.
+      - name: Push to ghcr.io
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker compose -f compose.prod.yaml push
+          for image in flights-php flights-nginx; do
+            docker tag "ghcr.io/chrisdejager/$image:$TAG" "ghcr.io/chrisdejager/$image:latest"
+            docker push "ghcr.io/chrisdejager/$image:latest"
+          done

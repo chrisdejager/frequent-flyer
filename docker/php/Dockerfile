@@ -14,6 +14,8 @@ WORKDIR /app
 # Build from the repo root: docker build -f docker/php/Dockerfile --target prod .
 FROM base AS prod
 
+LABEL org.opencontainers.image.source=https://github.com/chrisdejager/flight-planner
+
 ENV APP_ENV=prod APP_DEBUG=0
 COPY docker/php/prod.ini /usr/local/etc/php/conf.d/zz-prod.ini
 

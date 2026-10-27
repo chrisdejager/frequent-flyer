@@ -5,7 +5,7 @@ Decision: `docs/adr/0007-deploy-as-docker-images.md`.
 ## Steps
 - [x] 1 — prod images run locally; ADR-0007
 - [x] 2 — `scripts/smoke-test.sh`, proven by mutation; clear 503 for a missing ignav key
-- [ ] 3 — GitHub Actions: tests → build → smoke test → push to ghcr
+- [x] 3 — GitHub Actions (`.github/workflows/ci.yml`): tests → build → smoke test → push to ghcr
 - [ ] 4 — deploy (`workflow_dispatch` / `make deploy`) + example host nginx config in docs
 
 ## Owner decisions (2026-10-27)
@@ -57,3 +57,18 @@ Mutation-proven 2026-10-27, each breakage turns the script red:
 | network not internal | no-internet check |
 
 Not caught, by design: an empty `APP_SECRET` (nothing in the app uses it yet).
+
+## CI workflow (step 3)
+`.github/workflows/ci.yml`, on push to main and on pull requests.
+- `test`: the dev containers from `compose.yaml` (project `flights-ci`):
+  composer install, PHP suite with `--network none`, frontend test + build.
+- `images` (after `test`): build `compose.prod.yaml` with `TAG=<full sha>`,
+  run `scripts/smoke-test.sh`, and only on main push `:<sha>` and `:latest`
+  to ghcr.io with `GITHUB_TOKEN` (`packages: write`).
+- Both Dockerfiles carry `org.opencontainers.image.source` pointing at the
+  repo, so a package created by the workflow is linked to it.
+
+Verified 2026-10-27 without pushing: actionlint (incl. shellcheck) clean;
+both jobs' commands run in a fresh clone: 185 PHP offline, 96 frontend,
+build, smoke test 9/9 against `TAG=ci-local`. The push step itself has not
+run yet.
