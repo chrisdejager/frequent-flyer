@@ -8,7 +8,9 @@ use App\Domain\Flight\Airport;
 use App\Domain\Flight\Route;
 use App\Domain\Flight\Carrier;
 use App\Domain\Flight\RoutePattern;
+use App\Domain\Flight\FlightSourceUnavailable;
 use App\Infrastructure\Source\IgnavFlightSource;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
@@ -290,6 +292,42 @@ final class IgnavFlightSourceTest extends TestCase
             [Airport::Hel, Airport::Tku],
             array_map(static fn ($i) => $i->destination(), $found),
         );
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function missingKeys(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'whitespace only' => [" \n"];
+    }
+
+    /**
+     * Without a key every request is a guaranteed 401, which used to end up as
+     * an empty list: "no flights" instead of "not configured".
+     */
+    #[DataProvider('missingKeys')]
+    public function test_a_missing_api_key_fails_loudly_without_calling_ignav(string $key): void
+    {
+        $calls = 0;
+        $client = new MockHttpClient(function () use (&$calls): MockResponse {
+            ++$calls;
+
+            return new MockResponse('{"itineraries": []}');
+        });
+
+        try {
+            (new IgnavFlightSource($client, $key))->search(
+                [new Route(Airport::Ams, Airport::Hel)],
+                new \DateTimeImmutable('2026-10-17'),
+            );
+            self::fail('Expected FlightSourceUnavailable.');
+        } catch (FlightSourceUnavailable $e) {
+            self::assertStringContainsString('IGNAV_API_KEY', $e->getMessage());
+        }
+
+        self::assertSame(0, $calls);
     }
 
     public function test_a_failing_route_does_not_drop_the_other(): void

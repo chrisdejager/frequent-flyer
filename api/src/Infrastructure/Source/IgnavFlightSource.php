@@ -6,6 +6,7 @@ namespace App\Infrastructure\Source;
 
 use App\Domain\Flight\Airport;
 use App\Domain\Flight\Carrier;
+use App\Domain\Flight\FlightSourceUnavailable;
 use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\Money;
 use App\Domain\Flight\Route;
@@ -54,6 +55,12 @@ final readonly class IgnavFlightSource implements FlightPriceSource
 
     public function search(array $routes, \DateTimeImmutable $date): array
     {
+        // Without a key ignav answers 401 to everything, which would surface as
+        // "no flights". Fail before spending a request.
+        if ('' === trim($this->apiKey)) {
+            throw new FlightSourceUnavailable('Flight search is not configured: IGNAV_API_KEY is empty.');
+        }
+
         // Send every request before reading any answer. Symfony's HttpClient is
         // lazy, so the transfers run concurrently: the wait is the slowest route,
         // not the sum (one call measured ~1.6 s on 20 Oct 2026).

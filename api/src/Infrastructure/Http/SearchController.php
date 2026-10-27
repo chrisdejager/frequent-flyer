@@ -7,6 +7,7 @@ namespace App\Infrastructure\Http;
 use App\Application\SearchFlights\SearchFlightsHandler;
 use App\Application\SearchFlights\SearchFlightsQuery;
 use App\Domain\Flight\Direction;
+use App\Domain\Flight\FlightSourceUnavailable;
 use App\Domain\Traveller\UnknownTraveller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,6 +47,9 @@ final readonly class SearchController
             ));
         } catch (UnknownTraveller $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
+        } catch (FlightSourceUnavailable $e) {
+            // Our side is broken, not the request: 503, and the message names the cause.
+            return new JsonResponse(['error' => $e->getMessage()], 503);
         }
 
         return new JsonResponse($this->presenter->present($result));

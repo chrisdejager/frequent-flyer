@@ -15,6 +15,8 @@ use App\Domain\Port\TrainPriceSource;
 use App\Tests\Double\FixedTrainPriceSource;
 use App\Tests\Double\InMemoryFlightPriceSource;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class SearchControllerTest extends WebTestCase
 {
@@ -413,6 +415,41 @@ final class SearchControllerTest extends WebTestCase
         // Unknown is null, never "now": a made-up timestamp would look fresh.
         self::assertArrayHasKey('observedAt', $body['options'][1]);
         self::assertNull($body['options'][1]['observedAt']);
+    }
+
+    /**
+     * Through the real wiring: the key comes from the environment via
+     * services.yaml, so a typo in the env name or a lost argument shows up here.
+     */
+    public function test_a_missing_ignav_key_gives_503_with_a_clear_message(): void
+    {
+        $originalKey = $_ENV['IGNAV_API_KEY'] ?? null;
+        $_ENV['IGNAV_API_KEY'] = '';
+        $_SERVER['IGNAV_API_KEY'] = '';
+
+        try {
+            $client = static::createClient();
+
+            // Without the guard the real adapter would send requests: they must
+            // land here, never on the network.
+            $calls = 0;
+            static::getContainer()->set('http_client', new MockHttpClient(function () use (&$calls): MockResponse {
+                ++$calls;
+
+                return new MockResponse('', ['http_code' => 401]);
+            }));
+
+            $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+            self::assertResponseStatusCodeSame(503);
+            $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+            self::assertStringContainsString('IGNAV_API_KEY', $body['error']);
+            self::assertSame(0, $calls);
+        } finally {
+            // Restore, don't delete: see tearDown.
+            $_ENV['IGNAV_API_KEY'] = $originalKey ?? '';
+            $_SERVER['IGNAV_API_KEY'] = $originalKey ?? '';
+        }
     }
 
     private static function aFinnairFlight(): Itinerary
