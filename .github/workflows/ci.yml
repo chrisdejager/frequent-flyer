@@ -61,12 +61,13 @@ jobs:
         run: scripts/smoke-test.sh
 
       # Only what passed the smoke test is pushed; the sha tag is what gets deployed.
+      # Plain docker push: `compose push` would require the server-only app.env.
       - name: Push to ghcr.io
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          docker compose -f compose.prod.yaml push
           for image in flights-php flights-nginx; do
+            docker push "ghcr.io/chrisdejager/$image:$TAG"
             docker tag "ghcr.io/chrisdejager/$image:$TAG" "ghcr.io/chrisdejager/$image:latest"
             docker push "ghcr.io/chrisdejager/$image:latest"
           done
