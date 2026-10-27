@@ -71,11 +71,24 @@ final readonly class IgnavFlightSource implements FlightPriceSource
         }
 
         $found = [];
+        $rejected = null;
 
         foreach ($pending as [$route, $response]) {
-            if (null !== $response) {
-                $found = [...$found, ...$this->read($response, $route->from, $route->to, $date)];
+            if (null === $response) {
+                continue;
             }
+
+            // Read every response before throwing: an unread error response
+            // throws again when it is destroyed.
+            try {
+                $found = [...$found, ...$this->read($response, $route->from, $route->to, $date)];
+            } catch (FlightSourceUnavailable $e) {
+                $rejected = $e;
+            }
+        }
+
+        if (null !== $rejected) {
+            throw $rejected;
         }
 
         return $found;
@@ -110,6 +123,16 @@ final readonly class IgnavFlightSource implements FlightPriceSource
     {
         try {
             $payload = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface $e) {
+            $this->logHttpError($from, $to, $date, $e);
+
+            // 401 is a wrong or expired key (measured 27 Oct 2026): our
+            // configuration, which must not look like "no flights".
+            if (401 === $e->getResponse()->getStatusCode()) {
+                throw new FlightSourceUnavailable('Flight search is not configured: ignav rejected IGNAV_API_KEY (HTTP 401).', 0, $e);
+            }
+
+            return [];
         } catch (\Symfony\Contracts\HttpClient\Exception\ExceptionInterface $e) {
             $this->logHttpError($from, $to, $date, $e);
 

@@ -32,7 +32,9 @@ Decision: `docs/adr/0007-deploy-as-docker-images.md`.
 ## Owner decisions (2026-10-27, later)
 - A missing ignav key must give a clear message: `/api/search` now answers
   503 "Flight search is not configured: IGNAV_API_KEY is empty." (e5112f7).
-  A key that ignav *rejects* (401) still looks like "no flights": open.
+  A key that ignav *rejects* (401) gives 503 "… ignav rejected IGNAV_API_KEY
+  (HTTP 401)." as well (owner, same day). Booking links with a bad key
+  still give their generic 502.
 - The production images must not run locally by default. Only the smoke test
   starts them (project `flights-smoke`) and always tears them down.
 

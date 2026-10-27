@@ -452,6 +452,36 @@ final class SearchControllerTest extends WebTestCase
         }
     }
 
+    public function test_a_rejected_ignav_key_gives_503_with_a_clear_message(): void
+    {
+        $originalKey = $_ENV['IGNAV_API_KEY'] ?? null;
+        $_ENV['IGNAV_API_KEY'] = 'wrong-key';
+        $_SERVER['IGNAV_API_KEY'] = 'wrong-key';
+
+        try {
+            $client = static::createClient();
+
+            $sentKeys = [];
+            static::getContainer()->set('http_client', new MockHttpClient(function (string $method, string $url, array $options) use (&$sentKeys): MockResponse {
+                $sentKeys[] = $options['normalized_headers']['x-api-key'][0] ?? null;
+
+                return new MockResponse('{"detail": "Invalid API key"}', ['http_code' => 401]);
+            }));
+
+            $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+
+            self::assertResponseStatusCodeSame(503);
+            $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+            self::assertStringContainsString('ignav rejected IGNAV_API_KEY', $body['error']);
+            // The key from the environment is the one that was sent.
+            self::assertNotEmpty($sentKeys);
+            self::assertSame(['X-Api-Key: wrong-key'], array_values(array_unique($sentKeys)));
+        } finally {
+            $_ENV['IGNAV_API_KEY'] = $originalKey ?? '';
+            $_SERVER['IGNAV_API_KEY'] = $originalKey ?? '';
+        }
+    }
+
     private static function aFinnairFlight(): Itinerary
     {
         return new Itinerary(

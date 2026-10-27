@@ -330,6 +330,26 @@ final class IgnavFlightSourceTest extends TestCase
         self::assertSame(0, $calls);
     }
 
+    /**
+     * A wrong or expired key: ignav answers 401 (measured 27 Oct 2026 with a
+     * dummy key). That is our configuration, not "no flights".
+     */
+    public function test_a_rejected_api_key_fails_loudly(): void
+    {
+        $client = new MockHttpClient($this->answerPerDestination([
+            'HEL' => new MockResponse('{"detail": "Invalid API key"}', ['http_code' => 401]),
+            'TKU' => new MockResponse('{"detail": "Invalid API key"}', ['http_code' => 401]),
+        ]));
+
+        $this->expectException(FlightSourceUnavailable::class);
+        $this->expectExceptionMessage('ignav rejected IGNAV_API_KEY');
+
+        (new IgnavFlightSource($client, 'wrong-key'))->search(
+            [new Route(Airport::Ams, Airport::Hel), new Route(Airport::Ams, Airport::Tku)],
+            new \DateTimeImmutable('2026-10-17'),
+        );
+    }
+
     public function test_a_failing_route_does_not_drop_the_other(): void
     {
         $client = new MockHttpClient($this->answerPerDestination([
