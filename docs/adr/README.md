@@ -12,3 +12,4 @@ Superseded by ADR-NNNN).
 | [0004](0004-hel-tku-transfer-behind-a-toggle.md) | HEL–TKU transfer behind a single toggle, off by default | Accepted |
 | [0005](0005-exclude-baggage-costs.md) | Baggage costs excluded | Accepted |
 | [0006](0006-booking-link-on-demand.md) | Booking link on demand, only from the airline itself (SAS custom-built) | Accepted |
+| [0007](0007-deploy-as-docker-images.md) | Deploy as Docker images, not with Deployer | Accepted |

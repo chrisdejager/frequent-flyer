@@ -1,0 +1,23 @@
+# Build context for the production images (docker/php, docker/nginx).
+# Secrets must never end up in an image: images are pushed to a registry.
+**/.env.local
+**/.env.*.local
+api/.env.local.php
+
+.git
+.idea
+docs
+*.iml
+
+api/vendor
+api/var
+api/.phpunit.cache
+
+web/node_modules
+web/dist
+web/.vite
+web/*.tsbuildinfo
+
+# Not needed at runtime
+api/tests
+api/phpunit.dist.xml

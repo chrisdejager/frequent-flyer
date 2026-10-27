@@ -45,7 +45,11 @@ docker compose run --rm node npm run test
 
 ## To the VPS
 
+Production runs from two images with the code baked in (`docker/php/Dockerfile`
+target `prod`, `docker/nginx/Dockerfile`). Try the production stack locally:
+
 ```bash
-docker compose run --rm node npm run build
-docker compose -f compose.yaml -f compose.prod.yaml up -d
+cp app.env.example app.env        # fill in; git-ignored
+docker compose -f compose.prod.yaml build
+docker compose -f compose.prod.yaml up -d   # http://127.0.0.1:8081
 ```

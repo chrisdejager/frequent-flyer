@@ -1,6 +1,8 @@
 services:
   php:
-    build: ./docker/php
+    build:
+      context: ./docker/php
+      target: base
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     volumes:
       - ./api:/app

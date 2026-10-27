@@ -1,16 +1,30 @@
+# Production stack. Standalone: on the VPS this is the only compose file, next
+# to app.env (secrets, see app.env.example). The code lives in the images.
+#
+#   docker compose -f compose.prod.yaml build     # locally (later: CI)
+#   docker compose -f compose.prod.yaml up -d
+#
+# nginx listens on localhost only; the host's nginx terminates TLS, does basic
+# auth and proxies to it.
+name: flights-prod
+
 services:
   php:
-    environment:
-      APP_ENV: prod
-      APP_DEBUG: '0'
+    image: ghcr.io/chrisdejager/flights-php:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: prod
+    env_file: app.env
+    restart: unless-stopped
 
   nginx:
-    volumes:
-      - ./api:/app
-      - ./web/dist:/srv/web:ro
-      - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+    image: ghcr.io/chrisdejager/flights-nginx:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    ports:
+      - "127.0.0.1:${HTTP_PORT:-8081}:80"
     depends_on:
       - php
-
-  node:
-    profiles: ['dev']
+    restart: unless-stopped
