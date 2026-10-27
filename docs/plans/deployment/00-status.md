@@ -6,7 +6,8 @@ Decision: `docs/adr/0007-deploy-as-docker-images.md`.
 - [x] 1 — prod images run locally; ADR-0007
 - [x] 2 — `scripts/smoke-test.sh`, proven by mutation; clear 503 for a missing ignav key
 - [x] 3 — GitHub Actions (`.github/workflows/ci.yml`): tests → build → smoke test → push to ghcr
-- [ ] 4 — deploy (`workflow_dispatch` / `make deploy`) + example host nginx config in docs
+- [x] 4 — `scripts/deploy.sh` + `docs/deployment.md` (runbook, host nginx config)
+- [ ] 5 — one-time server setup by the owner, first deploy
 
 ## Owner decisions (2026-10-27)
 - Images instead of Deployer.
@@ -72,3 +73,24 @@ Verified 2026-10-27 without pushing: actionlint (incl. shellcheck) clean;
 both jobs' commands run in a fresh clone: 185 PHP offline, 96 frontend,
 build, smoke test 9/9 against `TAG=ci-local`. The push step itself has not
 run yet.
+
+## CI, first runs (2026-10-27)
+- Run for d5187ef failed at the push: `docker compose push` loads
+  `env_file: app.env`, which only exists on the server. Fixed in bdbddae
+  (`docker push` per image). Run for bdbddae green (owner).
+- No images exist for d5187ef; the first deployable sha is bdbddae.
+
+## Deploy (step 4)
+- Local script, no deploy secrets in GitHub (manual trigger, owner decision).
+  A `workflow_dispatch` around it stays possible.
+- `scripts/deploy.sh [commit]` → refuses commits not on origin/main, uploads
+  that commit's `compose.prod.yaml` as `.new`, runs
+  `scripts/deploy-on-server.sh` over ssh: pull (abort = nothing changed),
+  move compose file in place, `up -d`, `TAG=<sha>` in the server's `.env`,
+  health check on 127.0.0.1:8081 (`/` 200, `/api/search` 400).
+- Tested locally 2026-10-27: missing app.env stops with a pointer to the
+  runbook; failed pull (no ghcr login → `unauthorized`, which also confirms
+  the images are private) leaves `.env`, compose file and containers
+  untouched; no DEPLOY_HOST, a commit not on main, an unknown ref and an
+  unreachable host each stop with a clear message. **The success path
+  (pull, up, health check) has not run yet**: needs ghcr access.

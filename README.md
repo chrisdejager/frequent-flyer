@@ -46,7 +46,8 @@ docker compose run --rm node npm run test
 ## To the VPS
 
 Production runs from two images with the code baked in (`docker/php/Dockerfile`
-target `prod`, `docker/nginx/Dockerfile`); see ADR-0007. Locally they don't run
+target `prod`, `docker/nginx/Dockerfile`); see ADR-0007. Deploying, server
+setup and rollback: [`docs/deployment.md`](docs/deployment.md). Locally they don't run
 by default: check them with the smoke test, which starts them without internet
 access and tears them down again.
 
