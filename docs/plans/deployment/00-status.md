@@ -7,7 +7,8 @@ Decision: `docs/adr/0007-deploy-as-docker-images.md`.
 - [x] 2 — `scripts/smoke-test.sh`, proven by mutation; clear 503 for a missing ignav key
 - [x] 3 — GitHub Actions (`.github/workflows/ci.yml`): tests → build → smoke test → push to ghcr
 - [x] 4 — `scripts/deploy.sh` + `docs/deployment.md` (runbook, host nginx config)
-- [ ] 5 — one-time server setup by the owner, first deploy
+- [x] 5 — one-time server setup by the owner; first deploy by hand (bdbddae)
+- [ ] 6 — first deploy with `scripts/deploy.sh` (its success path has not run yet)
 
 ## Owner decisions (2026-10-27)
 - Images instead of Deployer.
@@ -96,3 +97,14 @@ run yet.
   untouched; no DEPLOY_HOST, a commit not on main, an unknown ref and an
   unreachable host each stop with a clear message. **The success path
   (pull, up, health check) has not run yet**: needs ghcr access.
+
+## Live (2026-10-28)
+The owner set up the server per `docs/deployment.md` and deployed bdbddae
+by hand (`pull` + `up -d` in `/var/apps/flights`, `TAG` in `.env`).
+`https://flights.chrisdejager.nl` works behind basic auth; the app works.
+**I7 (public `/api` spending credits) is closed** by the basic auth.
+
+Hiccups during setup, for the next server:
+- The ssh user was not in the `docker` group (`permission denied … docker.sock`).
+- App secrets and `TAG` were first put in one env file; `app.env` (containers)
+  and `.env` (compose interpolation) are separate. Now in the runbook.
