@@ -5,14 +5,13 @@
 #   DEPLOY_HOST=<ssh host> scripts/deploy.sh            # latest origin/main
 #   DEPLOY_HOST=<ssh host> scripts/deploy.sh <commit>   # also: rollback
 #
-# DEPLOY_DIR is the directory on the server (default: flights, in the
-# ssh user's home).
+# DEPLOY_DIR is the directory on the server (default: /var/apps/flights).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 : "${DEPLOY_HOST:?set DEPLOY_HOST to the ssh host of the VPS}"
-dir=${DEPLOY_DIR:-flights}
+dir=${DEPLOY_DIR:-/var/apps/flights}
 
 git fetch -q origin main
 sha=$(git rev-parse --verify "${1:-origin/main}^{commit}")

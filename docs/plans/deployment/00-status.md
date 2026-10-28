@@ -81,6 +81,8 @@ run yet.
 - No images exist for d5187ef; the first deployable sha is bdbddae.
 
 ## Deploy (step 4)
+- Server directory: `/var/apps/flights` (owner, 2026-10-28), the default of
+  `DEPLOY_DIR`.
 - Local script, no deploy secrets in GitHub (manual trigger, owner decision).
   A `workflow_dispatch` around it stays possible.
 - `scripts/deploy.sh [commit]` → refuses commits not on origin/main, uploads

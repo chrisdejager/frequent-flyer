@@ -33,12 +33,12 @@ its images don't exist). The script:
 It prints the previous sha. **Rollback** is a deploy of that sha:
 `scripts/deploy.sh <previous sha>`.
 
-`DEPLOY_DIR` (default `flights`, relative to the ssh user's home) is the
-directory on the server.
+`DEPLOY_DIR` (default `/var/apps/flights`) is the directory on the server.
 
 ## One-time server setup
 
-The ssh user must be able to run `docker` (member of the `docker` group).
+The ssh user must be able to run `docker` (member of the `docker` group) and
+write to `/var/apps/flights`.
 
 1. **DNS.** `flights.chrisdejager.nl` must resolve to the VPS. Not needed if
    there is a wildcard record `*.chrisdejager.nl`.
@@ -54,9 +54,9 @@ The ssh user must be able to run `docker` (member of the `docker` group).
 3. **Secrets.**
 
    ```bash
-   mkdir -p ~/flights
-   # create ~/flights/app.env from app.env.example, with the real values
-   chmod 600 ~/flights/app.env
+   mkdir -p /var/apps/flights
+   # create /var/apps/flights/app.env from app.env.example, with the real values
+   chmod 600 /var/apps/flights/app.env
    ```
 
 4. **Basic auth** (closes I7: `/api` spends ignav credits).
@@ -104,7 +104,7 @@ The ssh user must be able to run `docker` (member of the `docker` group).
 
 ## On the server
 
-In `~/flights` (`.env` holds the deployed `TAG`, so these stay on it):
+In `/var/apps/flights` (`.env` holds the deployed `TAG`, so these stay on it):
 
 ```bash
 docker compose -f compose.prod.yaml ps
