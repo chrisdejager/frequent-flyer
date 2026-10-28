@@ -59,6 +59,16 @@ write to `/var/apps/flights`.
    chmod 600 /var/apps/flights/app.env
    ```
 
+   Two env files, each with its own reader. Don't merge them:
+
+   | File | Read by | Contains | Written by |
+   |---|---|---|---|
+   | `app.env` | the containers (`env_file:`) | `APP_SECRET`, `IGNAV_API_KEY`, `APIFY_TOKEN`, `TRAIN_COST_ENABLED`, `DEFAULT_URI` | you, once |
+   | `.env` | compose itself, for `${TAG}` / `${HTTP_PORT}` in `compose.prod.yaml` | `TAG=<sha>`, optionally `HTTP_PORT` | `scripts/deploy.sh`, every deploy |
+
+   Without `.env` compose falls back to `TAG=latest`; without `app.env` it
+   refuses to start.
+
 4. **Basic auth** (closes I7: `/api` spends ignav credits).
 
    ```bash
