@@ -1,20 +1,26 @@
 # Flight finder
 
-Finds the cheapest trip between two places, booked directly with the airline,
-under conditions you set: which airlines, how many connections, how long a
-connection may take, and when you want to depart. A place can have several
-airports, and the finder searches all of them.
+For people who fly the same routes again and again. Save a route once, with
+your own airports, airlines and conditions, and find the best flight in one
+click, booked directly with the airline. One screen shows everything the choice
+depends on: price, connections, baggage costs and what each option does for
+your loyalty status, ranked by price and status.
 
-**Status: MVP with one demo route.** Amsterdam ⇄ Finland, with Helsinki
-(direct flights) and Turku (one connection via Stockholm or Copenhagen), for
-Finnair, SAS and KLM. One-way or round trip, a day forward or back per leg, and
+A route has one or more airports on each side (a place can have several) and
+one or more airlines; more airlines give more options to compare. Its
+conditions are how many connections, how long a connection may take, and when
+you want to depart and arrive.
+
+**Status: MVP with one demo route.** Not everything above is built yet.
+Today the finder searches Amsterdam ⇄ Finland, with Helsinki (direct flights)
+and Turku (one connection via Stockholm or Copenhagen), for Finnair, SAS and
+KLM. One-way or round trip, a day forward or back per leg, sorted by price, and
 a Book button that opens the airline's own booking page. Prices come from
 [ignav](https://ignav.com). Baggage costs are deliberately not included yet
 (ADR-0005).
 
-**Where it is going:** saved routes with your own conditions, any airport,
-users by invitation, and advice on which airline to pick given your loyalty
-status. See the [roadmap](docs/roadmap.md).
+**Still to come:** saved routes, any airport, users by invitation, baggage
+costs, and the ranking by loyalty status. See the [roadmap](docs/roadmap.md).
 
 - [Roadmap](docs/roadmap.md): phases, and what is still open
 - [Architecture](docs/architecture.md): components and the search flow, as diagrams

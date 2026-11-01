@@ -1,9 +1,13 @@
 # Flight finder
 
-A general flight finder: the cheapest trip between two places, booked directly
-with the airline, under conditions the user sets. Today it is an MVP with one
-**demo route** that is still code: AMS ⇄ HEL shows only direct flights,
-AMS ⇄ TKU only flights with exactly 1 connection.
+A flight finder for people who fly the same routes again and again: save a
+route once, with your own airports, airlines and conditions, and find the best
+flight in one click, booked directly with the airline. One screen shows
+everything the choice depends on: price, connections, baggage costs and what
+each option does for your loyalty status.
+
+Today it is an MVP with one **demo route** that is still code: AMS ⇄ HEL shows
+only direct flights, AMS ⇄ TKU only flights with exactly 1 connection.
 
 Baggage costs are deliberately not included (simplification) — why, and how to
 bring them back, is in `docs/adr/0005-exclude-baggage-costs.md`.

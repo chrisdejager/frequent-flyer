@@ -1,7 +1,11 @@
 # Roadmap
 
-Where this project is going: from an MVP with one demo route to a general
-flight finder. Decisions behind it:
+Where this project is going: from an MVP with one demo route to a flight
+finder for people who fly the same routes again and again. They save a route
+once with their own airports, airlines and conditions, and find the best flight
+in one click, booked directly with the airline. One screen shows everything the
+choice depends on: price, connections, baggage costs and what each option does
+for their loyalty status. Decisions behind it:
 [`plans/general-flight-finder/00-status.md`](plans/general-flight-finder/00-status.md).
 
 ## Where it stands
