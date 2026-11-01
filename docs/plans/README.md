@@ -14,11 +14,11 @@ Two work items, not started, each with its own `00-status.md`:
 - [`behat-feature-tests/`](behat-feature-tests/00-status.md) — a few
   readable feature scenarios.
 
-**Found, not fixed: 3 frontend tests are date-dependent and fail since
-1 Nov 2026** (93/96). The default outbound date `2026-10-29` is hardcoded in
-`web/src/App.vue`; it is now in the past, and the day shift refuses dates
-before today. The "day shift" and "no stale results" tests in `App.spec.ts`
-fail on that. CI will be red on the next push until this is fixed.
+**Fixed: 3 frontend tests were date-dependent** and failed from 1 Nov 2026.
+The default outbound date was hardcoded as `2026-10-29`, which had become the
+past, and the day shift refuses dates before today. Now the outbound date
+starts at today, and `App.spec.ts` freezes the clock at 2026-10-20 (only
+`Date` is faked). Frontend 97/97.
 
 ---
 

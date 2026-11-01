@@ -17,7 +17,10 @@ const arrow = (direction: Direction) => (direction === 'nl-fi' ? 'NL → FI' : '
 const emptyLeg = (direction: Direction, date: string): LegState =>
   ({ direction, date, result: null, error: '', loading: false, selected: null })
 
-const out = reactive<LegState>(emptyLeg('nl-fi', '2026-10-29'))
+// Local date: the picker and "today" are the user's, not UTC.
+const today = () => new Intl.DateTimeFormat('en-CA').format(new Date())
+
+const out = reactive<LegState>(emptyLeg('nl-fi', today()))
 const back = reactive<LegState>(emptyLeg('fi-nl', ''))
 
 // The return picker starts at the outbound date (via :min); an outbound moved past
@@ -73,9 +76,6 @@ async function run() {
 }
 
 const loading = () => out.loading || back.loading
-
-// Local date: the picker and "today" are the user's, not UTC.
-const today = () => new Intl.DateTimeFormat('en-CA').format(new Date())
 
 // A day earlier or later for one leg: searches only that leg, from the date that
 // was searched (not what has been typed into the form since). One ignav call

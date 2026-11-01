@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import App from '../../App.vue'
 import type { SearchResult } from '../../types'
@@ -65,6 +65,30 @@ const mockResult: SearchResult = {
   searchedAt: '2026-09-17T10:00:00Z',
   options: [rankedOption, unrankedOption],
 }
+
+// A fixed "today" for every test in this file: the default outbound date and
+// the day shift ("never before today") depend on it. Only Date is faked, so
+// flushPromises (setTimeout) keeps working. Midday, so no time zone flips the day.
+const TODAY = '2026-10-20'
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(`${TODAY}T12:00:00`))
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+describe('App — default date', () => {
+  it('the outbound date starts at today, the return empty', async () => {
+    const wrapper = mount(App)
+    await flushPromises()
+
+    expect((wrapper.find('[data-testid="out-date"]').element as HTMLInputElement).value).toBe(TODAY)
+    expect((wrapper.find('[data-testid="back-date"]').element as HTMLInputElement).value).toBe('')
+  })
+})
 
 describe('App', () => {
   beforeEach(() => {
