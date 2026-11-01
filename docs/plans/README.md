@@ -1,5 +1,14 @@
 # Handoff — flight finder
 
+## 00. Next: general flight finder (1 Nov 2026)
+
+The owner wants to turn this into a general, open source flight finder:
+any airport, saved routes with conditions, users by invitation, loyalty
+status and advice. Intake decisions and the phased roadmap:
+[`general-flight-finder/`](general-flight-finder/00-status.md). Nothing built yet.
+
+---
+
 ## 00. Status 1 Nov 2026 — aligned with the owner's default stack
 
 The owner's default skills changed; this repo was compared with them. Done:
