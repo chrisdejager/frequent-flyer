@@ -82,7 +82,7 @@ expect '/api/booking-link?ref=x' 400 'Invalid or missing ref'
 
 # A real search, with IGNAV_API_KEY empty: the env reaches the adapter through
 # the prod container and the user gets the cause, not an empty list.
-expect '/api/search?date=2030-01-15&direction=nl-fi&traveller=partner' 503 'IGNAV_API_KEY'
+expect '/api/search?date=2030-01-15&direction=nl-fi&traveller=default' 503 'IGNAV_API_KEY'
 
 # The php image itself.
 in_php "container compiles with the prod config" 'php bin/console lint:container'
