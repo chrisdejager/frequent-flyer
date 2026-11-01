@@ -65,3 +65,7 @@ cp app.env.example app.env        # fill in; git-ignored
 docker compose -f compose.prod.yaml up -d     # http://127.0.0.1:8081
 docker compose -f compose.prod.yaml down      # when done
 ```
+
+## License
+
+MIT, copyright (c) 2026 Chris de Jager. See [`LICENSE`](LICENSE).
