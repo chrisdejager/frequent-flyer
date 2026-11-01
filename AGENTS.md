@@ -62,7 +62,7 @@ Here they are decided; don't reopen them without the owner:
 
 ## Constraints
 
-- PHP 8.4 / Symfony 7.4 LTS + Vue 3. **No Python** — hard requirement.
+- PHP 8.4 / Symfony 7.4 LTS + Vue 3.
 - `declare(strict_types=1)` everywhere; `src/Domain/**` is framework-free (an
   architecture test checks this).
 - Money amounts always in whole cents as int.
