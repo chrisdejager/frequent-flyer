@@ -39,16 +39,6 @@ services:
     App\Domain\Port\FlightPriceSource: '@App\Infrastructure\Source\IgnavFlightSource'
     App\Domain\Port\PriceHistory: '@App\Infrastructure\Persistence\NullPriceHistory'
 
-    App\Infrastructure\Source\ApifyTrainPriceSource:
-        arguments:
-            $cache: '@cache.app'
-            $apiToken: '%env(APIFY_TOKEN)%'
-            # Explicit, even though Symfony autowires it: without this line the logger
-            # silently disappears as soon as someone adds a positional argument here.
-            $logger: '@logger'
-
-    App\Domain\Port\TrainPriceSource: '@App\Infrastructure\Source\ApifyTrainPriceSource'
-
     App\Infrastructure\Source\IgnavBookingLinkSource:
         arguments:
             $cache: '@cache.app'
@@ -57,17 +47,10 @@ services:
 
     App\Domain\Port\BookingLinkSource: '@App\Infrastructure\Source\IgnavBookingLinkSource'
 
-    App\Domain\Pricing\TotalCostCalculator:
-        arguments:
-            $trainCostEnabled: '%env(bool:TRAIN_COST_ENABLED)%'
-
 when@test:
     services:
         App\Domain\Port\FlightPriceSource:
             alias: App\Infrastructure\Source\IgnavFlightSource
-            public: true
-        App\Domain\Port\TrainPriceSource:
-            alias: App\Infrastructure\Source\ApifyTrainPriceSource
             public: true
         App\Domain\Port\BookingLinkSource:
             alias: App\Infrastructure\Source\IgnavBookingLinkSource

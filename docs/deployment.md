@@ -63,7 +63,7 @@ write to `/var/apps/flights`.
 
    | File | Read by | Contains | Written by |
    |---|---|---|---|
-   | `app.env` | the containers (`env_file:`) | `APP_SECRET`, `IGNAV_API_KEY`, `APIFY_TOKEN`, `TRAIN_COST_ENABLED`, `DEFAULT_URI` | you, once |
+   | `app.env` | the containers (`env_file:`) | `APP_SECRET`, `IGNAV_API_KEY`, `DEFAULT_URI` | you, once |
    | `.env` | compose itself, for `${TAG}` / `${HTTP_PORT}` in `compose.prod.yaml` | `TAG=<sha>`, optionally `HTTP_PORT` | `scripts/deploy.sh`, every deploy |
 
    Without `.env` compose falls back to `TAG=latest`; without `app.env` it

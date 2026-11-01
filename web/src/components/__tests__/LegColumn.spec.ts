@@ -4,38 +4,14 @@ import LegColumn from '../LegColumn.vue'
 import { makeLeg, makeOption, makeResult } from '../../__tests__/fixtures'
 
 describe('LegColumn', () => {
-  it('shows ranked options before the separator and unranked after', () => {
-    // The unranked is deliberately first in the input: the column must
-    // split itself, not follow the order of input.
-    const leg = makeLeg(makeResult([
-      makeOption('KLM', 19900, { trainCostKnown: false }),
-      makeOption('Finnair', 15650),
-    ]), 1)
-    const html = mount(LegColumn, { props: { title: 'Outbound', leg } }).html()
-
-    const finnairPos = html.indexOf('Finnair')
-    const noticePos = html.indexOf('unranked-notice')
-    const klmPos = html.indexOf('KLM')
-
-    expect(finnairPos).toBeGreaterThanOrEqual(0)
-    expect(finnairPos).toBeLessThan(noticePos)
-    expect(noticePos).toBeLessThan(klmPos)
-  })
-
-  it('emits the original index when an unranked option is clicked', async () => {
-    // Input: [ranked, unranked, ranked]. Display: 0, 2, | 1.
-    // The third card on screen is thus index 1 — not 2.
-    const leg = makeLeg(makeResult([
-      makeOption('Finnair', 15650),
-      makeOption('KLM', 19900, { trainCostKnown: false }),
-      makeOption('SAS', 17000),
-    ]), 0)
+  it('shows the options in the order the API sends them, and emits the clicked index', async () => {
+    const leg = makeLeg(makeResult([makeOption('Finnair', 15650), makeOption('SAS', 17000)]), 0)
     const column = mount(LegColumn, { props: { title: 'Outbound', leg } })
 
     const cards = column.findAll('article')
-    expect(cards[2].text()).toContain('KLM')
+    expect(cards.map(c => c.text().includes('Finnair'))).toEqual([true, false])
 
-    await cards[2].trigger('click')
+    await cards[1].trigger('click')
 
     expect(column.emitted('select')).toEqual([[1]])
   })

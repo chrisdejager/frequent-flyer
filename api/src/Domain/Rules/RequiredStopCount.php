@@ -14,7 +14,7 @@ final readonly class RequiredStopCount implements ItineraryRule
 {
     /** @var array<string, int> */
     private const REQUIRED = [
-        RoutePattern::ViaHelsinkiWithTrain->value => 0,
+        RoutePattern::Helsinki->value => 0,
         RoutePattern::ThroughTicket->value => 1,
     ];
 

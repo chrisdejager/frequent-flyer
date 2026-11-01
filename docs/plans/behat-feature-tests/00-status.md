@@ -18,8 +18,8 @@ edge cases.
 Candidate scenarios, to be chosen at Gate 1:
 
 - The cheapest trip on the demo route.
-- An option with an unknown train price stays visible and comes last.
-- With the HEL–TKU transfer off, a Helsinki option says "not included".
+- A flight that breaks a rule (too late, wrong airline) is not shown.
+- A round trip adds up the chosen outbound and return.
 
 ## Notes for a fresh session
 

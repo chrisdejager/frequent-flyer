@@ -50,12 +50,8 @@ final readonly class SearchResultPresenter
             ),
             'cost' => [
                 'basePrice' => $cost->basePrice->cents,
-                'trainCost' => $cost->trainCost->cents,
                 'total' => $cost->total()->cents,
                 'totalFormatted' => $cost->total()->format(),
-                'indicative' => $cost->indicative,
-                'trainCostKnown' => $cost->trainCostKnown,
-                'trainCostIncluded' => $cost->trainCostIncluded,
             ],
             'bookingRef' => $itinerary->bookingRef,
             'observedAt' => $itinerary->observedAt?->format(\DATE_ATOM),

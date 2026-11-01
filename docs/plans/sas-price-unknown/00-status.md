@@ -73,20 +73,21 @@ If SerpApi isn't better: the fallback is this plan's slices A+B below
 - [ ] Slice B — frontend: card, header "Unranked — price unknown", total bar
 
 ## Design
-- **Toggle** `SAS_PRICES_TRUSTED` (env, bool, in `api/.env` at `0`), like
-  `TRAIN_COST_ENABLED` (ADR-0004) in `TotalCostCalculator` — one place.
+- **Toggle** `SAS_PRICES_TRUSTED` (env, bool, in `api/.env` at `0`), read in
+  `TotalCostCalculator` only — one place.
 - **Domain:** `TotalCost` gets `bool $basePriceKnown` and `isRanked()` =
-  `trainCostKnown && basePriceKnown`. `TotalCostCalculator::calculate` sets
+  `basePriceKnown`. `TotalCostCalculator::calculate` sets
   `basePriceKnown = false` if `itinerary->carrier === Carrier::Sas` and the
   toggle is off. `carrier` SK means: all legs SK (adapter priority
   KL > AY > SK); a mixed KL+SK ticket is KLM's own price and stays as is.
-- **Handler** sorts on `isRanked()` (now: `trainCostKnown`).
+- **Handler** ranks the known prices by total and puts the unknown ones last
+  (today every option is ranked; ADR-0008 removed the old split).
 - **Presenter:** `cost.priceKnown`; when `false` `basePrice`, `total` and
   `totalFormatted` are **`null`** — the codeshare price doesn't leave the
   server, so the UI **cannot** show it.
 - **Frontend:** `Cost` fields nullable + `priceKnown`; `isRanked(option)` in
-  `roundTrip.ts` replaces the lone `trainCostKnown` checks (partition,
-  defaultSelection, combine). Card: "price unknown · see flysas.com", row
+  `roundTrip.ts`, used by a new ranked/unranked split in `LegColumn`,
+  `defaultSelection` and `combine`. Card: "price unknown · see flysas.com", row
   "Flight: unknown". Header: "Unranked — price unknown". Total bar:
   "unknown" instead of an amount if a chosen side has no price.
 

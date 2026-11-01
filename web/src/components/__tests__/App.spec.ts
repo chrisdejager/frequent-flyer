@@ -10,10 +10,10 @@ vi.mock('../../api', () => ({
 import { search } from '../../api'
 import { makeOption, makeResult } from '../../__tests__/fixtures'
 
-const rankedOption = {
+const finnairOption = {
   carrier: 'AY',
   carrierLabel: 'Finnair',
-  pattern: 'via_hel_train' as const,
+  pattern: 'helsinki' as const,
   origin: 'AMS',
   destination: 'HEL',
   departAt: '2026-10-29T06:00:00+00:00',
@@ -25,17 +25,13 @@ const rankedOption = {
   bookingRef: null,
   observedAt: null,
   cost: {
-    basePrice: 13400,
-    trainCost: 2250,
+    basePrice: 15650,
     total: 15650,
     totalFormatted: '€ 156,50',
-    indicative: false,
-    trainCostKnown: true,
-    trainCostIncluded: true,
   },
 }
 
-const unrankedOption = {
+const klmOption = {
   carrier: 'KL',
   carrierLabel: 'KLM',
   pattern: 'through' as const,
@@ -51,19 +47,15 @@ const unrankedOption = {
   observedAt: null,
   cost: {
     basePrice: 19900,
-    trainCost: 0,
     total: 19900,
     totalFormatted: '€ 199,00',
-    indicative: true,
-    trainCostKnown: false,
-    trainCostIncluded: true,
   },
 }
 
 const mockResult: SearchResult = {
   traveller: { id: 'default', name: 'Traveller' },
   searchedAt: '2026-09-17T10:00:00Z',
-  options: [rankedOption, unrankedOption],
+  options: [finnairOption, klmOption],
 }
 
 // A fixed "today" for every test in this file: the default outbound date and
@@ -93,38 +85,6 @@ describe('App — default date', () => {
 describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it('shows ranked options before unranked and shows the separator line', async () => {
-    const wrapper = mount(App)
-    await flushPromises()
-
-    // Submit the form to load search results
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    const unrankedNotice = wrapper.find('[data-testid="unranked-notice"]')
-
-    // The unranked notice must be visible
-    expect(unrankedNotice.exists()).toBe(true)
-    expect(unrankedNotice.text()).toContain('Unranked')
-
-    // The separator must really be between the two groups, not
-    // randomly around them: ranked (Finnair) → notice → unranked (KLM).
-    // Only testing "Finnair before KLM" would also pass if the notice
-    // ends up above or below both cards, and that's exactly the semantics
-    // this test must capture.
-    const html = wrapper.html()
-    const finnairPos = html.indexOf('Finnair')
-    const noticePos = html.indexOf('unranked-notice')
-    const klmPos = html.indexOf('KLM')
-
-    expect(finnairPos).toBeGreaterThanOrEqual(0)
-    expect(noticePos).toBeGreaterThanOrEqual(0)
-    expect(klmPos).toBeGreaterThanOrEqual(0)
-
-    expect(finnairPos).toBeLessThan(noticePos)
-    expect(noticePos).toBeLessThan(klmPos)
   })
 
   it('has no traveller choice: without baggage costs both get the same price', async () => {
@@ -190,12 +150,11 @@ describe('App — total', () => {
   })
 
   it('default is the cheapest outbound + cheapest return', async () => {
-    // Per direction its own result, with an unranked option that is cheaper
-    // but must not be chosen as default.
+    // Per direction its own result; the API sends each cheapest first.
     vi.mocked(search).mockImplementation(async (_date, direction) =>
       direction === 'nl-fi'
         ? makeResult([makeOption('KLM', 15650), makeOption('SAS', 17000)])
-        : makeResult([makeOption('Cheap', 100, { trainCostKnown: false }), makeOption('Finnair', 9875)]),
+        : makeResult([makeOption('Finnair', 9875), makeOption('SAS', 12000)]),
     )
 
     const wrapper = await searchWith('2026-10-29', '2026-11-09')

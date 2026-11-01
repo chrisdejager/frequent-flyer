@@ -10,26 +10,15 @@ final readonly class TotalCost
 {
     public function __construct(
         public Money $basePrice,
-        public Money $trainCost,
-        public bool $indicative,
-        public bool $trainCostKnown,
-        /**
-         * Whether the Helsinki–Turku transfer is in this total.
-         *
-         * Separate from $trainCostKnown, because the two mean really different things:
-         * $trainCostKnown = false means "we don't know the price" and removes the
-         * option from sorting. $trainCostIncluded = false means "the price is
-         * deliberately not counted" — the option continues to participate, but the total
-         * is demonstrably incomplete and the UI must report it. Without this field,
-         * a train price of € 0.00 could not be distinguished from "really free",
-         * and that's exactly the invisible zero that spec §5 forbids.
-         */
-        public bool $trainCostIncluded,
     ) {
     }
 
+    /**
+     * Today the total is the flight price alone: baggage is deliberately left
+     * out (ADR-0005). A new cost line is added here, not in the callers.
+     */
     public function total(): Money
     {
-        return $this->basePrice->add($this->trainCost);
+        return $this->basePrice;
     }
 }

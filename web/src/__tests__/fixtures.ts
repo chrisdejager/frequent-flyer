@@ -17,12 +17,8 @@ export function makeOption(carrierLabel: string, total: number, cost: Partial<Co
     observedAt: null,
     cost: {
       basePrice: total,
-      trainCost: 0,
       total,
       totalFormatted: `€ ${(total / 100).toFixed(2).replace('.', ',')}`,
-      indicative: false,
-      trainCostKnown: true,
-      trainCostIncluded: true,
       ...cost,
     },
   }

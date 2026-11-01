@@ -28,7 +28,7 @@ final class RuleSetTest extends TestCase
         $it = self::viaHel('2026-10-29 18:30', '2026-10-29 22:15', Carrier::Finnair);
 
         self::assertSame(
-            'Arrival in Helsinki after 21:00 — train to Turku no longer reachable.',
+            'Arrival in Helsinki after 21:00.',
             RuleSet::standard(Direction::NlToFi)->rejectionReason($it),
         );
     }
@@ -46,7 +46,7 @@ final class RuleSetTest extends TestCase
             Carrier::Finnair,
             [self::segment(Airport::Hel, Airport::Ams, '2026-10-25 08:00', '2026-10-25 09:50', 'AY841')],
             Money::fromEuros(80),
-            RoutePattern::ViaHelsinkiWithTrain,
+            RoutePattern::Helsinki,
         );
 
         self::assertSame(
@@ -61,7 +61,7 @@ final class RuleSetTest extends TestCase
             Carrier::Finnair,
             [self::segment(Airport::Hel, Airport::Ams, '2026-10-25 12:00', '2026-10-25 13:50', 'AY841')],
             Money::fromEuros(80),
-            RoutePattern::ViaHelsinkiWithTrain,
+            RoutePattern::Helsinki,
         );
 
         self::assertNull(RuleSet::standard(Direction::FiToNl)->rejectionReason($it));
@@ -128,7 +128,7 @@ final class RuleSetTest extends TestCase
                 self::segment(Airport::Cph, Airport::Hel, '2026-10-29 11:30', '2026-10-29 14:00', 'AY2'),
             ],
             Money::fromEuros(150),
-            RoutePattern::ViaHelsinkiWithTrain,
+            RoutePattern::Helsinki,
         );
 
         self::assertNotNull(RuleSet::standard(Direction::NlToFi)->rejectionReason($it));
@@ -165,7 +165,7 @@ final class RuleSetTest extends TestCase
             $carrier,
             [self::segment(Airport::Ams, Airport::Hel, $dep, $arr, 'AY842')],
             Money::fromEuros(134),
-            RoutePattern::ViaHelsinkiWithTrain,
+            RoutePattern::Helsinki,
         );
     }
 

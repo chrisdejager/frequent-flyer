@@ -313,11 +313,10 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             return null;
         }
 
-        // Helsinki is an endpoint of the flight (departure or arrival): the VR train
-        // HEL–TKU belongs with it. Note: this is about the endpoint of this ticket, not
-        // about an intermediate connection — a ticket that connects via Helsinki but
-        // ends elsewhere correctly gets ThroughTicket.
-        $trainNeeded = Airport::Hel === $destination || Airport::Hel === $origin;
+        // Helsinki is an endpoint of the flight (departure or arrival). Note: this is
+        // about the endpoint of this ticket, not about an intermediate connection — a
+        // ticket that connects via Helsinki but ends elsewhere correctly gets ThroughTicket.
+        $helsinkiEndpoint = Airport::Hel === $destination || Airport::Hel === $origin;
 
         $price = $offer['price'] ?? null;
 
@@ -365,7 +364,7 @@ final readonly class IgnavFlightSource implements FlightPriceSource
             $carrier,
             $segments,
             $priceMoney,
-            $trainNeeded ? RoutePattern::ViaHelsinkiWithTrain : RoutePattern::ThroughTicket,
+            $helsinkiEndpoint ? RoutePattern::Helsinki : RoutePattern::ThroughTicket,
             // Without a usable id the option remains as is, just without a Book button.
             is_string($offer['ignav_id'] ?? null) && '' !== $offer['ignav_id'] ? $offer['ignav_id'] : null,
             $observedAt,

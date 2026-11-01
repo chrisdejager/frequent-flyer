@@ -20,7 +20,7 @@ final class ItineraryTest extends TestCase
             Carrier::Finnair,
             [self::segment(Airport::Ams, Airport::Hel, '2026-10-29 13:00', '2026-10-29 16:45', 'AY842')],
             Money::fromEuros(134),
-            RoutePattern::ViaHelsinkiWithTrain,
+            RoutePattern::Helsinki,
         );
 
         self::assertSame(0, $it->stopCount());

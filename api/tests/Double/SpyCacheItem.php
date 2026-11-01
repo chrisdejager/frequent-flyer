@@ -60,7 +60,7 @@ final class SpyCacheItem implements CacheItemInterface
 
     public function expiresAt(?\DateTimeInterface $expiration): static
     {
-        // Not used by ApifyTrainPriceSource; no-op is sufficient.
+        // Not used by the adapters under test; no-op is sufficient.
         return $this;
     }
 

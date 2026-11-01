@@ -29,8 +29,8 @@ Roadmap: [`docs/roadmap.md`](../../roadmap.md). Nothing is built yet.
   user). Alliance-level benefits still open.
 - Advice: **price including status benefit** and **keeping your status**.
   Money-versus-status trade-off: not decided yet.
-- **The HEL ⇄ TKU train is removed**, Apify adapter included. Turku becomes
-  the route {TKU, HEL} without ground transport. It stays in git history.
+- **No ground transport**: Turku becomes the route {TKU, HEL} without it.
+  Done in ADR-0008.
 
 **Users**
 - **Small circle, own users, by invitation** — for now.

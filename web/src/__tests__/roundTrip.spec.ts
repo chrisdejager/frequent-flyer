@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chosenOption, combine, defaultSelection, legDirections, partition, shiftedDate, validateDates } from '../roundTrip'
+import { chosenOption, combine, defaultSelection, legDirections, shiftedDate, validateDates } from '../roundTrip'
 import { euro } from '../money'
 import { makeLeg, makeOption, makeResult } from './fixtures'
 
@@ -12,29 +12,12 @@ describe('roundTrip', () => {
     expect(legDirections('fi')).toEqual({ out: 'fi-nl', back: 'nl-fi' })
   })
 
-  it('defaultSelection chooses the first ranked option, even if an unranked one comes before', () => {
-    const result = makeResult([
-      makeOption('KLM', 9000, { trainCostKnown: false }),
-      makeOption('Finnair', 12000),
-    ])
-
-    expect(defaultSelection(result)).toBe(1)
+  it('defaultSelection chooses the first option: the API sends them cheapest first', () => {
+    expect(defaultSelection(makeResult([makeOption('KLM', 9000), makeOption('Finnair', 12000)]))).toBe(0)
   })
 
-  it('defaultSelection returns null if there are only unranked options', () => {
-    expect(defaultSelection(makeResult([makeOption('KLM', 9000, { trainCostKnown: false })]))).toBeNull()
+  it('defaultSelection returns null without options', () => {
     expect(defaultSelection(makeResult([]))).toBeNull()
-  })
-
-  it('partition preserves the original index', () => {
-    const a = makeOption('KLM', 9000, { trainCostKnown: false })
-    const b = makeOption('Finnair', 12000)
-    const c = makeOption('SAS', 15000)
-
-    expect(partition([a, b, c])).toEqual({
-      ranked: [{ option: b, index: 1 }, { option: c, index: 2 }],
-      unranked: [{ option: a, index: 0 }],
-    })
   })
 
   it('chosenOption returns the chosen option, or null without choice or result', () => {
@@ -59,29 +42,6 @@ describe('roundTrip', () => {
     expect(combine(makeOption('KLM', 15650), null)).toMatchObject({ totalCents: 15650, legsCounted: 1 })
     expect(combine(null, makeOption('KLM', 9875))).toMatchObject({ totalCents: 9875, legsCounted: 1 })
     expect(combine(null, null)).toMatchObject({ totalCents: 0, legsCounted: 0 })
-  })
-
-  it('combine sets excludesTransfer if a chosen option does not count the transfer', () => {
-    const plain = makeOption('SAS', 10000)
-    const excl = makeOption('KLM', 10000, { trainCostIncluded: false })
-
-    expect(combine(plain, plain).excludesTransfer).toBe(false)
-    expect(combine(plain, excl).excludesTransfer).toBe(true)
-    expect(combine(excl, null).excludesTransfer).toBe(true)
-  })
-
-  it('combine sets incomplete if a chosen option has an unknown train cost', () => {
-    const plain = makeOption('SAS', 10000)
-
-    expect(combine(plain, plain).incomplete).toBe(false)
-    expect(combine(makeOption('KLM', 1, { trainCostKnown: false }), plain).incomplete).toBe(true)
-  })
-
-  it('combine sets indicative if a chosen option is indicative', () => {
-    const plain = makeOption('SAS', 10000)
-
-    expect(combine(plain, plain).indicative).toBe(false)
-    expect(combine(plain, makeOption('KLM', 1, { indicative: true })).indicative).toBe(true)
   })
 })
 

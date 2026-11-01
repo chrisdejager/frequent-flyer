@@ -11,7 +11,6 @@ use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\Money;
 use App\Domain\Flight\RoutePattern;
 use App\Domain\Flight\Segment;
-use App\Tests\Double\FixedTrainPriceSource;
 use App\Tests\Double\InMemoryFlightPriceSource;
 use PHPUnit\Framework\TestCase;
 
@@ -35,16 +34,6 @@ final class InMemoryFlightPriceSourceTest extends TestCase
         self::assertSame([], $source->search([new Route(Airport::Ams, Airport::Tku)], new \DateTimeImmutable('2026-10-29')));
     }
 
-    public function test_the_train_double_counts_its_calls(): void
-    {
-        $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
-
-        $train->priceFor(new \DateTimeImmutable('2026-10-29'));
-
-        self::assertSame(1, $train->callCount);
-        self::assertSame(2250, $train->priceFor(new \DateTimeImmutable('2026-10-29'))->cents);
-    }
-
     private static function anItinerary(): Itinerary
     {
         return new Itinerary(
@@ -57,7 +46,7 @@ final class InMemoryFlightPriceSourceTest extends TestCase
                 'AY842',
             )],
             Money::fromEuros(134),
-            RoutePattern::ViaHelsinkiWithTrain,
+            RoutePattern::Helsinki,
         );
     }
 }

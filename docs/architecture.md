@@ -30,18 +30,16 @@ flowchart LR
         subgraph domain["Domain — plain PHP"]
             R["Rules\RuleSet"]
             C["Pricing\TotalCostCalculator"]
-            Ports["Port\FlightPriceSource<br/>Port\TrainPriceSource<br/>Port\BookingLinkSource<br/>Port\PriceHistory"]
+            Ports["Port\FlightPriceSource<br/>Port\BookingLinkSource<br/>Port\PriceHistory"]
         end
         subgraph src["Infrastructure/Source"]
             IF["IgnavFlightSource"]
-            AT["ApifyTrainPriceSource<br/>(cache.app)"]
             IB["IgnavBookingLinkSource<br/>(cache.app, 30 min)"]
             NH["Persistence\NullPriceHistory"]
         end
     end
 
     Ignav[("ignav.com")]
-    Apify[("Apify — VR train")]
 
     App --> Api
     Book --> Api
@@ -54,12 +52,10 @@ flowchart LR
     H --> C
     H --> Ports
     IF -. implements .-> Ports
-    AT -. implements .-> Ports
     IB -. implements .-> Ports
     NH -. implements .-> Ports
     IF --> Ignav
     IB --> Ignav
-    AT --> Apify
 ```
 
 ## Main flow: one search
@@ -73,7 +69,6 @@ sequenceDiagram
     participant SC as SearchController
     participant H as SearchFlightsHandler
     participant F as IgnavFlightSource
-    participant T as ApifyTrainPriceSource
     participant C as TotalCostCalculator
 
     UI->>SC: GET /api/search?date&direction&traveller
@@ -82,14 +77,10 @@ sequenceDiagram
     Note over F: both requests sent before<br/>either answer is read
     F-->>H: candidate itineraries
     H->>H: RuleSet::filter (carriers, stops,<br/>connections ≤120 min, route)
-    opt train cost enabled AND a HEL option is left
-        H->>T: priceFor(date)
-        T-->>H: price, or null when unknown
-    end
     loop each valid itinerary
-        H->>C: calculate(itinerary, trainCost)
+        H->>C: calculate(itinerary)
     end
-    H->>H: ranked by total, unknown train price last
+    H->>H: sorted by total, cheapest first
     H-->>SC: SearchResult
     SC-->>UI: JSON (SearchResultPresenter)
 ```

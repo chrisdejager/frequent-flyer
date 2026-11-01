@@ -1,6 +1,6 @@
 # ADR-0004: HEL–TKU transfer behind a single toggle, off by default
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0008](0008-remove-the-hel-tku-train.md)
 **Date:** 2026-09-17 (retroactively documented on 2026-10-02)
 **Deciders:** owner
 

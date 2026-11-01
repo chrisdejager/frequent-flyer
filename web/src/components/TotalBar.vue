@@ -8,7 +8,7 @@ const props = defineProps<{
   out: Option | null
   back: Option | null
   backRequested: boolean
-  /** True = the chosen options are the default choice (cheapest ranked). */
+  /** True = the chosen options are the default choice (the cheapest). */
   isDefault: boolean
   /** A side is being searched: its amount is coming, not missing. */
   searching?: boolean
@@ -37,9 +37,6 @@ const legLine = (option: Option) => `${option.carrierLabel} · ${option.flightNu
         <small v-if="!backRequested">Outbound only</small>
         <small v-if="!out" class="warn">Outbound missing — not counted</small>
         <small v-if="backRequested && !back" class="warn">Return missing — not counted</small>
-        <small v-if="combined.indicative" class="warn">indicative</small>
-        <small v-if="combined.incomplete" class="warn">incomplete — train cost unknown</small>
-        <small v-if="combined.excludesTransfer">excl. transfer HEL→TKU</small>
       </template>
     </div>
   </section>

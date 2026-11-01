@@ -1,4 +1,4 @@
-export type Pattern = 'via_hel_train' | 'through'
+export type Pattern = 'helsinki' | 'through'
 export type Direction = 'nl-fi' | 'fi-nl'
 export type TravellerId = 'default'
 export type StartCountry = 'nl' | 'fi'
@@ -9,13 +9,8 @@ export type BookingLinkResult =
 
 export interface Cost {
   basePrice: number
-  trainCost: number
   total: number
   totalFormatted: string
-  indicative: boolean
-  trainCostKnown: boolean
-  /** False = the transfer HEL–TKU is deliberately not in this total. */
-  trainCostIncluded: boolean
 }
 
 export interface Option {

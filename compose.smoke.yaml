@@ -1,5 +1,5 @@
 # Override for scripts/smoke-test.sh: the production images on a network
-# without internet access, so no smoke check can reach ignav or Apify.
+# without internet access, so no smoke check can reach ignav.
 # The checks run inside the nginx container; no port is published.
 services:
   nginx:

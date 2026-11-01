@@ -10,8 +10,8 @@ use App\Domain\Flight\RoutePattern;
 
 /**
  * For a through ticket, only Stockholm and Copenhagen are meaningful
- * connection points. Helsinki is intentionally excluded here: that is the
- * via-Helsinki-with-train pattern, which is priced separately.
+ * connection points. Helsinki is intentionally excluded: for Helsinki the
+ * demo route only shows direct flights (the Helsinki pattern).
  */
 final readonly class AllowedConnectionAirports implements ItineraryRule
 {

@@ -6,26 +6,9 @@ export function legDirections(start: StartCountry): { out: Direction; back: Dire
     : { out: 'fi-nl', back: 'nl-fi' }
 }
 
-/** First ranked option (trainCostKnown); none → null. */
+/** The cheapest option: the API sends them cheapest first. None → null. */
 export function defaultSelection(result: SearchResult): number | null {
-  const index = result.options.findIndex(o => o.cost.trainCostKnown)
-
-  return index === -1 ? null : index
-}
-
-export interface IndexedOption {
-  option: Option
-  index: number
-}
-
-/** Ranked/unranked preserving original index. */
-export function partition(options: Option[]): { ranked: IndexedOption[]; unranked: IndexedOption[] } {
-  const indexed = options.map((option, index) => ({ option, index }))
-
-  return {
-    ranked: indexed.filter(({ option }) => option.cost.trainCostKnown),
-    unranked: indexed.filter(({ option }) => !option.cost.trainCostKnown),
-  }
+  return result.options.length > 0 ? 0 : null
 }
 
 export function chosenOption(leg: LegState): Option | null {
@@ -39,11 +22,6 @@ export function chosenOption(leg: LegState): Option | null {
 export interface Combined {
   totalCents: number
   legsCounted: number
-  /** A chosen option has trainCostIncluded=false. */
-  excludesTransfer: boolean
-  /** A chosen option has trainCostKnown=false. */
-  incomplete: boolean
-  indicative: boolean
 }
 
 export function combine(out: Option | null, back: Option | null): Combined {
@@ -52,9 +30,6 @@ export function combine(out: Option | null, back: Option | null): Combined {
   return {
     totalCents: chosen.reduce((sum, o) => sum + o.cost.total, 0),
     legsCounted: chosen.length,
-    excludesTransfer: chosen.some(o => !o.cost.trainCostIncluded),
-    incomplete: chosen.some(o => !o.cost.trainCostKnown),
-    indicative: chosen.some(o => o.cost.indicative),
   }
 }
 

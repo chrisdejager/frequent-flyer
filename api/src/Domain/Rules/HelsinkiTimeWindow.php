@@ -9,11 +9,12 @@ use App\Domain\Flight\Itinerary;
 use App\Domain\Flight\RoutePattern;
 
 /**
- * Outbound: you must catch the train to Turku, so arrival no later than 21:00.
- * Return: no night departure from Turku, so departure no earlier than 12:00.
+ * Outbound: arrival in Helsinki no later than 21:00.
+ * Return: departure from Helsinki no earlier than 12:00.
  *
- * Only applies to the train pattern. A through ticket to TKU has no
- * connecting train and is not checked here.
+ * Only applies to the Helsinki pattern; a through ticket to or from TKU is
+ * not checked here. A demo-route condition: in roadmap phase 2 this becomes a
+ * general time window per route.
  */
 final readonly class HelsinkiTimeWindow implements ItineraryRule
 {
@@ -26,7 +27,7 @@ final readonly class HelsinkiTimeWindow implements ItineraryRule
 
     public function isSatisfiedBy(Itinerary $itinerary): bool
     {
-        if (RoutePattern::ViaHelsinkiWithTrain !== $itinerary->pattern) {
+        if (RoutePattern::Helsinki !== $itinerary->pattern) {
             return true;
         }
 
@@ -41,7 +42,7 @@ final readonly class HelsinkiTimeWindow implements ItineraryRule
     public function reasonFor(Itinerary $itinerary): string
     {
         return $this->direction->isOutbound()
-            ? 'Arrival in Helsinki after 21:00 — train to Turku no longer reachable.'
+            ? 'Arrival in Helsinki after 21:00.'
             : 'Departure from Helsinki before 12:00.';
     }
 

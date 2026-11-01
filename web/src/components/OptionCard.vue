@@ -18,27 +18,11 @@ const time = (iso: string, airport: string) =>
 interface CostRow {
   label: string
   cents: number
-  unknown?: boolean
-  /** Deliberately not counted — unlike "unknown", since the option remains ranked. */
-  excluded?: boolean
 }
 
-const rows = computed(() => {
-  const r: CostRow[] = [
-    { label: 'Flight', cents: props.option.cost.basePrice },
-  ]
-
-  if (props.option.pattern === 'via_hel_train') {
-    r.push({
-      label: 'Train HEL–TKU',
-      cents: props.option.cost.trainCost,
-      unknown: !props.option.cost.trainCostKnown,
-      excluded: !props.option.cost.trainCostIncluded,
-    })
-  }
-
-  return r
-})
+const rows = computed((): CostRow[] => [
+  { label: 'Flight', cents: props.option.cost.basePrice },
+])
 
 const bookingUrl = computed(() => bookingPageUrl(props.option))
 
@@ -74,20 +58,12 @@ function openBooking() {
     <dl class="breakdown">
       <div v-for="row in rows" :key="row.label" data-testid="cost-row">
         <dt>{{ row.label }}</dt>
-        <dd v-if="row.excluded" data-testid="train-excluded">not included</dd>
-        <dd v-else-if="row.unknown">unknown</dd>
-        <dd v-else>{{ euro(row.cents) }}</dd>
+        <dd>{{ euro(row.cents) }}</dd>
       </div>
     </dl>
 
     <div class="total">
       <strong>{{ option.cost.totalFormatted }}</strong>
-      <em v-if="option.cost.indicative" data-testid="indicative">indicative</em>
-      <small
-        v-if="!option.cost.trainCostIncluded"
-        class="excluded-notice"
-        data-testid="excluded-notice"
-      >Total excludes transfer HEL→TKU</small>
       <button v-if="bookingUrl" type="button" class="book" data-testid="book" @click.stop="openBooking" @keydown.stop>Book ↗</button>
     </div>
   </article>
@@ -117,8 +93,6 @@ function openBooking() {
 .breakdown dt, .breakdown dd { margin: 0; }
 
 .total { display: flex; flex-direction: column; align-items: flex-end; text-align: right; font-size: 1.15rem; }
-.total em { font-size: .75rem; color: #a15c00; font-style: normal; }
-.excluded-notice { font-size: .7rem; color: #888; font-weight: normal; }
 
 .book { margin-top: .25rem; font-size: .8rem; padding: .2rem .7rem; border: 1px solid #4a74d9; color: #4a74d9; background: #fff; border-radius: 4px; cursor: pointer; }
 .book:hover { background: #4a74d9; color: #fff; }

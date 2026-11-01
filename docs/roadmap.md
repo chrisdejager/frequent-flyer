@@ -27,7 +27,7 @@ flowchart LR
     P3["3 · Any airport<br/>reference data, quota, own key"]
     P4["4 · Loyalty status<br/>catalogue, tier + progress"]
     P5["5 · Advice<br/>price incl. benefit, keep status"]
-    F["Future<br/>price alerts, ground transport,<br/>companions"]
+    F["Future<br/>price alerts,<br/>companions"]
     NOW --> P1 --> P2 --> P3 --> P5
     P1 --> P4 --> P5
     P5 -.-> F
@@ -74,9 +74,6 @@ Groundwork first, in this order:
 - New ADR: *General flight finder*: the scope widens, the stack choices
   "no database" and "no commands" end. Update the "Stack choices" section of
   AGENTS.md to point to it.
-- Remove the HEL ⇄ TKU train: `TrainPriceSource`, `ApifyTrainPriceSource`,
-  `TRAIN_COST_ENABLED`, `trainCostKnown`/`trainCostIncluded` in API and UI.
-  New ADR that supersedes ADR-0004.
 - [`debuggability/`](plans/debuggability/00-status.md): request id,
   structured logs, Xdebug. Needed before there are users.
 - [`behat-feature-tests/`](plans/behat-feature-tests/00-status.md): a few
@@ -170,7 +167,6 @@ an estimate of points per flight. Not decided.
 - **Price alerts** for dates you already know: "time to book", "special
   offer". Needs a scheduler, stored observations (`PriceHistory` port
   exists), and mail or push.
-- Ground transport to and from airports (the train, but general).
 - Travelling together: companions, advice for a group.
 - Locale and multiple languages (UI in English, formatting nl-NL for now).
 - Serious self-hosting: public images, semver, upgrade notes.

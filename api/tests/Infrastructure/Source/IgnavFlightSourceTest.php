@@ -212,12 +212,12 @@ final class IgnavFlightSourceTest extends TestCase
         self::assertNull($itineraries[0]->bookingRef);
     }
 
-    public function test_via_helsinki_gets_the_train_pattern(): void
+    public function test_a_helsinki_endpoint_gets_the_helsinki_pattern(): void
     {
         $itineraries = $this->searchRealPayload();
 
-        // Helsinki is the endpoint of this ticket, so the VR train belongs.
-        self::assertSame(RoutePattern::ViaHelsinkiWithTrain, $itineraries[0]->pattern);
+        // Helsinki is the endpoint of this ticket.
+        self::assertSame(RoutePattern::Helsinki, $itineraries[0]->pattern);
     }
 
     public function test_request_carries_the_api_key_and_the_search_parameters(): void

@@ -14,18 +14,6 @@ describe('TotalBar', () => {
     expect(bar.text()).toContain('Finnair')
   })
 
-  it('shows "excl. transfer HEL→TKU" if a chosen option requires it', () => {
-    const plain = mount(TotalBar, {
-      props: { out: makeOption('SAS', 100), back: makeOption('SAS', 100), backRequested: true, isDefault: true },
-    })
-    const excl = mount(TotalBar, {
-      props: { out: makeOption('SAS', 100), back: makeOption('KLM', 100, { trainCostIncluded: false }), backRequested: true, isDefault: true },
-    })
-
-    expect(plain.text()).not.toContain('excl. transfer')
-    expect(excl.text()).toContain('excl. transfer HEL→TKU')
-  })
-
   it('reports "outbound only" if there is no return date', () => {
     const oneWay = mount(TotalBar, { props: { out: makeOption('KLM', 100), back: null, backRequested: false, isDefault: true } })
     const roundTrip = mount(TotalBar, { props: { out: makeOption('KLM', 100), back: makeOption('SAS', 100), backRequested: true, isDefault: true } })

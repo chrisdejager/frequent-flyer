@@ -3,8 +3,7 @@
 A general flight finder: the cheapest trip between two places, booked directly
 with the airline, under conditions the user sets. Today it is an MVP with one
 **demo route** that is still code: AMS ⇄ HEL shows only direct flights,
-AMS ⇄ TKU only flights with exactly 1 connection. A HEL ⇄ TKU train toggle
-(off) is still in the code and goes at the start of roadmap phase 1.
+AMS ⇄ TKU only flights with exactly 1 connection.
 
 Baggage costs are deliberately not included (simplification) — why, and how to
 bring them back, is in `docs/adr/0005-exclude-baggage-costs.md`.
@@ -70,7 +69,7 @@ Here they are decided; don't reopen them without the owner:
 - Demo route, until roadmap phase 2: airlines AY/SK/KL; airports
   AMS/HEL/TKU/ARN/CPH; connection ≤120 minutes.
 - **No test may touch the network.** External credits are small: ignav
-  1,000 requests/month, Apify ~20–50 runs/month.
+  1,000 requests/month.
 
 ## How this codebase learned to work
 
