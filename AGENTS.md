@@ -23,23 +23,38 @@ Dutch and are not translated.
 - `docs/adr/` — lasting decisions.
   Change a decision with a new ADR; never rewrite an old one.
 - `docs/plans/flight-finder-phase-1/` — intake, spec, plan and log of phase 1.
+- `docs/architecture.md` — components and the main search flow, as diagrams.
 
 ## Running
 
-```bash
-docker compose exec -T php php bin/phpunit          # PHP suite
-docker compose run --rm node npm run test           # frontend
-docker compose run --rm node npm run build
-docker compose up                                   # app at http://localhost:8080
-```
-
-Proving that no test touches the network:
+The Makefile is the interface; every tool runs in a container (`make help`).
 
 ```bash
-docker run --rm --network none -v "$PWD/api:/app" -w /app flights-php:latest php bin/phpunit
+make up              # app at http://localhost:8080
+make test            # PHP suite + frontend suite
+make phpunit         # PHP suite only
+make test-offline    # PHP suite with --network none: proves no test touches the network
+make web-test        # frontend suite only
+make build           # frontend production build
+make smoke           # build the production images and smoke-test them without internet
 ```
 
 The PHPUnit config is `phpunit.dist.xml`; the working directory in the container is `/app` (= `api/`).
+
+## Stack choices for this project
+
+The owner's default stack (PHP/Symfony, DDD) leaves a few things per project.
+Here they are decided; don't reopen them without the owner:
+
+- **Frontend: Vue 3** (`web/`). **Backend: Symfony** (`api/`).
+- **No database yet.** Nothing is stored; `PriceHistory` is a port with a
+  `NullPriceHistory`. A database may come later, as its own feature.
+- **No commands yet.** The API only reads: plain `GET` endpoints calling a
+  handler, no command bus. Commands may come later, as their own feature.
+- **Tests are a pyramid:** mostly PHPUnit (including API tests through the real
+  container), far fewer Behat scenarios — only features a non-technical person
+  should be able to read — and, later, a handful of Playwright flows. Behat is
+  not set up yet: see `docs/plans/behat-feature-tests/`.
 
 ## Constraints
 

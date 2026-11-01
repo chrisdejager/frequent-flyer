@@ -31,17 +31,19 @@ to verify that the configuration is complete.
 ## Running locally
 
 ```bash
-docker compose up
+make up
 ```
 
-Open http://localhost:8080
+Open http://localhost:8080. `make help` lists all targets.
 
 ## Testing
 
 ```bash
-docker compose exec -T php php bin/phpunit
-docker compose run --rm node npm run test
+make test            # PHP suite + frontend suite
+make test-offline    # PHP suite without network access
 ```
+
+How the parts fit together: [`docs/architecture.md`](docs/architecture.md).
 
 ## To the VPS
 
