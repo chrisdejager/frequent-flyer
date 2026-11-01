@@ -61,7 +61,7 @@ const unrankedOption = {
 }
 
 const mockResult: SearchResult = {
-  traveller: { id: 'chris', name: 'Chris' },
+  traveller: { id: 'default', name: 'Traveller' },
   searchedAt: '2026-09-17T10:00:00Z',
   options: [rankedOption, unrankedOption],
 }
@@ -158,8 +158,8 @@ describe('App', () => {
     await flushPromises()
 
     expect(vi.mocked(search)).toHaveBeenCalledTimes(2)
-    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
-    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-11-09', 'fi-nl', 'partner')
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'default')
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-11-09', 'fi-nl', 'default')
 
     // Each leg gets its own column with its own options.
     const columns = wrapper.findAll('[data-testid="leg-column"]')
@@ -242,7 +242,7 @@ describe('App — dates', () => {
     const wrapper = await searchWith('2026-10-29', '')
 
     expect(vi.mocked(search)).toHaveBeenCalledOnce()
-    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'default')
     expect(wrapper.findAll('[data-testid="leg-column"]')).toHaveLength(1)
     expect(wrapper.find('[data-testid="total-sum"]').text()).toBe('€ 156,50')
     expect(wrapper.find('[data-testid="total-bar"]').text()).toContain('Outbound only')
@@ -341,8 +341,8 @@ describe('App — start country', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-25', 'fi-nl', 'partner')
-    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'partner')
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-25', 'fi-nl', 'default')
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-29', 'nl-fi', 'default')
   })
 
 })
@@ -389,7 +389,7 @@ describe('App — day shift', () => {
     await flushPromises()
 
     expect(vi.mocked(search)).toHaveBeenCalledOnce()
-    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-30', 'nl-fi', 'partner')
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-10-30', 'nl-fi', 'default')
     const [outColumn, backColumn] = wrapper.findAll('[data-testid="leg-column"]')
     expect(outColumn.find('h2').text()).toContain('30 oktober')
     expect(backColumn.find('h2').text()).toContain('9 november')
@@ -404,7 +404,7 @@ describe('App — day shift', () => {
     await wrapper.findAll('[data-testid="leg-column"]')[1].find('[data-testid="prev-day"]').trigger('click')
     await flushPromises()
 
-    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-11-08', 'fi-nl', 'partner')
+    expect(vi.mocked(search)).toHaveBeenCalledWith('2026-11-08', 'fi-nl', 'default')
   })
 
   it('the outbound cannot be shifted past the return', async () => {

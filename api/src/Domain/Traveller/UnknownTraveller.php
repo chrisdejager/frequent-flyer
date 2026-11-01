@@ -8,6 +8,6 @@ final class UnknownTraveller extends \DomainException
 {
     public static function withId(string $id): self
     {
-        return new self(sprintf('Onbekende reiziger "%s".', $id));
+        return new self(sprintf('Unknown traveller "%s".', $id));
     }
 }

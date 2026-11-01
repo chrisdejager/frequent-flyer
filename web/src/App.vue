@@ -6,9 +6,9 @@ import TotalBar from './components/TotalBar.vue'
 import { chosenOption, defaultSelection, legDirections, shiftedDate, validateDates } from './roundTrip'
 import type { Direction, LegState, StartCountry, TravellerId } from './types'
 
-// No traveller choice: without baggage costs (ADR-0005) both get the same
-// price. The API still takes one, so baggage can come back without an API change.
-const traveller: TravellerId = 'partner'
+// No traveller choice: without baggage costs (ADR-0005) the traveller does not
+// change a price. The API still takes one, so baggage can come back without an API change.
+const traveller: TravellerId = 'default'
 const start = ref<StartCountry>('nl')
 const directions = computed(() => legDirections(start.value))
 

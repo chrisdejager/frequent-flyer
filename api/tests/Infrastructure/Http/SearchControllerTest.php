@@ -71,14 +71,14 @@ final class SearchControllerTest extends WebTestCase
             FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
         );
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('Content-Type', 'application/json');
 
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertSame('chris', $body['traveller']['id']);
+        self::assertSame('default', $body['traveller']['id']);
         self::assertCount(1, $body['options']);
         self::assertSame('AY', $body['options'][0]['carrier']);
         self::assertSame(13400, $body['options'][0]['cost']['basePrice']);
@@ -99,7 +99,7 @@ final class SearchControllerTest extends WebTestCase
         $flights->give(Airport::Ams, Airport::Hel, [self::aFinnairFlight()]);
         static::getContainer()->set(FlightPriceSource::class, $flights);
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
@@ -111,7 +111,7 @@ final class SearchControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request('GET', '/api/search?direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?direction=nl-fi&traveller=default');
 
         self::assertResponseStatusCodeSame(400);
     }
@@ -120,7 +120,7 @@ final class SearchControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request('GET', '/api/search?date=gisteren&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=gisteren&direction=nl-fi&traveller=default');
 
         self::assertResponseStatusCodeSame(400);
     }
@@ -129,7 +129,7 @@ final class SearchControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-de&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-de&traveller=default');
 
         self::assertResponseStatusCodeSame(400);
     }
@@ -158,7 +158,7 @@ final class SearchControllerTest extends WebTestCase
 
         static::getContainer()->set(FlightPriceSource::class, $broken);
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         self::assertResponseStatusCodeSame(500,
             'An InvalidArgumentException from the data source should be 500, not 400.');
@@ -177,7 +177,7 @@ final class SearchControllerTest extends WebTestCase
             FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
         );
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
@@ -200,7 +200,7 @@ final class SearchControllerTest extends WebTestCase
             FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)),
         );
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $cost = $body['options'][0]['cost'];
@@ -226,7 +226,7 @@ final class SearchControllerTest extends WebTestCase
         $trains = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
         static::getContainer()->set(TrainPriceSource::class, $trains);
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         self::assertResponseIsSuccessful();
         self::assertSame(0, $trains->callCount,
@@ -247,7 +247,7 @@ final class SearchControllerTest extends WebTestCase
         $trains = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
         static::getContainer()->set(TrainPriceSource::class, $trains);
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         self::assertResponseIsSuccessful();
         self::assertSame(1, $trains->callCount,
@@ -268,7 +268,7 @@ final class SearchControllerTest extends WebTestCase
             FixedTrainPriceSource::withUnknownPrice(),
         );
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
@@ -336,7 +336,7 @@ final class SearchControllerTest extends WebTestCase
             FixedTrainPriceSource::withUnknownPrice(),
         );
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         self::assertResponseIsSuccessful();
 
@@ -375,7 +375,7 @@ final class SearchControllerTest extends WebTestCase
         $flights->give(Airport::Ams, Airport::Hel, [$withRef, self::aFinnairFlight()]);
         static::getContainer()->set(FlightPriceSource::class, $flights);
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
@@ -407,7 +407,7 @@ final class SearchControllerTest extends WebTestCase
         $flights->give(Airport::Ams, Airport::Hel, [$observed, self::aFinnairFlight()]);
         static::getContainer()->set(FlightPriceSource::class, $flights);
 
-        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+        $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
         $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
@@ -439,7 +439,7 @@ final class SearchControllerTest extends WebTestCase
                 return new MockResponse('', ['http_code' => 401]);
             }));
 
-            $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+            $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
             self::assertResponseStatusCodeSame(503);
             $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
@@ -468,7 +468,7 @@ final class SearchControllerTest extends WebTestCase
                 return new MockResponse('{"detail": "Invalid API key"}', ['http_code' => 401]);
             }));
 
-            $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=chris');
+            $client->request('GET', '/api/search?date=2026-10-29&direction=nl-fi&traveller=default');
 
             self::assertResponseStatusCodeSame(503);
             $body = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);

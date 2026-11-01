@@ -35,7 +35,7 @@ final class SearchFlightsHandlerTest extends TestCase
         ]);
 
         $result = $this->handler($flights, FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)))(
-            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'default'),
         );
 
         self::assertCount(2, $result->options);
@@ -52,27 +52,11 @@ final class SearchFlightsHandlerTest extends TestCase
         ]);
 
         $result = $this->handler($flights, FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)))(
-            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'default'),
         );
 
         self::assertCount(1, $result->options, 'the cheaper evening flight falls away on arrival time');
         self::assertSame(13400, $result->options[0]->itinerary->basePrice->cents);
-    }
-
-    public function test_chris_and_partner_get_the_same_total_on_finnair(): void
-    {
-        // Baggage costs are out (simplification): the traveler must not
-        // influence it more.
-        $flights = new InMemoryFlightPriceSource();
-        $flights->give(Airport::Ams, Airport::Hel, [self::viaHel(Carrier::Finnair, 134, '13:00', '16:45')]);
-
-        $handler = $this->handler($flights, FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)));
-
-        $chris = $handler(new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'));
-        $partner = $handler(new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'partner'));
-
-        self::assertSame(15650, $chris->options[0]->cost->total()->cents);
-        self::assertSame(15650, $partner->options[0]->cost->total()->cents);
     }
 
     public function test_the_train_price_is_not_fetched_when_no_helsinki_option_survives(): void
@@ -83,7 +67,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
 
         $this->handler($flights, $train)(
-            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'default'),
         );
 
         self::assertSame(0, $train->callCount, 'no HEL option, so no apify credits used');
@@ -102,7 +86,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
 
         $result = $this->handler($flights, $train)(
-            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'default'),
         );
 
         self::assertSame(0, $train->callCount, 'the HEL flight fell away on the travel rules, so no train price needed');
@@ -120,7 +104,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
 
         $this->handler($flights, $train)(
-            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'default'),
         );
 
         self::assertSame(1, $train->callCount);
@@ -133,7 +117,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $flights->give(Airport::Tku, Airport::Ams, []);
 
         $this->handler($flights, FixedTrainPriceSource::withPrice(Money::zero()))(
-            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'partner'),
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'default'),
         );
 
         self::assertSame(
@@ -155,7 +139,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $train = FixedTrainPriceSource::withPrice(Money::fromEuros(22.50));
 
         $result = $this->handler($flights, $train)(
-            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'chris'),
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'default'),
         );
 
         self::assertCount(1, $result->options);
@@ -172,7 +156,7 @@ final class SearchFlightsHandlerTest extends TestCase
         $flights->give(Airport::Tku, Airport::Ams, []);
 
         $result = $this->handler($flights, FixedTrainPriceSource::withPrice(Money::fromEuros(22.50)))(
-            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'chris'),
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'default'),
         );
 
         self::assertCount(0, $result->options,
@@ -221,7 +205,7 @@ final class SearchFlightsHandlerTest extends TestCase
             new NullPriceHistory(),
         );
 
-        $result = $handler(new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'chris'));
+        $result = $handler(new SearchFlightsQuery(new \DateTimeImmutable('2026-10-25'), Direction::FiToNl, 'default'));
 
         self::assertCount(1, $result->options, 'One valid HEL→AMS Finnair flight expected');
 
@@ -244,7 +228,7 @@ final class SearchFlightsHandlerTest extends TestCase
         ]);
 
         $result = $this->handler($flights, FixedTrainPriceSource::withUnknownPrice())(
-            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'chris'),
+            new SearchFlightsQuery(new \DateTimeImmutable('2026-10-29'), Direction::NlToFi, 'default'),
         );
 
         self::assertCount(2, $result->options);

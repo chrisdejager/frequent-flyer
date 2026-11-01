@@ -27,7 +27,7 @@ starts at today, and `App.spec.ts` freezes the clock at 2026-10-20 (only
 
 ## 00. Status 28 Oct 2026 — live on the VPS
 
-**The app runs in production** at https://flights.chrisdejager.nl, behind
+**The app runs in production** at https://flights.example.com, behind
 basic auth (closes I7). Deployed by hand by the owner: commit `bdbddae`.
 Everything about it: `docs/plans/deployment/00-status.md` (decisions,
 measurements, mutation table) and `docs/deployment.md` (runbook).

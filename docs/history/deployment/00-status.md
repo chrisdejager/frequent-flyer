@@ -14,7 +14,7 @@ Decision: `docs/adr/0007-deploy-as-docker-images.md`.
 - Images instead of Deployer.
 - Build and test in GitHub Actions; images private on ghcr.io.
 - Deploy triggered by hand, not on every push.
-- Subdomain `flights.chrisdejager.nl`; host nginx already serves other
+- Subdomain `flights.example.com`; host nginx already serves other
   subdomains with a wildcard certificate. Docker is installed; port 8081 is free.
 - The pipeline must test that the images work, without touching the network
   (compose network `internal: true` during the smoke test).
@@ -101,7 +101,7 @@ run yet.
 ## Live (2026-10-28)
 The owner set up the server per `docs/deployment.md` and deployed bdbddae
 by hand (`pull` + `up -d` in `/var/apps/flights`, `TAG` in `.env`).
-`https://flights.chrisdejager.nl` works behind basic auth; the app works.
+`https://flights.example.com` works behind basic auth; the app works.
 **I7 (public `/api` spending credits) is closed** by the basic auth.
 
 Hiccups during setup, for the next server:

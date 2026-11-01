@@ -3,12 +3,12 @@
 Production is two Docker images that CI builds, smoke-tests and pushes to
 ghcr.io for every commit on `main` (ADR-0007). A deploy pulls the images of
 one commit onto the VPS and restarts the stack. The host nginx is the reverse
-proxy: TLS with the wildcard certificate for `chrisdejager.nl`, and basic
+proxy: TLS with the wildcard certificate for `example.com`, and basic
 auth for the whole site.
 
 ```
 internet ──443──▶ host nginx (TLS, basic auth)
-                    └─ flights.chrisdejager.nl → 127.0.0.1:8081
+                    └─ flights.example.com → 127.0.0.1:8081
                                                    └─ [nginx container] → [php-fpm container]
 ```
 
@@ -40,15 +40,15 @@ It prints the previous sha. **Rollback** is a deploy of that sha:
 The ssh user must be able to run `docker` (member of the `docker` group) and
 write to `/var/apps/flights`.
 
-1. **DNS.** `flights.chrisdejager.nl` must resolve to the VPS. Not needed if
-   there is a wildcard record `*.chrisdejager.nl`.
+1. **DNS.** `flights.example.com` must resolve to the VPS. Not needed if
+   there is a wildcard record `*.example.com`.
 
 2. **Read access to the private images.** On GitHub: Settings → Developer
    settings → Personal access tokens (classic) → new token with **only**
    `read:packages`. On the VPS, as the ssh user:
 
    ```bash
-   docker login ghcr.io -u chrisdejager      # paste the token as password
+   docker login ghcr.io -u <github-user>     # paste the token as password
    ```
 
 3. **Secrets.**
@@ -77,19 +77,19 @@ write to `/var/apps/flights`.
    sudo htpasswd -c /etc/nginx/htpasswd/flights <user>
    ```
 
-5. **Host nginx**: `/etc/nginx/sites-available/flights.chrisdejager.nl`, then
-   `sudo ln -s ../sites-available/flights.chrisdejager.nl /etc/nginx/sites-enabled/`,
+5. **Host nginx**: `/etc/nginx/sites-available/flights.example.com`, then
+   `sudo ln -s ../sites-available/flights.example.com /etc/nginx/sites-enabled/`,
    `sudo nginx -t && sudo systemctl reload nginx`. Copy the certificate paths
-   and TLS settings from an existing `*.chrisdejager.nl` site.
+   and TLS settings from an existing `*.example.com` site.
 
    ```nginx
    server {
        listen 443 ssl;
        http2 on;
-       server_name flights.chrisdejager.nl;
+       server_name flights.example.com;
 
-       ssl_certificate     /etc/letsencrypt/live/chrisdejager.nl/fullchain.pem;
-       ssl_certificate_key /etc/letsencrypt/live/chrisdejager.nl/privkey.pem;
+       ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+       ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
 
        auth_basic           "flights";
        auth_basic_user_file /etc/nginx/htpasswd/flights;
@@ -104,7 +104,7 @@ write to `/var/apps/flights`.
 
    server {
        listen 80;
-       server_name flights.chrisdejager.nl;
+       server_name flights.example.com;
        return 301 https://$host$request_uri;
    }
    ```

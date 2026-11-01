@@ -1,6 +1,6 @@
 export type Pattern = 'via_hel_train' | 'through'
 export type Direction = 'nl-fi' | 'fi-nl'
-export type TravellerId = 'chris' | 'partner'
+export type TravellerId = 'default'
 export type StartCountry = 'nl' | 'fi'
 
 export type BookingLinkResult =

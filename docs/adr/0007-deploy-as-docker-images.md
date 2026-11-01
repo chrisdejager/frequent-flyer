@@ -6,7 +6,7 @@
 
 ## Context
 The app goes to the owner's Ubuntu VPS, which already runs Docker and a host
-nginx serving several `*.chrisdejager.nl` subdomains with a wildcard
+nginx serving several `*.example.com` subdomains with a wildcard
 certificate. In other projects the owner deploys with Deployer: SSH in, clone
 into `releases/N/`, `composer install`, link `shared/` files, switch the
 `current` symlink, reload php-fpm.
@@ -23,7 +23,7 @@ inside one (see `AGENTS.md`).
    come from `app.env` on the server.
 2. **On the VPS only `compose.prod.yaml` and `app.env`.** The nginx container
    listens on `127.0.0.1:8081`. The host nginx is the reverse proxy for
-   `flights.chrisdejager.nl`: TLS with the existing wildcard certificate, and
+   `flights.example.com`: TLS with the existing wildcard certificate, and
    basic auth on the whole site (closes I7: `/api` spends ignav credits).
 3. **Built and tested in GitHub Actions, private on ghcr.io.** Unit tests,
    build, a smoke test against the running prod stack, and only then push,

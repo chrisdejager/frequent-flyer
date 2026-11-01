@@ -11,14 +11,13 @@ final class TravellerTest extends TestCase
 {
     public function test_lookup_by_id(): void
     {
-        self::assertSame('chris', Traveller::byId('chris')->id);
-        self::assertSame('partner', Traveller::byId('partner')->id);
+        self::assertSame('default', Traveller::byId('default')->id);
     }
 
     public function test_unknown_id_is_rejected(): void
     {
         $this->expectException(\DomainException::class);
 
-        Traveller::byId('iemand-anders');
+        Traveller::byId('someone-else');
     }
 }

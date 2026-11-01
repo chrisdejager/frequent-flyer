@@ -29,7 +29,7 @@ export function makeOption(carrierLabel: string, total: number, cost: Partial<Co
 }
 
 export function makeResult(options: Option[]): SearchResult {
-  return { traveller: { id: 'partner', name: 'Partner' }, searchedAt: '2026-10-02T10:00:00Z', options }
+  return { traveller: { id: 'default', name: 'Traveller' }, searchedAt: '2026-10-02T10:00:00Z', options }
 }
 
 export function makeLeg(result: SearchResult | null, selected: number | null): LegState {
