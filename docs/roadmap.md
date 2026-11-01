@@ -21,14 +21,14 @@ the four gates (product, architecture, program design, slices) before code.
 
 ```mermaid
 flowchart LR
-    P0["0 · Clean slate<br/>public repo, train out"]
+    NOW(["Current · MVP<br/>one demo route"])
     P1["1 · Foundation<br/>Postgres, users, invites"]
     P2["2 · Saved routes<br/>multi-airport, conditions"]
     P3["3 · Any airport<br/>reference data, quota, own key"]
     P4["4 · Loyalty status<br/>catalogue, tier + progress"]
     P5["5 · Advice<br/>price incl. benefit, keep status"]
     F["Future<br/>price alerts, ground transport,<br/>companions"]
-    P0 --> P1 --> P2 --> P3 --> P5
+    NOW --> P1 --> P2 --> P3 --> P5
     P1 --> P4 --> P5
     P5 -.-> F
 ```
@@ -58,35 +58,33 @@ flowchart TB
     Search --> Fares
     Fares --> Usage
     Loyalty --> Reference
-    Search -. "owner id only" .-> Identity
-    Loyalty -. "owner id only" .-> Identity
+    Search -. "only a user id" .-> Identity
+    Loyalty -. "only a user id" .-> Identity
 ```
 
 Dependencies point from supporting to core, and the core only knows a user
 as an id: login, passwords and invitations never enter the search model.
 
-## Phase 0 — Clean slate (small, now)
-
-Goal: the repo is public and the demo route carries no code that is already
-known to go.
-
-- Switch the repo to public on GitHub (MIT license is in place).
-- Run the success path of `scripts/deploy.sh` once (its failure paths are
-  tested, the success path never ran: `history/deployment/00-status.md`).
-- Remove the HEL ⇄ TKU train: `TrainPriceSource`, `ApifyTrainPriceSource`,
-  `TRAIN_COST_ENABLED`, `trainCostKnown`/`trainCostIncluded` in API and UI.
-  New ADR that supersedes ADR-0004.
-- New ADR: *General flight finder*: the scope widens, the stack choices
-  "no database" and "no commands" end. Update the "Stack choices" section of
-  AGENTS.md to point to it.
-- Pick up the existing work items first or alongside:
-  [`debuggability/`](plans/debuggability/00-status.md) (request id, structured
-  logs: needed before there are users) and
-  [`behat-feature-tests/`](plans/behat-feature-tests/00-status.md).
-
 ## Phase 1 — Foundation: database and users
 
 Goal: invited people can log in; the search they see is still the demo route.
+
+Groundwork first, in this order:
+
+- New ADR: *General flight finder*: the scope widens, the stack choices
+  "no database" and "no commands" end. Update the "Stack choices" section of
+  AGENTS.md to point to it.
+- Remove the HEL ⇄ TKU train: `TrainPriceSource`, `ApifyTrainPriceSource`,
+  `TRAIN_COST_ENABLED`, `trainCostKnown`/`trainCostIncluded` in API and UI.
+  New ADR that supersedes ADR-0004.
+- [`debuggability/`](plans/debuggability/00-status.md): request id,
+  structured logs, Xdebug. Needed before there are users.
+- [`behat-feature-tests/`](plans/behat-feature-tests/00-status.md): a few
+  readable scenarios, so the users feature gets them from the start.
+- Run the success path of `scripts/deploy.sh` once (its failure paths are
+  tested, the success path never ran: `history/deployment/00-status.md`).
+
+Then the feature itself:
 
 - PostgreSQL in `compose.yaml`, `compose.prod.yaml` and the smoke test;
   Doctrine ORM with mapping in `Infrastructure/Persistence`; migrations
@@ -194,10 +192,10 @@ What was planned or left open before this roadmap, and where it lands now.
 
 | Item | Relevant? | Where |
 |---|---|---|
-| [Debuggability](plans/debuggability/00-status.md): request id, structured logs, Xdebug | Yes, more so with users | Phase 0 |
-| [Behat feature tests](plans/behat-feature-tests/00-status.md) | Yes | Phase 0, or alongside phase 1 |
+| [Debuggability](plans/debuggability/00-status.md): request id, structured logs, Xdebug | Yes, more so with users | Phase 1, groundwork |
+| [Behat feature tests](plans/behat-feature-tests/00-status.md) | Yes | Phase 1, groundwork |
 | [SAS price unknown](plans/sas-price-unknown/00-status.md): ignav gives SAS the KLM codeshare price | Yes: a symptom of fare-source coverage | Phase 3 (fare source), risk above |
-| `scripts/deploy.sh` success path never ran | Yes | Phase 0 |
+| `scripts/deploy.sh` success path never ran | Yes | Phase 1, groundwork |
 | Phase 1 deferral: show the Plus price next to Light | Yes, it is a status benefit | Phase 5 |
 | Phase 1 deferral: show KLM only if really cheaper | Replaced by airline preferences per route | Phase 2 |
 | Phase 1 deferral: ±1-day suggestion | Partly done (day shift ‹ ›); a "cheaper nearby date" hint fits price alerts | Future |

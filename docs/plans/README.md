@@ -6,8 +6,8 @@ order of the features, is in [`docs/roadmap.md`](../roadmap.md).
 | Feature | State |
 |---|---|
 | [`general-flight-finder/`](general-flight-finder/00-status.md) | Intake done: the owner's decisions behind the roadmap |
-| [`debuggability/`](debuggability/00-status.md) | Not started (roadmap phase 0) |
-| [`behat-feature-tests/`](behat-feature-tests/00-status.md) | Not started (roadmap phase 0) |
+| [`debuggability/`](debuggability/00-status.md) | Not started (roadmap phase 1, groundwork) |
+| [`behat-feature-tests/`](behat-feature-tests/00-status.md) | Not started (roadmap phase 1, groundwork) |
 | [`sas-price-unknown/`](sas-price-unknown/00-status.md) | Deferred; part of fare-source coverage (roadmap phase 3) |
 
 Each folder has a `00-status.md` (state and owner decisions) and, once the
