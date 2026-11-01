@@ -1,5 +1,27 @@
 # Handoff — flight finder
 
+## 00. Status 1 Nov 2026 — aligned with the owner's default stack
+
+The owner's default skills changed; this repo was compared with them. Done:
+a `Makefile` (`make help`), `docs/architecture.md` with Mermaid diagrams, the
+last Dutch comments in `services.yaml` translated, and a "Stack choices for
+this project" section in AGENTS.md (Vue, no database yet, no commands yet,
+test pyramid).
+
+Two work items, not started, each with its own `00-status.md`:
+- [`debuggability/`](debuggability/00-status.md) — request id, structured
+  logs, Xdebug, `docs/debugging.md`.
+- [`behat-feature-tests/`](behat-feature-tests/00-status.md) — a few
+  readable feature scenarios.
+
+**Found, not fixed: 3 frontend tests are date-dependent and fail since
+1 Nov 2026** (93/96). The default outbound date `2026-10-29` is hardcoded in
+`web/src/App.vue`; it is now in the past, and the day shift refuses dates
+before today. The "day shift" and "no stale results" tests in `App.spec.ts`
+fail on that. CI will be red on the next push until this is fixed.
+
+---
+
 **Updated:** 28 Oct 2026 · **branch:** `main` · all green: **PHP 185/185
 (also `--network none`), frontend 96/96, build green, smoke test 9/9.**
 
