@@ -1,8 +1,10 @@
-# Leiden ↔ Turku flight finder
+# Flight finder
 
-Finds the cheapest trip between Leiden and Turku. The total is the ticket price
-plus the VR train Helsinki⇄Turku where applicable. HEL<>AMS shows only direct
-flights, TKU<>AMS only flights with exactly 1 connection.
+A general flight finder: the cheapest trip between two places, booked directly
+with the airline, under conditions the user sets. Today it is an MVP with one
+**demo route** that is still code: AMS ⇄ HEL shows only direct flights,
+AMS ⇄ TKU only flights with exactly 1 connection. A HEL ⇄ TKU train toggle
+(off) is still in the code and goes in roadmap phase 0.
 
 Baggage costs are deliberately not included (simplification) — why, and how to
 bring them back, is in `docs/adr/0005-exclude-baggage-costs.md`.
@@ -10,20 +12,23 @@ bring them back, is in `docs/adr/0005-exclude-baggage-costs.md`.
 ## Language
 
 Everything in the repo is in English: code, comments, UI copy, docs and commit
-messages. Historical logs (`docs/plans/*/plan.md`, `progress.md`) are still in
+messages. Historical logs (`docs/history/*/plan.md`, `progress.md`) are still in
 Dutch and are not translated.
 
 ## Read this first in a new session
 
-- **`docs/plans/README.md`** — where the work stands, what is open, and which
-  decisions the owner has made. Start here.
-- `docs/plans/<feature>/` — one folder per feature: `00-status.md` (state),
-  `01-product.md` through `04-slices.md`, mockups and measurements.
-  New features go here too.
+- **`docs/roadmap.md`** — the main plan: phases from the demo route to the
+  general flight finder, and what is still open. Start here.
+- `docs/plans/README.md` — features in progress, one folder each:
+  `00-status.md` (state and owner decisions), `01-product.md` through
+  `04-slices.md`, mockups and measurements. New features go here too.
+- `docs/plans/general-flight-finder/00-status.md` — the owner's decisions
+  behind the roadmap.
 - `docs/adr/` — lasting decisions.
   Change a decision with a new ADR; never rewrite an old one.
-- `docs/plans/flight-finder-phase-1/` — intake, spec, plan and log of phase 1.
 - `docs/architecture.md` — components and the main search flow, as diagrams.
+- `docs/history/` — finished plans and the session handoff log of the MVP.
+  A finished feature folder moves there from `docs/plans/`.
 
 ## Running
 
@@ -62,9 +67,10 @@ Here they are decided; don't reopen them without the owner:
 - `declare(strict_types=1)` everywhere; `src/Domain/**` is framework-free (an
   architecture test checks this).
 - Money amounts always in whole cents as int.
-- Airlines AY/SK/KL; airports AMS/HEL/TKU/ARN/CPH; connection ≤120 minutes.
-- **No test may touch the network.** External credits are small: Bright
-  Data 5,000 credits/month, Apify ~20–50 runs/month.
+- Demo route, until roadmap phase 2: airlines AY/SK/KL; airports
+  AMS/HEL/TKU/ARN/CPH; connection ≤120 minutes.
+- **No test may touch the network.** External credits are small: ignav
+  1,000 requests/month, Apify ~20–50 runs/month.
 
 ## How this codebase learned to work
 

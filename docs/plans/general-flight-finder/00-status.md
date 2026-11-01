@@ -1,7 +1,7 @@
 # Status: General flight finder
 
-From a Leiden ⇄ Turku tool to a general flight finder, open source.
-Roadmap: [`roadmap.md`](roadmap.md). Nothing is built yet.
+From an MVP with one demo route to a general flight finder, open source.
+Roadmap: [`docs/roadmap.md`](../../roadmap.md). Nothing is built yet.
 
 ## Owner decisions (intake, 1 Nov 2026)
 

@@ -61,4 +61,4 @@ won because it's a real API, and because there's a real response as a fixture to
   adapter.
 
 ## Action Items
-1. [x] Built according to `docs/plans/ignav-flightsource/plan.md`.
+1. [x] Built according to `docs/history/ignav-flightsource/plan.md`.

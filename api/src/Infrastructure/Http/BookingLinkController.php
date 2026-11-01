@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * Only retrieves the link on a click on "Book": ignav charges one call per
- * request, not in advance for every option (docs/plans/booking-link).
+ * request, not in advance for every option (docs/history/booking-link).
  */
 #[AsController]
 final readonly class BookingLinkController

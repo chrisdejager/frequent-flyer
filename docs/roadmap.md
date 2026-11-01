@@ -1,8 +1,19 @@
-# Roadmap: General flight finder
+# Roadmap
 
-Decisions behind this roadmap: [`00-status.md`](00-status.md).
-Every phase leaves a working app; Leiden ⇄ Turku keeps working the whole way,
-first as code, from phase 2 on as a saved route.
+Where this project is going: from an MVP with one demo route to a general
+flight finder. Decisions behind it:
+[`plans/general-flight-finder/00-status.md`](plans/general-flight-finder/00-status.md).
+
+## Where it stands
+
+The MVP searches **one demo route**: Amsterdam ⇄ Finland, with Helsinki (direct
+flights) and Turku (one connection) as destination airports, for Finnair, SAS
+and KLM. The route, its airlines and its rules are still code. It runs in
+production, and the search, round trip, day shift and booking links work end
+to end.
+
+Every phase below leaves a working app; the demo route keeps working the whole
+way, first as code, from phase 2 on as a saved route.
 Each phase becomes its own feature folder in `docs/plans/` and goes through
 the four gates (product, architecture, program design, slices) before code.
 
@@ -56,10 +67,12 @@ as an id: login, passwords and invitations never enter the search model.
 
 ## Phase 0 — Clean slate (small, now)
 
-Goal: the repo can go public and contains no Leiden ⇄ Turku code that is
-already known to go.
+Goal: the repo is public and the demo route carries no code that is already
+known to go.
 
-- Merge the MIT license; switch the repo to public on GitHub.
+- Switch the repo to public on GitHub (MIT license is in place).
+- Run the success path of `scripts/deploy.sh` once (its failure paths are
+  tested, the success path never ran: `history/deployment/00-status.md`).
 - Remove the HEL ⇄ TKU train: `TrainPriceSource`, `ApifyTrainPriceSource`,
   `TRAIN_COST_ENABLED`, `trainCostKnown`/`trainCostIncluded` in API and UI.
   New ADR that supersedes ADR-0004.
@@ -67,13 +80,13 @@ already known to go.
   "no database" and "no commands" end. Update the "Stack choices" section of
   AGENTS.md to point to it.
 - Pick up the existing work items first or alongside:
-  [`debuggability/`](../debuggability/00-status.md) (request id, structured
+  [`debuggability/`](plans/debuggability/00-status.md) (request id, structured
   logs: needed before there are users) and
-  [`behat-feature-tests/`](../behat-feature-tests/00-status.md).
+  [`behat-feature-tests/`](plans/behat-feature-tests/00-status.md).
 
 ## Phase 1 — Foundation: database and users
 
-Goal: invited people can log in; the search they see is still Leiden ⇄ Turku.
+Goal: invited people can log in; the search they see is still the demo route.
 
 - PostgreSQL in `compose.yaml`, `compose.prod.yaml` and the smoke test;
   Doctrine ORM with mapping in `Infrastructure/Persistence`; migrations
@@ -92,8 +105,8 @@ transport on the VPS; session vs. token auth for the SPA.
 
 ## Phase 2 — Saved routes with conditions
 
-Goal: every user keeps their own routes; Leiden ⇄ Turku is no longer code but
-the first saved route of the owner.
+Goal: every user keeps their own routes; the demo route is no longer code but
+the first saved route.
 
 - `Route`: name, origin airports, destination airports (max 3 per side),
   owner. Search runs one call per origin × destination pair.
@@ -106,7 +119,7 @@ the first saved route of the owner.
   window.
 - "Booked with the airline" stays a hard filter on the fare source.
 - UI: route list, route editor, search a route with one click (pick dates).
-- Data migration: the current hardcoded rules become the owner's route.
+- Data migration: the current hardcoded rules become the first saved route.
 - Call quota per user (counted calls per month) arrives here, because this
   is the first phase where several people spend the admin's credits.
 
@@ -169,11 +182,33 @@ an estimate of points per flight. Not decided.
 - **API credits.** 1,000 free ignav requests/month. Multi-airport routes
   multiply calls; quota comes in phase 2, own keys in phase 3.
 - **Coverage of the fare source.** ignav works for AY/SK/KL around AMS/HEL;
-  the SAS price is already wrong (`sas-price-unknown/`). "Any airport" may
-  need a second source.
+  the SAS price is already wrong
+  ([`sas-price-unknown/`](plans/sas-price-unknown/00-status.md)).
+  "Any airport" may need a second source.
 - **Personal data.** Users, emails and loyalty numbers make this an app that
   stores personal data; the small invite-only circle keeps that manageable.
-</content>
-</invoke>
-<invoke name="Bash">
-<parameter name="command">cd /Storage/Workspace/Projecten/flights && perl -0pi -e 's/(# Handoff — flight finder\n\n)/$1## 00. Next: general flight finder (1 Nov 2026)\n\nThe owner wants to turn this into a general, open source flight finder:\nany airport, saved routes with conditions, users by invitation, loyalty\nstatus and advice. Intake decisions and the phased roadmap:\n[`general-flight-finder\/`](general-flight-finder\/00-status.md). Nothing built yet.\n\n---\n\n/' docs/plans/README.md && head -12 docs/plans/README.md && docker run --rm -v "$PWD/docs/plans/general-flight-finder:/d:ro" minlag/mermaid-cli:11.4.2 --version 2>&1 | tail -1
+
+## Earlier plans: still relevant?
+
+What was planned or left open before this roadmap, and where it lands now.
+
+| Item | Relevant? | Where |
+|---|---|---|
+| [Debuggability](plans/debuggability/00-status.md): request id, structured logs, Xdebug | Yes, more so with users | Phase 0 |
+| [Behat feature tests](plans/behat-feature-tests/00-status.md) | Yes | Phase 0, or alongside phase 1 |
+| [SAS price unknown](plans/sas-price-unknown/00-status.md): ignav gives SAS the KLM codeshare price | Yes: a symptom of fare-source coverage | Phase 3 (fare source), risk above |
+| `scripts/deploy.sh` success path never ran | Yes | Phase 0 |
+| Phase 1 deferral: show the Plus price next to Light | Yes, it is a status benefit | Phase 5 |
+| Phase 1 deferral: show KLM only if really cheaper | Replaced by airline preferences per route | Phase 2 |
+| Phase 1 deferral: ±1-day suggestion | Partly done (day shift ‹ ›); a "cheaper nearby date" hint fits price alerts | Future |
+| I6: `FareUpgradeRates` silently €0 for an unknown airline | Code is gone with ADR-0005; the rule (unknown is never €0) carries over | Phase 5 |
+| M3: `CARRIER_PRIORITY` hardcoded in `IgnavFlightSource` | Yes, it blocks "any airline" | Phase 3 |
+| M7: impossible dates (`2026-02-31`) roll over silently | Yes, small | Phase 2 (search input) |
+| M10: frontend does not validate the API response | Yes, small | Phase 2 |
+| Docker layer cache in CI | Nice to have | Any time |
+| Booking link with a bad key gives a generic 502 | Small | Any time |
+| "GitHub deploy key" | No: deploy stays manual, the server needs none | Dropped |
+
+The full list of older findings (M1–M10) is in
+[`history/handoff.md`](history/handoff.md), section 2; several went away with
+Bright Data and were not re-checked one by one.

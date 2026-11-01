@@ -65,5 +65,5 @@ earlier Criticals were found.
 - Reconsider if the `FlightPriceSource` port becomes parallel: then B becomes equivalent in speed.
 
 ## Action Items
-1. [x] Built in six slices; see `docs/plans/round-trip/`.
+1. [x] Built in six slices; see `docs/history/round-trip/`.
 2. [ ] For a round-trip-specific pricing rule: a new ADR that replaces this one.

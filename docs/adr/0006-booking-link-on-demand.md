@@ -78,5 +78,5 @@ the codeshare price, SAS goes outside ignav.
   or if ignav changes the quota counting for booking links.
 
 ## Action Items
-1. [x] Built in six slices according to `docs/plans/booking-link/`.
+1. [x] Built in six slices according to `docs/history/booking-link/`.
 2. [ ] SAS price = unknown (separate feature).

@@ -106,7 +106,8 @@ const isDefault = computed(() =>
 
 <template>
   <main>
-    <h1>Leiden ↔ Turku</h1>
+    <h1>Flight finder</h1>
+    <p class="demo-route">Demo route: Amsterdam ⇄ Helsinki / Turku</p>
 
     <form @submit.prevent="run">
       <label>Departing from
@@ -169,6 +170,8 @@ main { max-width: 76rem; margin: 0 auto; padding: 1.5rem; }
 form { display: flex; gap: .75rem; flex-wrap: wrap; align-items: end; margin-bottom: 1.5rem; }
 label { display: flex; flex-direction: column; font-size: .75rem; color: #666; gap: .2rem; }
 input, select, button { padding: .5rem; font: inherit; }
+h1 { margin-bottom: .25rem; }
+.demo-route { margin: 0 0 1.25rem; font-size: .875rem; color: #666; }
 .error { color: #b00020; }
 .columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; }
 @media (max-width: 70rem) { .columns { grid-template-columns: 1fr; } }

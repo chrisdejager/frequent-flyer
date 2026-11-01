@@ -17,7 +17,7 @@ edge cases.
 
 Candidate scenarios, to be chosen at Gate 1:
 
-- The cheapest trip Leiden → Turku, total = ticket + train where applicable.
+- The cheapest trip on the demo route.
 - An option with an unknown train price stays visible and comes last.
 - With the HEL–TKU transfer off, a Helsinki option says "not included".
 

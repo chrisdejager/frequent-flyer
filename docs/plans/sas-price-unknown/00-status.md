@@ -100,7 +100,7 @@ If SerpApi isn't better: the fallback is this plan's slices A+B below
   shows "price unknown" and no "€"; LegColumn header; TotalBar "unknown".
 
 ## Notes for a fresh session
-- Trigger (2026-10-03, see `docs/plans/booking-link/00-status.md`): ignav gives
+- Trigger (2026-10-03, see `docs/history/booking-link/00-status.md`): ignav gives
   the KLM codeshare price as search price for SAS flights. Measured 26-11-2026:
   SK556+SK2728 € 374 in the app, € 193 on flysas.com; SK1556+SK2720 € 515 vs € 259.
   The search response does not reveal it (same `status: verified`).

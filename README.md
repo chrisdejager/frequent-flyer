@@ -1,11 +1,25 @@
-# Leiden ↔ Turku flight finder
+# Flight finder
 
-Searches for the cheapest travel options between Leiden and Turku, with a total price
-that includes the VR train (baggage costs intentionally excluded, see ADR-0005).
+Finds the cheapest trip between two places, booked directly with the airline,
+under conditions you set: which airlines, how many connections, how long a
+connection may take, and when you want to depart. A place can have several
+airports, and the finder searches all of them.
 
-- [Status](docs/plans/README.md)
-- [Design phase 1](docs/plans/flight-finder-phase-1/spec.md)
-- [Implementation plan phase 1](docs/plans/flight-finder-phase-1/plan.md)
+**Status: MVP with one demo route.** Amsterdam ⇄ Finland, with Helsinki
+(direct flights) and Turku (one connection via Stockholm or Copenhagen), for
+Finnair, SAS and KLM. One-way or round trip, a day forward or back per leg, and
+a Book button that opens the airline's own booking page. Prices come from
+[ignav](https://ignav.com). Baggage costs are deliberately not included yet
+(ADR-0005).
+
+**Where it is going:** saved routes with your own conditions, any airport,
+users by invitation, and advice on which airline to pick given your loyalty
+status. See the [roadmap](docs/roadmap.md).
+
+- [Roadmap](docs/roadmap.md): phases, and what is still open
+- [Architecture](docs/architecture.md): components and the search flow, as diagrams
+- [Decisions](docs/adr/README.md): architecture decision records
+- [Plans](docs/plans/README.md): features in progress; finished ones are in [history](docs/history/README.md)
 
 ## Setup
 
@@ -13,20 +27,10 @@ Copy `api/.env` to `api/.env.local` and fill in:
 
 | Variable | Where from |
 |---|---|
-| `BRIGHTDATA_TOKEN` | brightdata.com — 5,000 free credits per month |
-| `BRIGHTDATA_ZONE` | name of your SERP zone |
-| `APIFY_TOKEN` | apify.com — $5 free credit per month |
-| `FARE_UPGRADE_AY` | Finnair Light→Plus in euros — **16** (fixed rate) |
-| `FARE_UPGRADE_KL` | KLM Light→Plus in euros — **25** (estimate; dynamically priced) |
+| `IGNAV_API_KEY` | ignav.com: 1,000 free requests per month, only successful calls count |
 
-Without `FARE_UPGRADE_AY` and `FARE_UPGRADE_KL` **the first search request fails**
-with a 500 — missing variables return `Environment variable not found`, empty values
-return `Non-numeric env var ... cannot be cast to float`. This is intentional:
-calculating with €0 would make Light fares look systematically too cheap.
-
-Note that the container itself does start; you only notice a missing value when
-you run the first search, not during deployment. After a deploy, run one search
-to verify that the configuration is complete.
+Without a key the app starts, and a search answers 503 "Flight search is not
+configured: IGNAV_API_KEY is empty." A key that ignav rejects gives a 503 too.
 
 ## Running locally
 
