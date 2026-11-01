@@ -7,9 +7,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 services:
-    # Vervangt de standaard logger van FrameworkBundle zodat waarschuwingen
-    # (warning+) naar stderr schrijven. Zonder dit override staat de drempelwaarde
-    # op ERROR, waardoor $logger->warning(...) stilletjes niets doet.
+    # Replaces the FrameworkBundle default logger so that warnings (warning+)
+    # go to stderr. Without this override the threshold is ERROR, and
+    # $logger->warning(...) silently does nothing.
     logger:
         class: Symfony\Component\HttpKernel\Log\Logger
         arguments:
@@ -32,8 +32,8 @@ services:
     App\Infrastructure\Source\IgnavFlightSource:
         arguments:
             $apiKey: '%env(IGNAV_API_KEY)%'
-            # Expliciet, ook al autowiret Symfony dit: zonder deze regel verdwijnt
-            # de logger stil zodra iemand dit blok met een positional argument uitbreidt.
+            # Explicit, even though Symfony autowires it: without this line the logger
+            # silently disappears as soon as someone adds a positional argument here.
             $logger: '@logger'
 
     App\Domain\Port\FlightPriceSource: '@App\Infrastructure\Source\IgnavFlightSource'
@@ -43,8 +43,8 @@ services:
         arguments:
             $cache: '@cache.app'
             $apiToken: '%env(APIFY_TOKEN)%'
-            # Expliciet, ook al autowiret Symfony dit: zonder deze regel verdwijnt
-            # de logger stil zodra iemand dit blok met een positional argument uitbreidt.
+            # Explicit, even though Symfony autowires it: without this line the logger
+            # silently disappears as soon as someone adds a positional argument here.
             $logger: '@logger'
 
     App\Domain\Port\TrainPriceSource: '@App\Infrastructure\Source\ApifyTrainPriceSource'
@@ -72,8 +72,8 @@ when@test:
         App\Domain\Port\BookingLinkSource:
             alias: App\Infrastructure\Source\IgnavBookingLinkSource
             public: true
-        # Blootgesteld voor LoggerConfigurationTest: bewijst dat het logger:-blok
-        # in de productiedefinitie de drempelwaarde op 'warning' houdt.
+        # Exposed for LoggerConfigurationTest: proves that the logger: block in the
+        # production definition keeps the threshold at 'warning'.
         test.logger:
             alias: logger
             public: true
