@@ -22,6 +22,10 @@ a Book button that opens the airline's own booking page. Prices come from
 **Still to come:** saved routes, any airport, users by invitation, baggage
 costs, and the ranking by loyalty status. See the [roadmap](docs/roadmap.md).
 
+**Built with:** PHP 8.4 and Symfony 7.4 LTS (API, domain-driven design), Vue 3
+with TypeScript and Vite (frontend), PHPUnit and Vitest for tests, all running
+in Docker via a Makefile.
+
 - [Roadmap](docs/roadmap.md): phases, and what is still open
 - [Architecture](docs/architecture.md): components and the search flow, as diagrams
 - [Decisions](docs/adr/README.md): architecture decision records
