@@ -21,6 +21,11 @@ services:
 
   node:
     image: node:22-alpine
+    # As the host user, like php: node_modules, dist and .vite stay yours.
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    environment:
+      # npm keeps its cache in $HOME, and an arbitrary uid has no home here.
+      HOME: /tmp
     volumes:
       - ./web:/app
     working_dir: /app
