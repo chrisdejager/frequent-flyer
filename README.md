@@ -33,7 +33,15 @@ in Docker via a Makefile.
 
 ## Setup
 
-Copy `api/.env` to `api/.env.local` and fill in:
+Docker is the only thing the host needs. Run this once after cloning, and
+again after switching branches; it is safe to rerun:
+
+```bash
+make setup
+```
+
+It installs the dependencies and creates `api/.env.local`, which git ignores.
+Fill in:
 
 | Variable | Where from |
 |---|---|

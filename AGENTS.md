@@ -38,6 +38,7 @@ Dutch and are not translated.
 The Makefile is the interface; every tool runs in a container (`make help`).
 
 ```bash
+make setup           # first use or after switching branches; idempotent
 make up              # app at http://localhost:8080
 make test            # PHP suite + frontend suite
 make phpunit         # PHP suite only
