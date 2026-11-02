@@ -106,7 +106,7 @@ const isDefault = computed(() =>
 
 <template>
   <main>
-    <h1>Flight finder</h1>
+    <h1>Frequent Flyer</h1>
     <p class="demo-route">Demo route: Amsterdam ⇄ Helsinki / Turku</p>
 
     <form @submit.prevent="run">

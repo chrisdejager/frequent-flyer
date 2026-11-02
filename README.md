@@ -1,4 +1,4 @@
-# Flight finder
+# Frequent Flyer
 
 For people who fly the same routes again and again. Save a route once, with
 your own airports, airlines and conditions, and find the best flight in one
